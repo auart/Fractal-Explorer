@@ -30,33 +30,18 @@
       right: 10px;
       z-index: 10;
     }
-    /* Full screen and Toggle Controls buttons styling */
-    #fsToggleBtn,
-    #toggleControlsBtn {
+    /* Full screen toggle button - positioned at bottom right */
+    #fsToggleBtn {
       position: fixed;
+      bottom: 10px;
+      right: 10px;
       z-index: 20;
       padding: 10px 20px;
       font-size: 16px;
-      background: black;
-      color: grey;
-      border: 1px solid grey;
+      background: #fff;
+      color: #000;
+      border: 1px solid #000;
       cursor: pointer;
-    }
-    /* Full screen toggle button - positioned at bottom right */
-    #fsToggleBtn {
-      bottom: 10px;
-      right: 10px;
-    }
-    /* Toggle Controls button - positioned above the full screen button */
-    #toggleControlsBtn {
-      bottom: 50px;
-      right: 10px;
-      transition: transform 0.3s ease;
-    }
-    /* When controls are closed, scale the "Open Controls" button 10× smaller */
-    #toggleControlsBtn.small {
-      transform: scale(0.1);
-      transform-origin: bottom right;
     }
     /* Enable Microphone button */
     #startBtn {
@@ -93,8 +78,6 @@
   <button id="startBtn">Enable Microphone</button>
   <!-- Full Screen Button -->
   <button id="fsToggleBtn">Enter Full Screen</button>
-  <!-- Toggle Controls Button -->
-  <button id="toggleControlsBtn">Close Controls</button>
   <!-- GUI Container -->
   <div id="gui"></div>
   
@@ -317,16 +300,17 @@
       lightIntensity: 1.0,
       lightAngle: 0.0,
       powerMin: 2.0,
-      powerMax: 25.0, // Default adjusted to fall within new range (0-50)
+      powerMax: 100.0,
       trippyMode: false,
-      // Remove the old trippySpeed property and add a display value:
-      trippySpeedDisplay: 5  // This slider will show values 0-10
+      trippySpeed: 0.5,
+      kaleidoscopeMode: false,
+      kaleidoscopeSpeed: 1.0,
+      musicMatch: false,
+      zoomValue: 2.2
     };
     
     if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
       params.zoomValue = 3.8;
-    } else {
-      params.zoomValue = 2.2;
     }
     
     const magicRate = 1.5;
@@ -385,7 +369,9 @@
           e.touches[0].clientY - e.touches[1].clientY
         );
         let delta = currentDist - lastPinchDist;
+        // Update the zoomValue based on the pinch delta
         params.zoomValue += delta * zoomFactor;
+        // Clamp zoomValue between 0 and 4
         params.zoomValue = Math.max(0, Math.min(4, params.zoomValue));
         lastPinchDist = currentDist;
       } else if(isDragging && e.touches.length === 1) {
@@ -461,6 +447,8 @@
           document.documentElement.webkitRequestFullscreen();
         }
         fsToggleBtn.textContent = "Exit Full Screen";
+        fsToggleBtn.style.backgroundColor = "black";
+        fsToggleBtn.style.color = "black";
       } else {
         if(document.exitFullscreen) {
           document.exitFullscreen();
@@ -468,21 +456,8 @@
           document.webkitExitFullscreen();
         }
         fsToggleBtn.textContent = "Enter Full Screen";
-      }
-    });
-    
-    // Toggle Controls button event listener
-    const toggleControlsBtn = document.getElementById("toggleControlsBtn");
-    toggleControlsBtn.addEventListener("click", () => {
-      const guiDiv = document.getElementById("gui");
-      if (guiDiv.style.display === "none") {
-        guiDiv.style.display = "block";
-        toggleControlsBtn.textContent = "Close Controls";
-        toggleControlsBtn.classList.remove("small");
-      } else {
-        guiDiv.style.display = "none";
-        toggleControlsBtn.textContent = "Open Controls";
-        toggleControlsBtn.classList.add("small");
+        fsToggleBtn.style.backgroundColor = "";
+        fsToggleBtn.style.color = "";
       }
     });
     
@@ -549,8 +524,7 @@
       
       let magicFolder = gui.addFolder("Magic Mode");
       magicFolder.add(params, "powerMin", 2, 100).name("Power Min").listen();
-      // Update the range for powerMax to be 0-50
-      magicFolder.add(params, "powerMax", 0, 50).name("Power Max").listen();
+      magicFolder.add(params, "powerMax", 2, 100).name("Power Max").listen();
       magicFolder.add(params, "magicRotationSpeed", 0, 10).name("Magic Speed");
       magicFolder.add({ magic: function() {
           magicMode = !magicMode;
@@ -565,12 +539,13 @@
       colorFolder.add(params, "rainbow").name("Rainbow Mode");
       colorFolder.add(params, "pulse").name("Pulse Mode");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
-      // Use the new trippySpeedDisplay slider (0-10)
-      colorFolder.add(params, "trippySpeedDisplay", 0, 10).name("Trippy Speed");
+      colorFolder.add(params, "trippySpeed", 0, 1).name("Trippy Speed");
       
       let lightingFolder = gui.addFolder("Lighting");
       lightingFolder.add(params, "lightIntensity", 0, 2).name("Light Intensity");
       lightingFolder.add(params, "lightAngle", 0, 6).name("Light Angle").listen();
+      lightingFolder.add(params, "kaleidoscopeMode").name("Kaleidoscope Mode");
+      lightingFolder.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
       
       let audioFolder = gui.addFolder("Audio Settings");
       audioFolder.add(params, "musicReact").name("Mic Reactive");
@@ -622,9 +597,6 @@
         sensitiveAvg = avg * params.micSensitivity;
       }
       
-      // Convert the trippySpeedDisplay (0-10) to the internal range (0-0.08)
-      params.trippySpeed = params.trippySpeedDisplay * 0.008;
-      
       if(params.trippyMode) {
         let effectiveTrippySpeed = params.trippySpeed * 5.0;
         let hue = (elapsedTime * effectiveTrippySpeed) % 1;
@@ -632,6 +604,14 @@
         material.uniforms.uColor.value.copy(newColor);
       } else {
         material.uniforms.uColor.value.set(params.uColor);
+      }
+      
+      if(params.kaleidoscopeMode) {
+        let delta = clock.getDelta();
+        params.lightAngle += delta * params.kaleidoscopeSpeed;
+        if(params.lightAngle > 6) {
+          params.lightAngle -= 6;
+        }
       }
       
       if(magicMode) {
