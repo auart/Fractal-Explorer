@@ -32,11 +32,10 @@
       z-index: 10;
       max-height: calc(100vh - 20px);
       overflow-y: auto;
-      overflow-x: visible;
-      padding-right: 8px;
-      box-sizing: border-box;
+      overflow-x: hidden;
+      padding: 0;
       scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,0.5) rgba(255,255,255,0.1);
+      scrollbar-color: rgba(255,255,255,0.45) rgba(255,255,255,0.08);
     }
 
     #gui::-webkit-scrollbar {
@@ -104,6 +103,7 @@
       border: 1px solid #000;
       font-size: 13px;
       width: 180px;
+      box-sizing: border-box;
     }
 
     #recordOptions label {
@@ -117,11 +117,13 @@
       margin-top: 4px;
       padding: 4px;
       font-size: 13px;
+      box-sizing: border-box;
     }
 
     .dg.main {
       transform: scale(2);
       transform-origin: top right;
+      margin-top: 0 !important;
       margin-right: 0 !important;
     }
 
@@ -617,35 +619,21 @@
 
     function getMimeTypeFromFormat(format) {
       if (format === "webm-vp9") {
-        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) {
-          return "video/webm;codecs=vp9";
-        }
-        if (MediaRecorder.isTypeSupported("video/webm")) {
-          return "video/webm";
-        }
+        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
+        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
 
       if (format === "webm") {
-        if (MediaRecorder.isTypeSupported("video/webm")) {
-          return "video/webm";
-        }
+        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
 
       if (format === "mp4") {
-        if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) {
-          return "video/mp4;codecs=avc1";
-        }
-        if (MediaRecorder.isTypeSupported("video/mp4")) {
-          return "video/mp4";
-        }
+        if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) return "video/mp4;codecs=avc1";
+        if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
       }
 
-      if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) {
-        return "video/webm;codecs=vp9";
-      }
-      if (MediaRecorder.isTypeSupported("video/webm")) {
-        return "video/webm";
-      }
+      if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
+      if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       return "";
     }
 
@@ -922,10 +910,7 @@
       if (params.kaleidoscopeMode) {
         params.lightAngle += deltaTime * params.kaleidoscopeSpeed;
         params.lightAngle = params.lightAngle % (Math.PI * 2);
-
-        if (lightAngleController) {
-          lightAngleController.updateDisplay();
-        }
+        if (lightAngleController) lightAngleController.updateDisplay();
       }
 
       if (magicMode) {
