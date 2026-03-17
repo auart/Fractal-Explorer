@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – HD Stills + Better Clip Export</title>
+  <title>Fractal Explorer – Safe GUI Build</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -33,10 +33,9 @@
       max-height: calc(100vh - 20px);
       overflow-y: auto;
       overflow-x: hidden;
-      width: 420px;
+      width: 320px;
       box-sizing: border-box;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,0.45) rgba(255,255,255,0.08);
+      padding-right: 4px;
     }
 
     #gui::-webkit-scrollbar {
@@ -45,57 +44,10 @@
 
     #gui::-webkit-scrollbar-track {
       background: rgba(255,255,255,0.08);
-      border-radius: 8px;
     }
 
     #gui::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.45);
-      border-radius: 8px;
-    }
-
-    .dg.main {
-      transform: none !important;
-      width: 400px !important;
-      font-size: 16px !important;
-      line-height: 1.4 !important;
-      margin-top: 0 !important;
-      margin-right: 0 !important;
-    }
-
-    .dg.main .close-button {
-      height: 32px !important;
-      line-height: 32px !important;
-      font-size: 16px !important;
-    }
-
-    .dg .cr {
-      height: 32px !important;
-      line-height: 32px !important;
-    }
-
-    .dg .property-name {
-      width: 45% !important;
-      font-size: 15px !important;
-      line-height: 32px !important;
-    }
-
-    .dg .c {
-      width: 55% !important;
-    }
-
-    .dg .slider {
-      height: 20px !important;
-      margin-top: 6px !important;
-    }
-
-    .dg input[type="text"] {
-      font-size: 15px !important;
-      height: 24px !important;
-    }
-
-    .dg select {
-      font-size: 15px !important;
-      height: 28px !important;
+      background: rgba(255,255,255,0.4);
     }
 
     #startBtn {
@@ -171,17 +123,7 @@
 
     @media only screen and (max-width: 768px) {
       #gui {
-        width: 92vw !important;
-        max-height: calc(100vh - 20px);
-      }
-
-      .dg.main {
-        width: 88vw !important;
-        font-size: 15px !important;
-      }
-
-      .dg .property-name {
-        font-size: 14px !important;
+        width: 92vw;
       }
 
       #recordOptions,
@@ -835,7 +777,7 @@
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
 
-      gui = new dat.GUI({ autoPlace: false, width: 400 });
+      gui = new dat.GUI({ autoPlace: false, width: 320 });
       document.getElementById("gui").appendChild(gui.domElement);
 
       const fractalFolder = gui.addFolder("Fractal Settings");
