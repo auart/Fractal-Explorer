@@ -102,7 +102,6 @@
     #exportStillBtn,
     #recordBtn {
       position: fixed;
-      right: 10px;
       z-index: 20;
       padding: 10px 20px;
       font-size: 16px;
@@ -113,15 +112,18 @@
     }
 
     #fsToggleBtn {
+      right: 10px;
       bottom: 10px;
     }
 
-    #exportStillBtn {
-      bottom: 60px;
+    #recordBtn {
+      right: 10px;
+      bottom: 110px;
     }
 
-    #recordBtn {
-      bottom: 110px;
+    #exportStillBtn {
+      left: 10px;
+      bottom: 10px;
     }
 
     #recordBtn:disabled {
@@ -246,7 +248,6 @@
     uniform float uPulse;
 
     uniform float uMusic;
-
     uniform int uShape;
 
     uniform vec3 uCamPos;
@@ -476,6 +477,29 @@
     let rotXController, rotYController, rotZController, lightAngleController;
     let keys = {};
 
+    function setFolderState(folder, isOpen) {
+      const list = folder.domElement.querySelector("ul");
+      folder.__customOpen = isOpen;
+      if (list) {
+        list.style.display = isOpen ? "block" : "none";
+      }
+      folder.domElement.classList.toggle("closed", !isOpen);
+    }
+
+    function enableFolderToggle(folder, startOpen) {
+      const title = folder.domElement.querySelector(".title");
+      if (!title) return;
+
+      setFolderState(folder, startOpen);
+      title.style.cursor = "pointer";
+
+      title.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setFolderState(folder, !folder.__customOpen);
+      });
+    }
+
     window.addEventListener("keydown", (e) => {
       keys[e.key] = true;
     });
@@ -621,20 +645,14 @@
         } else if (document.documentElement.webkitRequestFullscreen) {
           document.documentElement.webkitRequestFullscreen();
         }
-
         fsToggleBtn.textContent = "Exit Full Screen";
-        fsToggleBtn.style.backgroundColor = "black";
-        fsToggleBtn.style.color = "black";
       } else {
         if (document.exitFullscreen) {
           document.exitFullscreen();
         } else if (document.webkitExitFullscreen) {
           document.webkitExitFullscreen();
         }
-
         fsToggleBtn.textContent = "Enter Full Screen";
-        fsToggleBtn.style.backgroundColor = "";
-        fsToggleBtn.style.color = "";
       }
     });
 
@@ -892,12 +910,12 @@
       miscFolder.add(params, "mirror").name("Mirror Mode");
       miscFolder.add(params, "mirrorQuad").name("Quad Mirror Mode");
 
-      fractalFolder.open();
-      lightingFolder.open();
-      magicFolder.close();
-      colorFolder.close();
-      audioFolder.close();
-      miscFolder.close();
+      enableFolderToggle(fractalFolder, true);
+      enableFolderToggle(lightingFolder, true);
+      enableFolderToggle(magicFolder, false);
+      enableFolderToggle(colorFolder, false);
+      enableFolderToggle(audioFolder, false);
+      enableFolderToggle(miscFolder, false);
 
       window.addEventListener("resize", onWindowResize, false);
       renderer.domElement.addEventListener("mousedown", onMouseDown, false);
@@ -930,12 +948,10 @@
 
       if (params.musicReact) {
         analyser.getByteFrequencyData(dataArray);
-
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) {
           sum += dataArray[i];
         }
-
         let avg = sum / bufferLength / 255.0;
         sensitiveAvg = avg * params.micSensitivity;
       }
@@ -967,7 +983,6 @@
             lastBeatTime = elapsedTime;
             bpm = 60 / beatInterval;
           }
-
           effectiveMagicSpeed = (bpm / 120) * 5.0;
           speedMultiplier = effectiveMagicSpeed / 5.0;
         } else {
