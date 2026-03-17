@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – 2x Bigger GUI, Bottom-Right Full Screen, Auto Mic & Pinch Zoom</title>
+  <title>Fractal Explorer – HD Stills + Better Clip Export</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -14,6 +14,7 @@
       width: 100%;
       height: 100%;
       background: black;
+      font-family: Arial, sans-serif;
     }
 
     canvas {
@@ -29,45 +30,52 @@
       top: 10px;
       right: 10px;
       z-index: 10;
+      max-height: calc(100vh - 20px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.45) rgba(255,255,255,0.08);
+    }
+
+    #gui::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    #gui::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+    }
+
+    #gui::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.45);
+      border-radius: 8px;
+    }
+
+    #fsToggleBtn,
+    #exportStillBtn,
+    #recordBtn {
+      position: fixed;
+      right: 10px;
+      z-index: 20;
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #fff;
+      color: #000;
+      border: 1px solid #000;
+      cursor: pointer;
     }
 
     #fsToggleBtn {
-      position: fixed;
       bottom: 10px;
-      right: 10px;
-      z-index: 20;
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #fff;
-      color: #000;
-      border: 1px solid #000;
-      cursor: pointer;
     }
 
     #exportStillBtn {
-      position: fixed;
       bottom: 60px;
-      right: 10px;
-      z-index: 20;
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #fff;
-      color: #000;
-      border: 1px solid #000;
-      cursor: pointer;
     }
 
     #recordBtn {
-      position: fixed;
       bottom: 110px;
-      right: 10px;
-      z-index: 20;
-      padding: 10px 20px;
-      font-size: 16px;
-      background: #fff;
-      color: #000;
-      border: 1px solid #000;
-      cursor: pointer;
     }
 
     #recordBtn:disabled {
@@ -84,15 +92,45 @@
       font-size: 16px;
     }
 
+    #recordOptions {
+      position: fixed;
+      bottom: 160px;
+      right: 10px;
+      z-index: 25;
+      background: rgba(255,255,255,0.92);
+      color: #000;
+      padding: 10px;
+      border: 1px solid #000;
+      font-size: 13px;
+      width: 180px;
+      box-sizing: border-box;
+    }
+
+    #recordOptions label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    #recordOptions select {
+      width: 100%;
+      margin-top: 4px;
+      padding: 4px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+
     .dg.main {
       transform: scale(2);
       transform-origin: top right;
+      margin-top: 0 !important;
+      margin-right: 0 !important;
     }
 
     @media only screen and (max-width: 768px) {
       #gui {
         width: 50vw !important;
-        height: 50vh !important;
+        max-height: calc(100vh - 20px);
       }
 
       .dg.main {
@@ -107,6 +145,10 @@
       .dg .property-name {
         font-size: 1em !important;
       }
+
+      #recordOptions {
+        width: 200px;
+      }
     }
   </style>
 </head>
@@ -114,7 +156,39 @@
   <button id="startBtn">Enable Microphone</button>
   <button id="fsToggleBtn">Enter Full Screen</button>
   <button id="exportStillBtn">Export HD Still</button>
-  <button id="recordBtn">Record 10s Clip</button>
+  <button id="recordBtn">Record Clip</button>
+
+  <div id="recordOptions">
+    <label>
+      Format
+      <select id="formatSelect">
+        <option value="webm-vp9">WebM VP9</option>
+        <option value="webm">WebM Basic</option>
+        <option value="mp4">MP4, if supported</option>
+      </select>
+    </label>
+
+    <label>
+      Quality
+      <select id="qualitySelect">
+        <option value="low">Low, 5 Mbps</option>
+        <option value="medium">Medium, 12 Mbps</option>
+        <option value="high" selected>High, 25 Mbps</option>
+        <option value="ultra">Ultra, 50 Mbps</option>
+      </select>
+    </label>
+
+    <label>
+      Duration
+      <select id="durationSelect">
+        <option value="5">5 sec</option>
+        <option value="10" selected>10 sec</option>
+        <option value="15">15 sec</option>
+        <option value="30">30 sec</option>
+      </select>
+    </label>
+  </div>
+
   <div id="gui"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
@@ -364,7 +438,7 @@
     let magicStartTime = 0;
     let magicEuler = new THREE.Euler(0, 0, 0);
 
-    let rotXController, rotYController, rotZController;
+    let rotXController, rotYController, rotZController, lightAngleController;
     let keys = {};
 
     window.addEventListener("keydown", (e) => {
@@ -498,6 +572,12 @@
     });
 
     const fsToggleBtn = document.getElementById("fsToggleBtn");
+    const exportStillBtn = document.getElementById("exportStillBtn");
+    const recordBtn = document.getElementById("recordBtn");
+
+    const formatSelect = document.getElementById("formatSelect");
+    const qualitySelect = document.getElementById("qualitySelect");
+    const durationSelect = document.getElementById("durationSelect");
 
     fsToggleBtn.addEventListener("click", () => {
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -523,11 +603,44 @@
       }
     });
 
-    const exportStillBtn = document.getElementById("exportStillBtn");
-
     exportStillBtn.addEventListener("click", async () => {
       await exportHDStill(3840, 2160);
     });
+
+    function getBitrateFromQuality(quality) {
+      switch (quality) {
+        case "low": return 5000000;
+        case "medium": return 12000000;
+        case "high": return 25000000;
+        case "ultra": return 50000000;
+        default: return 25000000;
+      }
+    }
+
+    function getMimeTypeFromFormat(format) {
+      if (format === "webm-vp9") {
+        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
+        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
+      }
+
+      if (format === "webm") {
+        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
+      }
+
+      if (format === "mp4") {
+        if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) return "video/mp4;codecs=avc1";
+        if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
+      }
+
+      if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
+      if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
+      return "";
+    }
+
+    function getFileExtensionFromMimeType(mimeType) {
+      if (mimeType.includes("mp4")) return "mp4";
+      return "webm";
+    }
 
     async function exportHDStill(width = 3840, height = 2160) {
       const originalSize = new THREE.Vector2();
@@ -564,23 +677,37 @@
       }
     }
 
-    const recordBtn = document.getElementById("recordBtn");
-
     recordBtn.addEventListener("click", async () => {
-      await recordCanvasVideo(10000);
+      const durationMs = parseInt(durationSelect.value, 10) * 1000;
+      const bitrate = getBitrateFromQuality(qualitySelect.value);
+      const mimeType = getMimeTypeFromFormat(formatSelect.value);
+
+      if (!mimeType) {
+        alert("This browser does not support the selected recording format.");
+        return;
+      }
+
+      await recordCanvasVideo(durationMs, bitrate, mimeType);
     });
 
-    async function recordCanvasVideo(durationMs = 10000) {
+    async function recordCanvasVideo(durationMs = 10000, videoBitsPerSecond = 25000000, mimeType = "video/webm;codecs=vp9") {
       const canvas = renderer.domElement;
       const stream = canvas.captureStream(60);
 
-      let mimeType = "video/webm;codecs=vp9";
-      if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = "video/webm";
+      let recorder;
+      try {
+        recorder = new MediaRecorder(stream, {
+          mimeType,
+          videoBitsPerSecond
+        });
+      } catch (err) {
+        console.error("MediaRecorder setup failed:", err);
+        alert("Recording failed to start with that format/settings.");
+        return;
       }
 
-      const recorder = new MediaRecorder(stream, { mimeType });
       const chunks = [];
+      const fileExt = getFileExtensionFromMimeType(mimeType);
 
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
@@ -594,7 +721,7 @@
 
         const link = document.createElement("a");
         link.href = url;
-        link.download = "fractal-clip.webm";
+        link.download = `fractal-clip-${qualitySelect.value}.${fileExt}`;
         link.click();
 
         setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -608,7 +735,7 @@
       setTimeout(() => {
         recorder.stop();
         recordBtn.disabled = false;
-        recordBtn.textContent = "Record 10s Clip";
+        recordBtn.textContent = "Record Clip";
       }, durationMs);
     }
 
@@ -674,7 +801,7 @@
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
 
-      gui = new dat.GUI({ autoPlace: false });
+      gui = new dat.GUI({ autoPlace: false, width: 300 });
       document.getElementById("gui").appendChild(gui.domElement);
 
       let fractalFolder = gui.addFolder("Fractal Settings");
@@ -713,7 +840,7 @@
 
       let lightingFolder = gui.addFolder("Lighting");
       lightingFolder.add(params, "lightIntensity", 0, 2).name("Light Intensity");
-      lightingFolder.add(params, "lightAngle", 0, 6).name("Light Angle").listen();
+      lightAngleController = lightingFolder.add(params, "lightAngle", 0, Math.PI * 2).name("Light Angle").listen();
       lightingFolder.add(params, "kaleidoscopeMode").name("Kaleidoscope Mode");
       lightingFolder.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
 
@@ -751,9 +878,10 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      let elapsedTime = clock.getElapsedTime();
-      material.uniforms.iTime.value = elapsedTime;
+      const deltaTime = clock.getDelta();
+      const elapsedTime = clock.elapsedTime;
 
+      material.uniforms.iTime.value = elapsedTime;
       navCamera.position.z = params.zoomValue;
 
       let sensitiveAvg = 0;
@@ -780,11 +908,9 @@
       }
 
       if (params.kaleidoscopeMode) {
-        let delta = clock.getDelta();
-        params.lightAngle += delta * params.kaleidoscopeSpeed;
-        if (params.lightAngle > 6) {
-          params.lightAngle -= 6;
-        }
+        params.lightAngle += deltaTime * params.kaleidoscopeSpeed;
+        params.lightAngle = params.lightAngle % (Math.PI * 2);
+        if (lightAngleController) lightAngleController.updateDisplay();
       }
 
       if (magicMode) {
@@ -814,12 +940,10 @@
 
         material.uniforms.uPower.value = newPower;
 
-        let dt = clock.getDelta();
-
         if (!isDragging) {
-          magicEuler.x += dt * speedMultiplier * 0.5;
-          magicEuler.y += dt * speedMultiplier * 1.0;
-          magicEuler.z += dt * speedMultiplier * 0.75;
+          magicEuler.x += deltaTime * speedMultiplier * 0.5;
+          magicEuler.y += deltaTime * speedMultiplier * 1.0;
+          magicEuler.z += deltaTime * speedMultiplier * 0.75;
           params.uFractalRotationX = magicEuler.x;
           params.uFractalRotationY = magicEuler.y;
           params.uFractalRotationZ = magicEuler.z;
