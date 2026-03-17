@@ -33,7 +33,8 @@
       max-height: calc(100vh - 20px);
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0;
+      width: 420px;
+      box-sizing: border-box;
       scrollbar-width: thin;
       scrollbar-color: rgba(255,255,255,0.45) rgba(255,255,255,0.08);
     }
@@ -50,6 +51,51 @@
     #gui::-webkit-scrollbar-thumb {
       background: rgba(255,255,255,0.45);
       border-radius: 8px;
+    }
+
+    .dg.main {
+      transform: none !important;
+      width: 400px !important;
+      font-size: 16px !important;
+      line-height: 1.4 !important;
+      margin-top: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .dg.main .close-button {
+      height: 32px !important;
+      line-height: 32px !important;
+      font-size: 16px !important;
+    }
+
+    .dg .cr {
+      height: 32px !important;
+      line-height: 32px !important;
+    }
+
+    .dg .property-name {
+      width: 45% !important;
+      font-size: 15px !important;
+      line-height: 32px !important;
+    }
+
+    .dg .c {
+      width: 55% !important;
+    }
+
+    .dg .slider {
+      height: 20px !important;
+      margin-top: 6px !important;
+    }
+
+    .dg input[type="text"] {
+      font-size: 15px !important;
+      height: 24px !important;
+    }
+
+    .dg select {
+      font-size: 15px !important;
+      height: 28px !important;
     }
 
     #fsToggleBtn,
@@ -120,30 +166,19 @@
       box-sizing: border-box;
     }
 
-    .dg.main {
-      transform: scale(2);
-      transform-origin: top right;
-      margin-top: 0 !important;
-      margin-right: 0 !important;
-    }
-
     @media only screen and (max-width: 768px) {
       #gui {
-        width: 50vw !important;
+        width: 92vw !important;
         max-height: calc(100vh - 20px);
       }
 
       .dg.main {
-        transform: scale(2);
-        transform-origin: top right;
+        width: 88vw !important;
+        font-size: 15px !important;
       }
 
-      .dg .cr,
-      .dg .c,
-      .dg .slider,
-      .dg .number,
       .dg .property-name {
-        font-size: 1em !important;
+        font-size: 14px !important;
       }
 
       #recordOptions {
@@ -801,7 +836,7 @@
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
 
-      gui = new dat.GUI({ autoPlace: false, width: 300 });
+      gui = new dat.GUI({ autoPlace: false, width: 400 });
       document.getElementById("gui").appendChild(gui.domElement);
 
       let fractalFolder = gui.addFolder("Fractal Settings");
