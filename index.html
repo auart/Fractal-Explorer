@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Lighting Controls Added</title>
+  <title>Fractal Explorer – Motion Controls Update</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -406,17 +406,29 @@
       uShape: 0,
       musicReact: true,
       micSensitivity: 1.0,
-      magicRotationSpeed: 5.0,
+
+      powerAnimation: false,
+      powerAnimationSpeed: 1.0,
+      powerMin: 2.0,
+      powerMax: 100.0,
+
+      autoRotateX: false,
+      autoRotateY: false,
+      autoRotateZ: false,
+      rotateSpeedX: 0.5,
+      rotateSpeedY: 1.0,
+      rotateSpeedZ: 0.75,
+
       mirror: false,
       mirrorQuad: false,
+
       lightIntensity: 1.0,
       lightAngle: 0.0,
       shadowStrength: 1.0,
       shadowTint: "#000000",
       contrast: 1.0,
       specularStrength: 0.5,
-      powerMin: 2.0,
-      powerMax: 100.0,
+
       trippyMode: false,
       trippySpeed: 0.5,
       kaleidoscopeMode: false,
@@ -429,12 +441,8 @@
       params.zoomValue = 3.8;
     }
 
-    const magicRate = 1.5;
     let lastBeatTime = 0;
     let bpm = 120;
-    let magicMode = false;
-    let magicStartTime = 0;
-    let magicEuler = new THREE.Euler(0, 0, 0);
 
     let rotXController, rotYController, rotZController, lightAngleController;
     let keys = {};
@@ -809,23 +817,18 @@
       fractalFolder.add(params, "uMaxDistance", 50, 400).name("Max Distance");
       fractalFolder.add(params, "uShape", { Mandelbulb: 0, Cube: 1, Pyramid: 2, Hexagon: 3 }).name("Base Shape");
 
-      const magicFolder = gui.addFolder("Magic Mode");
-      magicFolder.add(params, "powerMin", 2, 100).name("Power Min").listen();
-      magicFolder.add(params, "powerMax", 2, 100).name("Power Max").listen();
-      magicFolder.add(params, "magicRotationSpeed", 0, 10).name("Magic Speed");
-      magicFolder.add({
-        magic: function () {
-          magicMode = !magicMode;
-          if (magicMode) {
-            magicStartTime = clock.getElapsedTime();
-            magicEuler.set(
-              params.uFractalRotationX,
-              params.uFractalRotationY,
-              params.uFractalRotationZ
-            );
-          }
-        }
-      }, "magic").name("Magic");
+      const motionFolder = gui.addFolder("Motion");
+      motionFolder.add(params, "powerAnimation").name("Power Animation");
+      motionFolder.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
+      motionFolder.add(params, "powerMin", 2, 100).name("Power Min").listen();
+      motionFolder.add(params, "powerMax", 2, 100).name("Power Max").listen();
+
+      motionFolder.add(params, "autoRotateX").name("Auto Rotate X");
+      motionFolder.add(params, "rotateSpeedX", -5, 5).name("Rotate Speed X");
+      motionFolder.add(params, "autoRotateY").name("Auto Rotate Y");
+      motionFolder.add(params, "rotateSpeedY", -5, 5).name("Rotate Speed Y");
+      motionFolder.add(params, "autoRotateZ").name("Auto Rotate Z");
+      motionFolder.add(params, "rotateSpeedZ", -5, 5).name("Rotate Speed Z");
 
       const colorFolder = gui.addFolder("Color & Effects");
       colorFolder.addColor(params, "uColor").name("Base Color");
@@ -858,8 +861,8 @@
       miscFolder.add(params, "mirrorQuad").name("Quad Mirror Mode");
 
       fractalFolder.open();
+      motionFolder.open();
       lightingFolder.open();
-      magicFolder.close();
       colorFolder.close();
       audioFolder.close();
       miscFolder.close();
@@ -918,10 +921,8 @@
         if (lightAngleController) lightAngleController.updateDisplay();
       }
 
-      if (magicMode) {
-        let tMagic = elapsedTime - magicStartTime;
-        let range = params.powerMax - params.powerMin;
-        let effectiveMagicSpeed, speedMultiplier;
+      if (params.powerAnimation) {
+        let effectivePowerSpeed = params.powerAnimationSpeed;
 
         if (params.musicMatch) {
           let threshold = 0.4;
@@ -930,61 +931,45 @@
             lastBeatTime = elapsedTime;
             bpm = 60 / beatInterval;
           }
-          effectiveMagicSpeed = (bpm / 120) * 5.0;
-          speedMultiplier = effectiveMagicSpeed / 5.0;
-        } else {
-          effectiveMagicSpeed = params.magicRotationSpeed * (1 + sensitiveAvg * 5.0);
-          speedMultiplier = effectiveMagicSpeed / 5.0;
+          effectivePowerSpeed = (bpm / 120.0) * params.powerAnimationSpeed;
         }
 
-        let x = (tMagic * magicRate * speedMultiplier) % (2 * range);
-        let newPower = (x < range)
-          ? (params.powerMin + x)
-          : (params.powerMin + (2 * range - x));
-
-        material.uniforms.uPower.value = newPower;
-
-        if (!isDragging) {
-          magicEuler.x += deltaTime * speedMultiplier * 0.5;
-          magicEuler.y += deltaTime * speedMultiplier * 1.0;
-          magicEuler.z += deltaTime * speedMultiplier * 0.75;
-          params.uFractalRotationX = magicEuler.x;
-          params.uFractalRotationY = magicEuler.y;
-          params.uFractalRotationZ = magicEuler.z;
+        const range = params.powerMax - params.powerMin;
+        if (range <= 0.0001) {
+          material.uniforms.uPower.value = params.powerMin;
         } else {
-          magicEuler.set(
-            params.uFractalRotationX,
-            params.uFractalRotationY,
-            params.uFractalRotationZ
-          );
+          const x = (elapsedTime * effectivePowerSpeed) % (2 * range);
+          const newPower = (x < range)
+            ? (params.powerMin + x)
+            : (params.powerMin + (2 * range - x));
+          material.uniforms.uPower.value = newPower;
         }
+      } else {
+        material.uniforms.uPower.value = params.uPower;
+      }
 
-        material.uniforms.uFractalRotation.value.set(
-          params.uFractalRotationX,
-          params.uFractalRotationY,
-          params.uFractalRotationZ
-        );
+      if (!isDragging) {
+        if (params.autoRotateX) {
+          params.uFractalRotationX += deltaTime * params.rotateSpeedX;
+        }
+        if (params.autoRotateY) {
+          params.uFractalRotationY += deltaTime * params.rotateSpeedY;
+        }
+        if (params.autoRotateZ) {
+          params.uFractalRotationZ += deltaTime * params.rotateSpeedZ;
+        }
 
         if (rotXController) rotXController.updateDisplay();
         if (rotYController) rotYController.updateDisplay();
         if (rotZController) rotZController.updateDisplay();
-      } else if (params.musicReact) {
-        material.uniforms.uMusic.value = sensitiveAvg;
-        material.uniforms.uPower.value = params.uPower;
-        material.uniforms.uFractalRotation.value.set(
-          params.uFractalRotationX,
-          params.uFractalRotationY,
-          params.uFractalRotationZ
-        );
-      } else {
-        material.uniforms.uMusic.value = 0.0;
-        material.uniforms.uPower.value = params.uPower;
-        material.uniforms.uFractalRotation.value.set(
-          params.uFractalRotationX,
-          params.uFractalRotationY,
-          params.uFractalRotationZ
-        );
       }
+
+      material.uniforms.uMusic.value = params.musicReact ? sensitiveAvg : 0.0;
+      material.uniforms.uFractalRotation.value.set(
+        params.uFractalRotationX,
+        params.uFractalRotationY,
+        params.uFractalRotationZ
+      );
 
       material.uniforms.uBailout.value = params.uBailout;
       material.uniforms.uIterations.value = params.uIterations;
