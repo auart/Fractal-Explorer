@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Edge Highlight 2.0</title>
+  <title>Fractal Explorer – Presets + Vertical Export</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -50,6 +50,17 @@
       background: rgba(255,255,255,0.4);
     }
 
+    #leftPanel {
+      position: fixed;
+      left: 10px;
+      bottom: 10px;
+      z-index: 25;
+      width: 240px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
     #startBtn {
       position: fixed;
       top: 10px;
@@ -59,66 +70,47 @@
       font-size: 16px;
     }
 
-    #exportStillBtn,
-    #recordBtn,
-    #fsToggleBtn {
-      position: fixed;
-      left: 10px;
-      z-index: 20;
-      padding: 10px 20px;
-      font-size: 16px;
+    #leftPanel button,
+    #leftPanel select,
+    #leftPanel input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #000;
+    }
+
+    #leftPanel button {
       background: #fff;
       color: #000;
-      border: 1px solid #000;
       cursor: pointer;
-      width: 220px;
-      box-sizing: border-box;
       text-align: center;
     }
 
-    #exportStillBtn {
-      bottom: 10px;
-    }
-
-    #fsToggleBtn {
-      bottom: 60px;
-    }
-
-    #recordBtn {
-      bottom: 110px;
-    }
-
-    #recordBtn:disabled {
+    #leftPanel button:disabled {
       opacity: 0.7;
       cursor: wait;
     }
 
-    #recordOptions {
-      position: fixed;
-      left: 10px;
-      bottom: 160px;
-      z-index: 25;
+    .panelBox {
       background: rgba(255,255,255,0.92);
       color: #000;
       padding: 10px;
       border: 1px solid #000;
-      font-size: 13px;
-      width: 220px;
       box-sizing: border-box;
     }
 
-    #recordOptions label {
+    .panelBox label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
       font-weight: bold;
     }
 
-    #recordOptions select {
-      width: 100%;
-      margin-top: 4px;
-      padding: 4px;
-      font-size: 13px;
-      box-sizing: border-box;
+    .rowGap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     @media only screen and (max-width: 768px) {
@@ -126,10 +118,7 @@
         width: 92vw;
       }
 
-      #recordOptions,
-      #exportStillBtn,
-      #recordBtn,
-      #fsToggleBtn {
+      #leftPanel {
         width: 220px;
       }
     }
@@ -137,39 +126,63 @@
 </head>
 <body>
   <button id="startBtn">Enable Microphone</button>
-  <button id="exportStillBtn">Export HD Still</button>
-  <button id="fsToggleBtn">Enter Full Screen</button>
-  <button id="recordBtn">Record Clip</button>
 
-  <div id="recordOptions">
-    <label>
-      Format
+  <div id="leftPanel">
+    <div class="panelBox rowGap">
+      <label for="presetNameInput">Preset Name</label>
+      <input id="presetNameInput" type="text" placeholder="My preset">
+
+      <button id="savePresetBtn">Save Preset</button>
+      <button id="overwritePresetBtn">Overwrite Selected</button>
+
+      <label for="presetSelect">Load Preset</label>
+      <select id="presetSelect">
+        <option value="">No saved presets</option>
+      </select>
+
+      <button id="loadPresetBtn">Load Selected</button>
+      <button id="deletePresetBtn">Delete Selected</button>
+      <button id="exportPresetBtn">Export Preset JSON</button>
+      <button id="importPresetBtn">Import Preset JSON</button>
+      <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;">
+    </div>
+
+    <div class="panelBox rowGap">
+      <label for="exportFormatSelect">Export Format</label>
+      <select id="exportFormatSelect">
+        <option value="3840x2160" selected>Landscape 4K, 3840 x 2160</option>
+        <option value="2160x3840">Vertical 4K, 2160 x 3840</option>
+        <option value="1080x1920">Vertical HD, 1080 x 1920</option>
+        <option value="2160x2160">Square 4K, 2160 x 2160</option>
+      </select>
+
+      <label for="formatSelect">Video Format</label>
       <select id="formatSelect">
         <option value="webm-vp9">WebM VP9</option>
         <option value="webm">WebM Basic</option>
         <option value="mp4">MP4, if supported</option>
       </select>
-    </label>
 
-    <label>
-      Quality
+      <label for="qualitySelect">Video Quality</label>
       <select id="qualitySelect">
         <option value="low">Low, 5 Mbps</option>
         <option value="medium">Medium, 12 Mbps</option>
         <option value="high" selected>High, 25 Mbps</option>
         <option value="ultra">Ultra, 50 Mbps</option>
       </select>
-    </label>
 
-    <label>
-      Duration
+      <label for="durationSelect">Clip Duration</label>
       <select id="durationSelect">
         <option value="5">5 sec</option>
         <option value="10" selected>10 sec</option>
         <option value="15">15 sec</option>
         <option value="30">30 sec</option>
       </select>
-    </label>
+    </div>
+
+    <button id="exportStillBtn">Export Still</button>
+    <button id="recordBtn">Record Clip</button>
+    <button id="fsToggleBtn">Enter Full Screen</button>
   </div>
 
   <div id="gui"></div>
@@ -418,6 +431,8 @@
     let navCamera, orthoCamera, scene, renderer, material, quad, clock;
     let gui;
 
+    const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
+
     let params = {
       flySpeed: 0.05,
       uPower: 8.0,
@@ -478,7 +493,62 @@
       zoomValue: 2.2
     };
 
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    const PRESET_KEYS = [
+      "flySpeed",
+      "uPower",
+      "uBailout",
+      "uIterations",
+      "uSurfaceEpsilon",
+      "uMaxSteps",
+      "uMaxDistance",
+      "uColor",
+      "rainbow",
+      "pulse",
+      "uFractalRotationX",
+      "uFractalRotationY",
+      "uFractalRotationZ",
+      "uShape",
+      "musicReact",
+      "micSensitivity",
+      "powerAnimation",
+      "powerAnimationSpeed",
+      "powerMin",
+      "powerMax",
+      "autoRotateX",
+      "autoRotateY",
+      "autoRotateZ",
+      "rotateSpeedX",
+      "rotateSpeedY",
+      "rotateSpeedZ",
+      "mirror",
+      "mirrorQuad",
+      "lightIntensity",
+      "lightAngle",
+      "shadowStrength",
+      "shadowTint",
+      "contrast",
+      "specularStrength",
+      "edgeHighlight",
+      "edgeColorA",
+      "edgeAlphaA",
+      "edgeColorB",
+      "edgeAlphaB",
+      "edgeStrength",
+      "edgeWidth",
+      "edgeEmission",
+      "edgeScroll",
+      "edgeScrollSpeed",
+      "edgeReverse",
+      "trippyMode",
+      "trippySpeed",
+      "kaleidoscopeMode",
+      "kaleidoscopeSpeed",
+      "musicMatch",
+      "zoomValue"
+    ];
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
       params.zoomValue = 3.8;
     }
 
@@ -487,6 +557,245 @@
 
     let rotXController, rotYController, rotZController, lightAngleController;
     let keys = {};
+
+    const presetNameInput = document.getElementById("presetNameInput");
+    const presetSelect = document.getElementById("presetSelect");
+    const savePresetBtn = document.getElementById("savePresetBtn");
+    const overwritePresetBtn = document.getElementById("overwritePresetBtn");
+    const loadPresetBtn = document.getElementById("loadPresetBtn");
+    const deletePresetBtn = document.getElementById("deletePresetBtn");
+    const exportPresetBtn = document.getElementById("exportPresetBtn");
+    const importPresetBtn = document.getElementById("importPresetBtn");
+    const importPresetInput = document.getElementById("importPresetInput");
+
+    const fsToggleBtn = document.getElementById("fsToggleBtn");
+    const exportStillBtn = document.getElementById("exportStillBtn");
+    const recordBtn = document.getElementById("recordBtn");
+
+    const exportFormatSelect = document.getElementById("exportFormatSelect");
+    const formatSelect = document.getElementById("formatSelect");
+    const qualitySelect = document.getElementById("qualitySelect");
+    const durationSelect = document.getElementById("durationSelect");
+
+    function getCurrentPresetData() {
+      const data = {};
+      PRESET_KEYS.forEach((key) => {
+        data[key] = params[key];
+      });
+      return data;
+    }
+
+    function applyPresetData(data) {
+      PRESET_KEYS.forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          params[key] = data[key];
+        }
+      });
+      refreshGuiDisplays();
+    }
+
+    function refreshGuiDisplays() {
+      if (gui && gui.__controllers) {
+        gui.__controllers.forEach((c) => c.updateDisplay());
+      }
+      if (gui && gui.__folders) {
+        Object.values(gui.__folders).forEach((folder) => {
+          folder.__controllers.forEach((c) => c.updateDisplay());
+        });
+      }
+      if (rotXController) rotXController.updateDisplay();
+      if (rotYController) rotYController.updateDisplay();
+      if (rotZController) rotZController.updateDisplay();
+      if (lightAngleController) lightAngleController.updateDisplay();
+    }
+
+    function loadPresetsFromStorage() {
+      try {
+        const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (err) {
+        console.error("Failed to read presets:", err);
+        return {};
+      }
+    }
+
+    function savePresetsToStorage(presets) {
+      localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+    }
+
+    function refreshPresetSelect() {
+      const presets = loadPresetsFromStorage();
+      const names = Object.keys(presets).sort((a, b) => a.localeCompare(b));
+
+      presetSelect.innerHTML = "";
+      if (names.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No saved presets";
+        presetSelect.appendChild(opt);
+        return;
+      }
+
+      names.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        presetSelect.appendChild(opt);
+      });
+    }
+
+    function savePresetByName(name, overwrite = false) {
+      const trimmed = name.trim();
+      if (!trimmed) {
+        alert("Enter a preset name first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      if (!overwrite && presets[trimmed]) {
+        alert("A preset with that name already exists. Use Overwrite Selected or a new name.");
+        return;
+      }
+
+      presets[trimmed] = {
+        name: trimmed,
+        savedAt: new Date().toISOString(),
+        values: getCurrentPresetData()
+      };
+
+      savePresetsToStorage(presets);
+      refreshPresetSelect();
+      presetSelect.value = trimmed;
+    }
+
+    function loadSelectedPreset() {
+      const selected = presetSelect.value;
+      if (!selected) {
+        alert("Select a preset first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      if (!presets[selected]) {
+        alert("Preset not found.");
+        refreshPresetSelect();
+        return;
+      }
+
+      applyPresetData(presets[selected].values);
+      presetNameInput.value = selected;
+    }
+
+    function deleteSelectedPreset() {
+      const selected = presetSelect.value;
+      if (!selected) {
+        alert("Select a preset first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      if (!presets[selected]) return;
+
+      delete presets[selected];
+      savePresetsToStorage(presets);
+      refreshPresetSelect();
+      presetNameInput.value = "";
+    }
+
+    function exportSelectedPreset() {
+      const selected = presetSelect.value || presetNameInput.value.trim();
+      if (!selected) {
+        alert("Select or enter a preset name first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      const preset = presets[selected];
+      if (!preset) {
+        alert("Save the preset first before exporting it.");
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(preset, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selected}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importPresetFromObject(obj) {
+      if (!obj || typeof obj !== "object" || !obj.values) {
+        alert("Invalid preset file.");
+        return;
+      }
+
+      const baseName = obj.name && typeof obj.name === "string" ? obj.name.trim() : "Imported Preset";
+      let finalName = baseName || "Imported Preset";
+
+      const presets = loadPresetsFromStorage();
+      if (presets[finalName]) {
+        let i = 2;
+        while (presets[`${finalName} ${i}`]) i++;
+        finalName = `${finalName} ${i}`;
+      }
+
+      presets[finalName] = {
+        name: finalName,
+        savedAt: new Date().toISOString(),
+        values: obj.values
+      };
+
+      savePresetsToStorage(presets);
+      refreshPresetSelect();
+      presetSelect.value = finalName;
+      presetNameInput.value = finalName;
+    }
+
+    savePresetBtn.addEventListener("click", () => {
+      savePresetByName(presetNameInput.value, false);
+    });
+
+    overwritePresetBtn.addEventListener("click", () => {
+      const selected = presetSelect.value || presetNameInput.value.trim();
+      if (!selected) {
+        alert("Select or enter a preset name to overwrite.");
+        return;
+      }
+      savePresetByName(selected, true);
+    });
+
+    loadPresetBtn.addEventListener("click", loadSelectedPreset);
+    deletePresetBtn.addEventListener("click", deleteSelectedPreset);
+    exportPresetBtn.addEventListener("click", exportSelectedPreset);
+
+    importPresetBtn.addEventListener("click", () => {
+      importPresetInput.click();
+    });
+
+    importPresetInput.addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const obj = JSON.parse(text);
+        importPresetFromObject(obj);
+      } catch (err) {
+        console.error(err);
+        alert("Could not import preset JSON.");
+      }
+
+      importPresetInput.value = "";
+    });
+
+    function parseExportDimensions() {
+      const [w, h] = exportFormatSelect.value.split("x").map(Number);
+      return { width: w, height: h };
+    }
 
     window.addEventListener("keydown", (e) => {
       keys[e.key] = true;
@@ -590,6 +899,7 @@
       setTimeout(() => {
         document.getElementById("startBtn").style.display = "none";
       }, 3000);
+      refreshPresetSelect();
     };
 
     let micEnabled = false;
@@ -618,14 +928,6 @@
       }
     });
 
-    const fsToggleBtn = document.getElementById("fsToggleBtn");
-    const exportStillBtn = document.getElementById("exportStillBtn");
-    const recordBtn = document.getElementById("recordBtn");
-
-    const formatSelect = document.getElementById("formatSelect");
-    const qualitySelect = document.getElementById("qualitySelect");
-    const durationSelect = document.getElementById("durationSelect");
-
     fsToggleBtn.addEventListener("click", () => {
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (document.documentElement.requestFullscreen) {
@@ -645,7 +947,8 @@
     });
 
     exportStillBtn.addEventListener("click", async () => {
-      await exportHDStill(3840, 2160);
+      const { width, height } = parseExportDimensions();
+      await exportStill(width, height);
     });
 
     function getBitrateFromQuality(quality) {
@@ -683,7 +986,7 @@
       return "webm";
     }
 
-    async function exportHDStill(width = 3840, height = 2160) {
+    async function exportStill(width, height) {
       const originalSize = new THREE.Vector2();
       renderer.getSize(originalSize);
 
@@ -722,62 +1025,94 @@
       const durationMs = parseInt(durationSelect.value, 10) * 1000;
       const bitrate = getBitrateFromQuality(qualitySelect.value);
       const mimeType = getMimeTypeFromFormat(formatSelect.value);
+      const { width, height } = parseExportDimensions();
 
       if (!mimeType) {
         alert("This browser does not support the selected recording format.");
         return;
       }
 
-      await recordCanvasVideo(durationMs, bitrate, mimeType);
+      await recordCanvasVideo({
+        durationMs,
+        videoBitsPerSecond: bitrate,
+        mimeType,
+        width,
+        height
+      });
     });
 
-    async function recordCanvasVideo(durationMs = 10000, videoBitsPerSecond = 25000000, mimeType = "video/webm;codecs=vp9") {
-      const canvas = renderer.domElement;
-      const stream = canvas.captureStream(60);
+    async function recordCanvasVideo({ durationMs = 10000, videoBitsPerSecond = 25000000, mimeType = "video/webm;codecs=vp9", width, height }) {
+      const originalSize = new THREE.Vector2();
+      renderer.getSize(originalSize);
 
-      let recorder;
+      const originalPixelRatio = renderer.getPixelRatio();
+      const originalResolution = material.uniforms.iResolution.value.clone();
+
       try {
-        recorder = new MediaRecorder(stream, {
-          mimeType,
-          videoBitsPerSecond
-        });
-      } catch (err) {
-        console.error("MediaRecorder setup failed:", err);
-        alert("Recording failed to start with that format/settings.");
-        return;
-      }
+        renderer.setPixelRatio(1);
+        renderer.setSize(width, height, false);
+        material.uniforms.iResolution.value.set(width, height);
 
-      const chunks = [];
-      const fileExt = getFileExtensionFromMimeType(mimeType);
+        renderer.render(scene, orthoCamera);
 
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          chunks.push(event.data);
+        const canvas = renderer.domElement;
+        const stream = canvas.captureStream(60);
+
+        let recorder;
+        try {
+          recorder = new MediaRecorder(stream, {
+            mimeType,
+            videoBitsPerSecond
+          });
+        } catch (err) {
+          console.error("MediaRecorder setup failed:", err);
+          alert("Recording failed to start with that format/settings.");
+          return;
         }
-      };
 
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType });
-        const url = URL.createObjectURL(blob);
+        const chunks = [];
+        const fileExt = getFileExtensionFromMimeType(mimeType);
 
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `fractal-clip-${qualitySelect.value}.${fileExt}`;
-        link.click();
+        recorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
 
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      };
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mimeType });
+          const url = URL.createObjectURL(blob);
 
-      recorder.start();
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `fractal-clip-${width}x${height}.${fileExt}`;
+          link.click();
 
-      recordBtn.disabled = true;
-      recordBtn.textContent = "Recording...";
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      setTimeout(() => {
-        recorder.stop();
-        recordBtn.disabled = false;
-        recordBtn.textContent = "Record Clip";
-      }, durationMs);
+          renderer.setPixelRatio(originalPixelRatio);
+          renderer.setSize(originalSize.x, originalSize.y, false);
+          material.uniforms.iResolution.value.copy(originalResolution);
+          renderer.render(scene, orthoCamera);
+        };
+
+        recorder.start();
+
+        recordBtn.disabled = true;
+        recordBtn.textContent = "Recording...";
+
+        setTimeout(() => {
+          recorder.stop();
+          recordBtn.disabled = false;
+          recordBtn.textContent = "Record Clip";
+        }, durationMs);
+      } catch (err) {
+        console.error(err);
+        renderer.setPixelRatio(originalPixelRatio);
+        renderer.setSize(originalSize.x, originalSize.y, false);
+        material.uniforms.iResolution.value.copy(originalResolution);
+        renderer.render(scene, orthoCamera);
+      }
     }
 
     function init() {
@@ -796,7 +1131,7 @@
         1000
       );
 
-      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      if (isMobile) {
         navCamera.position.set(0, 0, 3.8);
         params.zoomValue = 3.8;
       } else {
