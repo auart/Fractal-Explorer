@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Motion Controls Update</title>
+  <title>Fractal Explorer – Liquid Gold + Edge Highlights</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -214,6 +214,11 @@
     uniform float uContrast;
     uniform float uSpecularStrength;
 
+    uniform float uLiquidGold;
+    uniform float uEdgeHighlight;
+    uniform vec3 uEdgeColor;
+    uniform float uEdgeStrength;
+
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
       float cy = cos(angles.y), sy = sin(angles.y);
@@ -359,14 +364,31 @@
         vec3 viewDir = normalize(ro - pos);
         vec3 halfDir = normalize(lightDir + viewDir);
 
-        float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
-        vec3 specular = vec3(1.0) * spec * uSpecularStrength * shadow;
+        float specPower = mix(32.0, 72.0, uLiquidGold);
+        float spec = pow(max(dot(normal, halfDir), 0.0), specPower);
+
+        float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
+        float liquidFresnel = fresnel * uLiquidGold * 0.45;
+
+        vec3 shadowTint = mix(uShadowTint, vec3(0.01, 0.008, 0.0), uLiquidGold);
 
         float lightVal = ambient + (1.0 - ambient) * diffuse * shadow;
         lightVal = mix(1.0, lightVal, uShadowStrength);
         lightVal = pow(clamp(lightVal, 0.0, 1.0), max(0.05, uContrast));
 
-        col = mix(uShadowTint, uColor, lightVal) + specular;
+        vec3 baseCol = mix(shadowTint, uColor, lightVal);
+
+        vec3 whiteHighlight = vec3(1.0, 0.98, 0.92);
+        vec3 specColor = mix(vec3(1.0), whiteHighlight, uLiquidGold);
+        vec3 specular = specColor * spec * uSpecularStrength * shadow;
+
+        vec3 fresnelColor = whiteHighlight * liquidFresnel;
+
+        float edgeMask = pow(1.0 - abs(dot(normal, viewDir)), 2.5);
+        float edgeAmt = edgeMask * uEdgeStrength * uEdgeHighlight;
+        vec3 edgeGlow = uEdgeColor * edgeAmt;
+
+        col = baseCol + specular + fresnelColor + edgeGlow;
 
         if (uPulse > 0.5) {
           float pulse = 0.5 + 0.5 * sin(iTime * 2.0 + uMusic * 10.0);
@@ -429,6 +451,11 @@
       contrast: 1.0,
       specularStrength: 0.5,
 
+      liquidGold: false,
+      edgeHighlight: false,
+      edgeColor: "#fff0a8",
+      edgeStrength: 0.35,
+
       trippyMode: false,
       trippySpeed: 0.5,
       kaleidoscopeMode: false,
@@ -446,6 +473,18 @@
 
     let rotXController, rotYController, rotZController, lightAngleController;
     let keys = {};
+
+    function applyLiquidGoldDefaults(enabled) {
+      if (enabled) {
+        params.shadowStrength = 1.15;
+        params.shadowTint = "#050400";
+        params.contrast = 1.3;
+        params.specularStrength = 0.95;
+        params.edgeHighlight = true;
+        params.edgeColor = "#fff0a8";
+        params.edgeStrength = 0.45;
+      }
+    }
 
     window.addEventListener("keydown", (e) => {
       keys[e.key] = true;
@@ -798,7 +837,11 @@
           uShadowStrength: { value: params.shadowStrength },
           uShadowTint: { value: new THREE.Color(params.shadowTint) },
           uContrast: { value: params.contrast },
-          uSpecularStrength: { value: params.specularStrength }
+          uSpecularStrength: { value: params.specularStrength },
+          uLiquidGold: { value: params.liquidGold ? 1.0 : 0.0 },
+          uEdgeHighlight: { value: params.edgeHighlight ? 1.0 : 0.0 },
+          uEdgeColor: { value: new THREE.Color(params.edgeColor) },
+          uEdgeStrength: { value: params.edgeStrength }
         }
       });
 
@@ -836,6 +879,12 @@
       colorFolder.add(params, "pulse").name("Pulse Mode");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
       colorFolder.add(params, "trippySpeed", 0, 1).name("Trippy Speed");
+      colorFolder.add(params, "liquidGold").name("Liquid Gold").onChange((v) => {
+        applyLiquidGoldDefaults(v);
+      });
+      colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
+      colorFolder.addColor(params, "edgeColor").name("Edge Color");
+      colorFolder.add(params, "edgeStrength", 0, 1.5).name("Edge Strength");
 
       const lightingFolder = gui.addFolder("Lighting");
       lightingFolder.add(params, "lightIntensity", 0, 2).name("Light Intensity");
@@ -863,7 +912,7 @@
       fractalFolder.open();
       motionFolder.open();
       lightingFolder.open();
-      colorFolder.close();
+      colorFolder.open();
       audioFolder.close();
       miscFolder.close();
 
@@ -987,6 +1036,10 @@
       material.uniforms.uShadowTint.value.set(params.shadowTint);
       material.uniforms.uContrast.value = params.contrast;
       material.uniforms.uSpecularStrength.value = params.specularStrength;
+      material.uniforms.uLiquidGold.value = params.liquidGold ? 1.0 : 0.0;
+      material.uniforms.uEdgeHighlight.value = params.edgeHighlight ? 1.0 : 0.0;
+      material.uniforms.uEdgeColor.value.set(params.edgeColor);
+      material.uniforms.uEdgeStrength.value = params.edgeStrength;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
