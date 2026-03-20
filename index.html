@@ -824,11 +824,11 @@
       motionFolder.add(params, "powerMax", 2, 100).name("Power Max").listen();
 
       motionFolder.add(params, "autoRotateX").name("Auto Rotate X");
-      motionFolder.add(params, "rotateSpeedX", -5, 5).name("Rotate Speed X");
+      motionFolder.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
       motionFolder.add(params, "autoRotateY").name("Auto Rotate Y");
-      motionFolder.add(params, "rotateSpeedY", -5, 5).name("Rotate Speed Y");
+      motionFolder.add(params, "rotateSpeedY", -2, 2).name("Rotate Speed Y");
       motionFolder.add(params, "autoRotateZ").name("Auto Rotate Z");
-      motionFolder.add(params, "rotateSpeedZ", -5, 5).name("Rotate Speed Z");
+      motionFolder.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
 
       const colorFolder = gui.addFolder("Color & Effects");
       colorFolder.addColor(params, "uColor").name("Base Color");
