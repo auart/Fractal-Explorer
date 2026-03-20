@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Presets + Vertical Export</title>
+  <title>Fractal Explorer – Presets + Vertical Export + Start Screen</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -23,6 +23,72 @@
       top: 0;
       left: 0;
       z-index: 0;
+    }
+
+    #startOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.74);
+      backdrop-filter: blur(4px);
+    }
+
+    #startCard {
+      width: min(92vw, 520px);
+      padding: 34px 28px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(0, 0, 0, 0.58);
+      color: white;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    #startCard h1 {
+      margin: 0 0 10px 0;
+      font-size: 40px;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      font-weight: 700;
+    }
+
+    #startCard p {
+      margin: 0 0 24px 0;
+      font-size: 16px;
+      line-height: 1.5;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .startButtons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .startButtons button {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      border: 1px solid white;
+      background: white;
+      color: black;
+      box-sizing: border-box;
+    }
+
+    .startButtons button.secondary {
+      background: transparent;
+      color: white;
+    }
+
+    #startStatus {
+      margin-top: 14px;
+      min-height: 20px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.68);
     }
 
     #gui {
@@ -59,15 +125,6 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-    }
-
-    #startBtn {
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 30;
-      padding: 10px 20px;
-      font-size: 16px;
     }
 
     #leftPanel button,
@@ -121,11 +178,25 @@
       #leftPanel {
         width: 220px;
       }
+
+      #startCard h1 {
+        font-size: 34px;
+      }
     }
   </style>
 </head>
 <body>
-  <button id="startBtn">Enable Microphone</button>
+  <div id="startOverlay">
+    <div id="startCard">
+      <h1>Fractal Explorer</h1>
+      <p>Audio reactive fractal visuals, HD exports, vertical exports, presets, and live controls.</p>
+      <div class="startButtons">
+        <button id="enterWithMicBtn">Enter with Microphone</button>
+        <button id="enterWithoutMicBtn" class="secondary">Continue without Microphone</button>
+      </div>
+      <div id="startStatus"></div>
+    </div>
+  </div>
 
   <div id="leftPanel">
     <div class="panelBox rowGap">
@@ -554,9 +625,15 @@
 
     let lastBeatTime = 0;
     let bpm = 120;
+    let micEnabled = false;
 
     let rotXController, rotYController, rotZController, lightAngleController;
     let keys = {};
+
+    const startOverlay = document.getElementById("startOverlay");
+    const enterWithMicBtn = document.getElementById("enterWithMicBtn");
+    const enterWithoutMicBtn = document.getElementById("enterWithoutMicBtn");
+    const startStatus = document.getElementById("startStatus");
 
     const presetNameInput = document.getElementById("presetNameInput");
     const presetSelect = document.getElementById("presetSelect");
@@ -576,6 +653,53 @@
     const formatSelect = document.getElementById("formatSelect");
     const qualitySelect = document.getElementById("qualitySelect");
     const durationSelect = document.getElementById("durationSelect");
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    async function enableMicrophone() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const micSource = audioCtx.createMediaStreamSource(stream);
+      micSource.connect(analyser);
+      micEnabled = true;
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
+    }
+
+    function enterApp() {
+      startOverlay.style.display = "none";
+    }
+
+    enterWithMicBtn.addEventListener("click", async () => {
+      enterWithMicBtn.disabled = true;
+      enterWithoutMicBtn.disabled = true;
+      startStatus.textContent = "Requesting microphone access...";
+      try {
+        await enableMicrophone();
+        startStatus.textContent = "";
+        enterApp();
+      } catch (err) {
+        console.error("Microphone access denied:", err);
+        startStatus.textContent = "Microphone access was denied. You can continue without it.";
+        enterWithMicBtn.disabled = false;
+        enterWithoutMicBtn.disabled = false;
+      }
+    });
+
+    enterWithoutMicBtn.addEventListener("click", async () => {
+      if (audioCtx.state === "suspended") {
+        try {
+          await audioCtx.resume();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      enterApp();
+    });
 
     function getCurrentPresetData() {
       const data = {};
@@ -886,47 +1010,6 @@
       if (e.touches.length < 2) isPinching = false;
       if (e.touches.length === 0) isDragging = false;
     }
-
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    window.onload = function () {
-      alert("Please click 'Enable Microphone' to activate audio input.");
-      setTimeout(() => {
-        document.getElementById("startBtn").style.display = "none";
-      }, 3000);
-      refreshPresetSelect();
-    };
-
-    let micEnabled = false;
-
-    document.getElementById("startBtn").addEventListener("click", () => {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-        const micSource = audioCtx.createMediaStreamSource(stream);
-        micSource.connect(analyser);
-        micEnabled = true;
-        document.getElementById("startBtn").style.display = "none";
-      }).catch((err) => {
-        console.error("Microphone access denied:", err);
-      });
-    });
-
-    document.body.addEventListener("click", () => {
-      if (!micEnabled) {
-        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-          const micSource = audioCtx.createMediaStreamSource(stream);
-          micSource.connect(analyser);
-          micEnabled = true;
-          document.getElementById("startBtn").style.display = "none";
-        }).catch((err) => {
-          console.error("Microphone access denied:", err);
-        });
-      }
-    });
 
     fsToggleBtn.addEventListener("click", () => {
       if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -1295,7 +1378,7 @@
 
       let sensitiveAvg = 0;
 
-      if (params.musicReact) {
+      if (params.musicReact && micEnabled) {
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) {
@@ -1323,7 +1406,7 @@
       if (params.powerAnimation) {
         let effectivePowerSpeed = params.powerAnimationSpeed;
 
-        if (params.musicMatch) {
+        if (params.musicMatch && micEnabled) {
           let threshold = 0.4;
           if (sensitiveAvg > threshold && (elapsedTime - lastBeatTime > 0.3)) {
             let beatInterval = elapsedTime - lastBeatTime;
@@ -1363,7 +1446,7 @@
         if (rotZController) rotZController.updateDisplay();
       }
 
-      material.uniforms.uMusic.value = params.musicReact ? sensitiveAvg : 0.0;
+      material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
       material.uniforms.uFractalRotation.value.set(
         params.uFractalRotationX,
         params.uFractalRotationY,
@@ -1419,6 +1502,7 @@
       renderer.render(scene, orthoCamera);
     }
 
+    refreshPresetSelect();
     init();
     animate();
   </script>
