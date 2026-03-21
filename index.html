@@ -262,6 +262,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
 
   <script id="fragmentShader" type="x-shader/x-fragment">
+    #ifdef GL_OES_standard_derivatives
+    #extension GL_OES_standard_derivatives : enable
+    #endif
+
     precision mediump float;
 
     uniform vec2 iResolution;
@@ -471,7 +475,16 @@
         vec3 baseCol = mix(uShadowTint, litBaseColor, lightVal);
 
         float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
-        float edgeMask = pow(rim, max(0.08, uEdgeWidth));
+
+        float widthExp = mix(3.5, 0.35, clamp(uEdgeWidth / 4.0, 0.0, 1.0));
+        float rimPow = pow(rim, widthExp);
+
+        float edgeStart = 0.02;
+        float edgeEnd = 0.65;
+        float aa = fwidth(rimPow) * 1.75 + 0.0005;
+
+        float edgeMask = smoothstep(edgeStart - aa, edgeStart + aa, rimPow)
+                       * (1.0 - smoothstep(edgeEnd - aa, edgeEnd + aa, rimPow));
 
         float gradCoord = rim;
         if (uEdgeScroll > 0.5) {
@@ -1221,6 +1234,8 @@
         preserveDrawingBuffer: true
       });
 
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      renderer.setPixelRatio(pixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
@@ -1248,7 +1263,12 @@
       material = new THREE.ShaderMaterial({
         fragmentShader: fs,
         uniforms: {
-          iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+          iResolution: {
+            value: new THREE.Vector2(
+              window.innerWidth * pixelRatio,
+              window.innerHeight * pixelRatio
+            )
+          },
           iTime: { value: 0 },
           uPower: { value: params.uPower },
           uBailout: { value: params.uBailout },
@@ -1380,8 +1400,14 @@
     function onWindowResize() {
       navCamera.aspect = window.innerWidth / window.innerHeight;
       navCamera.updateProjectionMatrix();
+
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      renderer.setPixelRatio(pixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
-      material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+      material.uniforms.iResolution.value.set(
+        window.innerWidth * pixelRatio,
+        window.innerHeight * pixelRatio
+      );
     }
 
     function animate() {
