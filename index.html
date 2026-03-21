@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Vertical Export Modes</title>
+  <title>Fractal Explorer – Output Window</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -170,6 +170,11 @@
       gap: 6px;
     }
 
+    .ui-hidden #gui,
+    .ui-hidden #leftPanel {
+      display: none !important;
+    }
+
     @media only screen and (max-width: 768px) {
       #gui {
         width: 92vw;
@@ -189,7 +194,7 @@
   <div id="startOverlay">
     <div id="startCard">
       <h1>Fractal Explorer</h1>
-      <p>Audio reactive fractal visuals, HD exports, vertical exports, presets, and live controls.</p>
+      <p>Audio reactive fractal visuals, HD exports, presets, and clean output window mode.</p>
       <div class="startButtons">
         <button id="enterWithMicBtn">Enter with Microphone</button>
         <button id="enterWithoutMicBtn" class="secondary">Continue without Microphone</button>
@@ -258,6 +263,8 @@
       </select>
     </div>
 
+    <button id="openOutputBtn">Open Output Window</button>
+    <button id="fullscreenOutputBtn">Fullscreen Output</button>
     <button id="exportStillBtn">Export Still</button>
     <button id="recordBtn">Record Clip</button>
     <button id="fsToggleBtn">Enter Full Screen</button>
@@ -509,6 +516,13 @@
     let navCamera, orthoCamera, scene, renderer, material, quad, clock;
     let gui;
 
+    let outputWindowRef = null;
+    let outputRenderer = null;
+    let outputMaterial = null;
+    let outputScene = null;
+    let outputOrthoCamera = null;
+    let outputQuad = null;
+
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
 
     let params = {
@@ -626,9 +640,7 @@
     ];
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile) {
-      params.zoomValue = 3.8;
-    }
+    if (isMobile) params.zoomValue = 3.8;
 
     let lastBeatTime = 0;
     let bpm = 120;
@@ -655,6 +667,8 @@
     const fsToggleBtn = document.getElementById("fsToggleBtn");
     const exportStillBtn = document.getElementById("exportStillBtn");
     const recordBtn = document.getElementById("recordBtn");
+    const openOutputBtn = document.getElementById("openOutputBtn");
+    const fullscreenOutputBtn = document.getElementById("fullscreenOutputBtn");
 
     const exportFormatSelect = document.getElementById("exportFormatSelect");
     const verticalBehaviorSelect = document.getElementById("verticalBehaviorSelect");
@@ -673,9 +687,7 @@
       const micSource = audioCtx.createMediaStreamSource(stream);
       micSource.connect(analyser);
       micEnabled = true;
-      if (audioCtx.state === "suspended") {
-        await audioCtx.resume();
-      }
+      if (audioCtx.state === "suspended") await audioCtx.resume();
     }
 
     function enterApp() {
@@ -700,39 +712,29 @@
 
     enterWithoutMicBtn.addEventListener("click", async () => {
       if (audioCtx.state === "suspended") {
-        try {
-          await audioCtx.resume();
-        } catch (err) {
-          console.error(err);
-        }
+        try { await audioCtx.resume(); } catch (err) { console.error(err); }
       }
       enterApp();
     });
 
     function getCurrentPresetData() {
       const data = {};
-      PRESET_KEYS.forEach((key) => {
-        data[key] = params[key];
-      });
+      PRESET_KEYS.forEach((key) => { data[key] = params[key]; });
       return data;
     }
 
     function applyPresetData(data) {
       PRESET_KEYS.forEach((key) => {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-          params[key] = data[key];
-        }
+        if (Object.prototype.hasOwnProperty.call(data, key)) params[key] = data[key];
       });
       refreshGuiDisplays();
     }
 
     function refreshGuiDisplays() {
-      if (gui && gui.__controllers) {
-        gui.__controllers.forEach((c) => c.updateDisplay());
-      }
+      if (gui && gui.__controllers) gui.__controllers.forEach(c => c.updateDisplay());
       if (gui && gui.__folders) {
-        Object.values(gui.__folders).forEach((folder) => {
-          folder.__controllers.forEach((c) => c.updateDisplay());
+        Object.values(gui.__folders).forEach(folder => {
+          folder.__controllers.forEach(c => c.updateDisplay());
         });
       }
       if (rotXController) rotXController.updateDisplay();
@@ -887,10 +889,7 @@
       presetNameInput.value = finalName;
     }
 
-    savePresetBtn.addEventListener("click", () => {
-      savePresetByName(presetNameInput.value, false);
-    });
-
+    savePresetBtn.addEventListener("click", () => savePresetByName(presetNameInput.value, false));
     overwritePresetBtn.addEventListener("click", () => {
       const selected = presetSelect.value || presetNameInput.value.trim();
       if (!selected) {
@@ -904,14 +903,10 @@
     deletePresetBtn.addEventListener("click", deleteSelectedPreset);
     exportPresetBtn.addEventListener("click", exportSelectedPreset);
 
-    importPresetBtn.addEventListener("click", () => {
-      importPresetInput.click();
-    });
-
+    importPresetBtn.addEventListener("click", () => importPresetInput.click());
     importPresetInput.addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
-
       try {
         const text = await file.text();
         const obj = JSON.parse(text);
@@ -920,7 +915,6 @@
         console.error(err);
         alert("Could not import preset JSON.");
       }
-
       importPresetInput.value = "";
     });
 
@@ -933,7 +927,149 @@
       return height > width;
     }
 
+    function createOutputWindow() {
+      if (outputWindowRef && !outputWindowRef.closed) {
+        outputWindowRef.focus();
+        return;
+      }
+
+      outputWindowRef = window.open("", "FractalOutputWindow", "width=1280,height=720");
+      if (!outputWindowRef) {
+        alert("Popup blocked. Allow popups for this site, then try again.");
+        return;
+      }
+
+      const doc = outputWindowRef.document;
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Fractal Output</title>
+          <style>
+            html, body {
+              margin: 0;
+              padding: 0;
+              width: 100%;
+              height: 100%;
+              overflow: hidden;
+              background: black;
+            }
+            canvas {
+              display: block;
+              width: 100%;
+              height: 100%;
+            }
+          </style>
+        </head>
+        <body></body>
+        </html>
+      `);
+      doc.close();
+
+      const outCanvasHost = doc.body;
+      outputRenderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: false
+      });
+      outputRenderer.setPixelRatio(1);
+      outputRenderer.setSize(outputWindowRef.innerWidth, outputWindowRef.innerHeight);
+      outCanvasHost.appendChild(outputRenderer.domElement);
+
+      outputScene = new THREE.Scene();
+      outputOrthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      outputMaterial = new THREE.ShaderMaterial({
+        fragmentShader: document.getElementById("fragmentShader").textContent,
+        uniforms: {
+          iResolution: { value: new THREE.Vector2(outputWindowRef.innerWidth, outputWindowRef.innerHeight) },
+          iTime: { value: 0 },
+          uPower: { value: params.uPower },
+          uBailout: { value: params.uBailout },
+          uIterations: { value: params.uIterations },
+          uSurfaceEpsilon: { value: params.uSurfaceEpsilon },
+          uMaxSteps: { value: params.uMaxSteps },
+          uMaxDistance: { value: params.uMaxDistance },
+          uColor: { value: new THREE.Color(params.uColor) },
+          uRainbow: { value: params.rainbow ? 1.0 : 0.0 },
+          uPulse: { value: params.pulse ? 1.0 : 0.0 },
+          uCamPos: { value: new THREE.Vector3() },
+          uCamRight: { value: new THREE.Vector3() },
+          uCamUp: { value: new THREE.Vector3() },
+          uCamForward: { value: new THREE.Vector3() },
+          uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
+          uShape: { value: params.uShape },
+          uMusic: { value: 0.0 },
+          uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
+          uMirror: { value: params.mirror ? 1.0 : 0.0 },
+          uLightIntensity: { value: params.lightIntensity },
+          uLightAngle: { value: params.lightAngle },
+          uShadowStrength: { value: params.shadowStrength },
+          uShadowTint: { value: new THREE.Color(params.shadowTint) },
+          uContrast: { value: params.contrast },
+          uSpecularStrength: { value: params.specularStrength },
+          uEdgeHighlight: { value: params.edgeHighlight ? 1.0 : 0.0 },
+          uEdgeColorA: { value: new THREE.Color(params.edgeColorA) },
+          uEdgeAlphaA: { value: params.edgeAlphaA },
+          uEdgeColorB: { value: new THREE.Color(params.edgeColorB) },
+          uEdgeAlphaB: { value: params.edgeAlphaB },
+          uEdgeStrength: { value: params.edgeStrength },
+          uEdgeWidth: { value: params.edgeWidth },
+          uEdgeEmission: { value: params.edgeEmission },
+          uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
+          uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
+          uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 }
+        }
+      });
+
+      outputQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), outputMaterial);
+      outputScene.add(outputQuad);
+
+      outputWindowRef.addEventListener("resize", handleOutputResize);
+      outputWindowRef.addEventListener("beforeunload", cleanupOutputWindow);
+    }
+
+    function handleOutputResize() {
+      if (!outputWindowRef || outputWindowRef.closed || !outputRenderer || !outputMaterial) return;
+      const w = outputWindowRef.innerWidth;
+      const h = outputWindowRef.innerHeight;
+      outputRenderer.setSize(w, h);
+      outputMaterial.uniforms.iResolution.value.set(w, h);
+    }
+
+    function cleanupOutputWindow() {
+      outputRenderer = null;
+      outputMaterial = null;
+      outputScene = null;
+      outputOrthoCamera = null;
+      outputQuad = null;
+      outputWindowRef = null;
+    }
+
+    async function fullscreenOutputWindow() {
+      if (!outputWindowRef || outputWindowRef.closed) {
+        createOutputWindow();
+      }
+      if (!outputWindowRef || outputWindowRef.closed) return;
+
+      try {
+        const el = outputWindowRef.document.documentElement;
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          await el.webkitRequestFullscreen();
+        }
+      } catch (err) {
+        console.error("Output fullscreen failed:", err);
+      }
+    }
+
+    openOutputBtn.addEventListener("click", createOutputWindow);
+    fullscreenOutputBtn.addEventListener("click", fullscreenOutputWindow);
+
     window.addEventListener("keydown", (e) => {
+      if (e.key === "h" || e.key === "H") {
+        document.body.classList.toggle("ui-hidden");
+      }
       keys[e.key] = true;
     });
 
@@ -995,7 +1131,6 @@
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
         );
-
         let delta = currentDist - lastPinchDist;
         params.zoomValue += delta * zoomFactor;
         params.zoomValue = Math.max(0, Math.min(4, params.zoomValue));
@@ -1061,16 +1196,13 @@
         if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
         if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
-
       if (format === "webm") {
         if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
-
       if (format === "mp4") {
         if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) return "video/mp4;codecs=avc1";
         if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
       }
-
       if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
       if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       return "";
@@ -1089,17 +1221,14 @@
         await exportNativeStill(width, height);
         return;
       }
-
       if (behavior === "crop") {
         await exportCroppedVerticalStill(width, height);
         return;
       }
-
       if (behavior === "fit") {
         await exportFitVerticalStill(width, height);
         return;
       }
-
       await exportNativeStill(width, height);
     }
 
@@ -1114,7 +1243,6 @@
         renderer.setPixelRatio(1);
         renderer.setSize(width, height, false);
         material.uniforms.iResolution.value.set(width, height);
-
         renderer.render(scene, orthoCamera);
 
         renderer.domElement.toBlob((blob) => {
@@ -1122,7 +1250,6 @@
             alert("Export failed.");
             return;
           }
-
           const link = document.createElement("a");
           const url = URL.createObjectURL(blob);
           link.href = url;
@@ -1152,14 +1279,12 @@
         renderer.setPixelRatio(1);
         renderer.setSize(landscapeWidth, landscapeHeight, false);
         material.uniforms.iResolution.value.set(landscapeWidth, landscapeHeight);
-
         renderer.render(scene, orthoCamera);
 
         const srcCanvas = renderer.domElement;
         const outCanvas = document.createElement("canvas");
         outCanvas.width = width;
         outCanvas.height = height;
-
         const ctx = outCanvas.getContext("2d");
 
         const cropWidth = Math.round(landscapeHeight * (width / height));
@@ -1167,18 +1292,13 @@
         const sx = Math.round((landscapeWidth - cropWidth) / 2);
         const sy = 0;
 
-        ctx.drawImage(
-          srcCanvas,
-          sx, sy, cropWidth, cropHeight,
-          0, 0, width, height
-        );
+        ctx.drawImage(srcCanvas, sx, sy, cropWidth, cropHeight, 0, 0, width, height);
 
         outCanvas.toBlob((blob) => {
           if (!blob) {
             alert("Export failed.");
             return;
           }
-
           const link = document.createElement("a");
           const url = URL.createObjectURL(blob);
           link.href = url;
@@ -1208,14 +1328,12 @@
         renderer.setPixelRatio(1);
         renderer.setSize(landscapeWidth, landscapeHeight, false);
         material.uniforms.iResolution.value.set(landscapeWidth, landscapeHeight);
-
         renderer.render(scene, orthoCamera);
 
         const srcCanvas = renderer.domElement;
         const outCanvas = document.createElement("canvas");
         outCanvas.width = width;
         outCanvas.height = height;
-
         const ctx = outCanvas.getContext("2d");
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, width, height);
@@ -1225,18 +1343,13 @@
         const drawHeight = landscapeHeight * scale;
         const dy = (height - drawHeight) / 2;
 
-        ctx.drawImage(
-          srcCanvas,
-          0, 0, landscapeWidth, landscapeHeight,
-          0, dy, drawWidth, drawHeight
-        );
+        ctx.drawImage(srcCanvas, 0, 0, landscapeWidth, landscapeHeight, 0, dy, drawWidth, drawHeight);
 
         outCanvas.toBlob((blob) => {
           if (!blob) {
             alert("Export failed.");
             return;
           }
-
           const link = document.createElement("a");
           const url = URL.createObjectURL(blob);
           link.href = url;
@@ -1283,7 +1396,6 @@
         renderer.setPixelRatio(1);
         renderer.setSize(width, height, false);
         material.uniforms.iResolution.value.set(width, height);
-
         renderer.render(scene, orthoCamera);
 
         const canvas = renderer.domElement;
@@ -1305,15 +1417,12 @@
         const fileExt = getFileExtensionFromMimeType(mimeType);
 
         recorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            chunks.push(event.data);
-          }
+          if (event.data && event.data.size > 0) chunks.push(event.data);
         };
 
         recorder.onstop = () => {
           const blob = new Blob(chunks, { type: mimeType });
           const url = URL.createObjectURL(blob);
-
           const link = document.createElement("a");
           link.href = url;
           link.download = `fractal-clip-${width}x${height}.${fileExt}`;
@@ -1328,7 +1437,6 @@
         };
 
         recorder.start();
-
         recordBtn.disabled = true;
         recordBtn.textContent = "Recording...";
 
@@ -1355,13 +1463,7 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      navCamera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
-
+      navCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       if (isMobile) {
         navCamera.position.set(0, 0, 3.8);
         params.zoomValue = 3.8;
@@ -1374,10 +1476,8 @@
       scene = new THREE.Scene();
 
       const geometry = new THREE.PlaneGeometry(2, 2);
-      const fs = document.getElementById("fragmentShader").textContent;
-
       material = new THREE.ShaderMaterial({
-        fragmentShader: fs,
+        fragmentShader: document.getElementById("fragmentShader").textContent,
         uniforms: {
           iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
           iTime: { value: 0 },
@@ -1397,7 +1497,6 @@
           uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
           uShape: { value: params.uShape },
           uMusic: { value: 0.0 },
-          uRotationPivot: { value: new THREE.Vector3(0, 0, 0) },
           uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
           uMirror: { value: params.mirror ? 1.0 : 0.0 },
           uLightIntensity: { value: params.lightIntensity },
@@ -1440,7 +1539,6 @@
       motionFolder.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
       motionFolder.add(params, "powerMin", 2, 100).name("Power Min").listen();
       motionFolder.add(params, "powerMax", 2, 100).name("Power Max").listen();
-
       motionFolder.add(params, "autoRotateX").name("Auto Rotate X");
       motionFolder.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
       motionFolder.add(params, "autoRotateY").name("Auto Rotate Y");
@@ -1454,7 +1552,6 @@
       colorFolder.add(params, "pulse").name("Pulse Mode");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
       colorFolder.add(params, "trippySpeed", 0, 1).name("Trippy Speed");
-
       colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
       colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
       colorFolder.add(params, "edgeAlphaA", 0, 1).name("Edge Alpha A");
@@ -1515,26 +1612,75 @@
       material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
     }
 
+    function syncMaterialUniforms(targetMaterial, elapsedTime, musicValue) {
+      if (!targetMaterial) return;
+
+      targetMaterial.uniforms.iTime.value = elapsedTime;
+      targetMaterial.uniforms.uPower.value = material.uniforms.uPower.value;
+      targetMaterial.uniforms.uBailout.value = params.uBailout;
+      targetMaterial.uniforms.uIterations.value = params.uIterations;
+      targetMaterial.uniforms.uSurfaceEpsilon.value = params.uSurfaceEpsilon;
+      targetMaterial.uniforms.uMaxSteps.value = params.uMaxSteps;
+      targetMaterial.uniforms.uMaxDistance.value = params.uMaxDistance;
+      targetMaterial.uniforms.uColor.value.copy(material.uniforms.uColor.value);
+      targetMaterial.uniforms.uRainbow.value = params.rainbow ? 1.0 : 0.0;
+      targetMaterial.uniforms.uPulse.value = params.pulse ? 1.0 : 0.0;
+      targetMaterial.uniforms.uShape.value = params.uShape;
+      targetMaterial.uniforms.uMusic.value = musicValue;
+
+      targetMaterial.uniforms.uFractalRotation.value.set(
+        params.uFractalRotationX,
+        params.uFractalRotationY,
+        params.uFractalRotationZ
+      );
+
+      targetMaterial.uniforms.uMirror.value = params.mirror ? 1.0 : 0.0;
+      targetMaterial.uniforms.uMirrorQuad.value = params.mirrorQuad ? 1.0 : 0.0;
+      targetMaterial.uniforms.uLightIntensity.value = params.lightIntensity;
+      targetMaterial.uniforms.uLightAngle.value = params.lightAngle;
+      targetMaterial.uniforms.uShadowStrength.value = params.shadowStrength;
+      targetMaterial.uniforms.uShadowTint.value.set(params.shadowTint);
+      targetMaterial.uniforms.uContrast.value = params.contrast;
+      targetMaterial.uniforms.uSpecularStrength.value = params.specularStrength;
+
+      targetMaterial.uniforms.uEdgeHighlight.value = params.edgeHighlight ? 1.0 : 0.0;
+      targetMaterial.uniforms.uEdgeColorA.value.set(params.edgeColorA);
+      targetMaterial.uniforms.uEdgeAlphaA.value = params.edgeAlphaA;
+      targetMaterial.uniforms.uEdgeColorB.value.set(params.edgeColorB);
+      targetMaterial.uniforms.uEdgeAlphaB.value = params.edgeAlphaB;
+      targetMaterial.uniforms.uEdgeStrength.value = params.edgeStrength;
+      targetMaterial.uniforms.uEdgeWidth.value = params.edgeWidth;
+      targetMaterial.uniforms.uEdgeEmission.value = params.edgeEmission;
+      targetMaterial.uniforms.uEdgeScroll.value = params.edgeScroll ? 1.0 : 0.0;
+      targetMaterial.uniforms.uEdgeScrollSpeed.value = params.edgeScrollSpeed;
+      targetMaterial.uniforms.uEdgeReverse.value = params.edgeReverse ? 1.0 : 0.0;
+
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(navCamera.quaternion).normalize();
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(navCamera.quaternion).normalize();
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(navCamera.quaternion).normalize();
+
+      targetMaterial.uniforms.uCamPos.value.copy(navCamera.position);
+      targetMaterial.uniforms.uCamForward.value.copy(forward);
+      targetMaterial.uniforms.uCamRight.value.copy(right);
+      targetMaterial.uniforms.uCamUp.value.copy(up);
+    }
+
     function animate() {
       requestAnimationFrame(animate);
 
       const deltaTime = clock.getDelta();
       const elapsedTime = clock.elapsedTime;
-
-      material.uniforms.iTime.value = elapsedTime;
-      navCamera.position.z = params.zoomValue;
-
       let sensitiveAvg = 0;
 
       if (params.musicReact && micEnabled) {
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
+        for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
         let avg = sum / bufferLength / 255.0;
         sensitiveAvg = avg * params.micSensitivity;
       }
+
+      navCamera.position.z = params.zoomValue;
 
       if (params.trippyMode) {
         let effectiveTrippySpeed = params.trippySpeed * 5.0;
@@ -1579,66 +1725,17 @@
       }
 
       if (!isDragging) {
-        if (params.autoRotateX) {
-          params.uFractalRotationX += deltaTime * params.rotateSpeedX;
-        }
-        if (params.autoRotateY) {
-          params.uFractalRotationY += deltaTime * params.rotateSpeedY;
-        }
-        if (params.autoRotateZ) {
-          params.uFractalRotationZ += deltaTime * params.rotateSpeedZ;
-        }
+        if (params.autoRotateX) params.uFractalRotationX += deltaTime * params.rotateSpeedX;
+        if (params.autoRotateY) params.uFractalRotationY += deltaTime * params.rotateSpeedY;
+        if (params.autoRotateZ) params.uFractalRotationZ += deltaTime * params.rotateSpeedZ;
 
         if (rotXController) rotXController.updateDisplay();
         if (rotYController) rotYController.updateDisplay();
         if (rotZController) rotZController.updateDisplay();
       }
 
-      material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
-      material.uniforms.uFractalRotation.value.set(
-        params.uFractalRotationX,
-        params.uFractalRotationY,
-        params.uFractalRotationZ
-      );
-
-      material.uniforms.uBailout.value = params.uBailout;
-      material.uniforms.uIterations.value = params.uIterations;
-      material.uniforms.uSurfaceEpsilon.value = params.uSurfaceEpsilon;
-      material.uniforms.uMaxSteps.value = params.uMaxSteps;
-      material.uniforms.uMaxDistance.value = params.uMaxDistance;
-      material.uniforms.uRainbow.value = params.rainbow ? 1.0 : 0.0;
-      material.uniforms.uPulse.value = params.pulse ? 1.0 : 0.0;
-      material.uniforms.uShape.value = params.uShape;
-      material.uniforms.uMirror.value = params.mirror ? 1.0 : 0.0;
-      material.uniforms.uMirrorQuad.value = params.mirrorQuad ? 1.0 : 0.0;
-      material.uniforms.uLightIntensity.value = params.lightIntensity;
-      material.uniforms.uLightAngle.value = params.lightAngle;
-      material.uniforms.uShadowStrength.value = params.shadowStrength;
-      material.uniforms.uShadowTint.value.set(params.shadowTint);
-      material.uniforms.uContrast.value = params.contrast;
-      material.uniforms.uSpecularStrength.value = params.specularStrength;
-
-      material.uniforms.uEdgeHighlight.value = params.edgeHighlight ? 1.0 : 0.0;
-      material.uniforms.uEdgeColorA.value.set(params.edgeColorA);
-      material.uniforms.uEdgeAlphaA.value = params.edgeAlphaA;
-      material.uniforms.uEdgeColorB.value.set(params.edgeColorB);
-      material.uniforms.uEdgeAlphaB.value = params.edgeAlphaB;
-      material.uniforms.uEdgeStrength.value = params.edgeStrength;
-      material.uniforms.uEdgeWidth.value = params.edgeWidth;
-      material.uniforms.uEdgeEmission.value = params.edgeEmission;
-      material.uniforms.uEdgeScroll.value = params.edgeScroll ? 1.0 : 0.0;
-      material.uniforms.uEdgeScrollSpeed.value = params.edgeScrollSpeed;
-      material.uniforms.uEdgeReverse.value = params.edgeReverse ? 1.0 : 0.0;
-
-      material.uniforms.uCamPos.value.copy(navCamera.position);
-
-      let forward = new THREE.Vector3(0, 0, -1).applyQuaternion(navCamera.quaternion).normalize();
-      let right = new THREE.Vector3(1, 0, 0).applyQuaternion(navCamera.quaternion).normalize();
-      let up = new THREE.Vector3(0, 1, 0).applyQuaternion(navCamera.quaternion).normalize();
-
-      material.uniforms.uCamForward.value.copy(forward);
-      material.uniforms.uCamRight.value.copy(right);
-      material.uniforms.uCamUp.value.copy(up);
+      const musicValue = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
+      syncMaterialUniforms(material, elapsedTime, musicValue);
 
       if (keys["ArrowUp"] || keys["w"]) navCamera.translateZ(-params.flySpeed);
       if (keys["ArrowDown"] || keys["s"]) navCamera.translateZ(params.flySpeed);
@@ -1648,6 +1745,13 @@
       if (keys["e"]) navCamera.translateY(-params.flySpeed);
 
       renderer.render(scene, orthoCamera);
+
+      if (outputWindowRef && outputWindowRef.closed) {
+        cleanupOutputWindow();
+      } else if (outputRenderer && outputMaterial && outputScene && outputOrthoCamera) {
+        syncMaterialUniforms(outputMaterial, elapsedTime, musicValue);
+        outputRenderer.render(outputScene, outputOrthoCamera);
+      }
     }
 
     refreshPresetSelect();
