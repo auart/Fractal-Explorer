@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Presets + Vertical Export + Start Screen</title>
+  <title>Fractal Explorer – Vertical Export Modes</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -225,6 +225,13 @@
         <option value="2160x3840">Vertical 4K, 2160 x 3840</option>
         <option value="1080x1920">Vertical HD, 1080 x 1920</option>
         <option value="2160x2160">Square 4K, 2160 x 2160</option>
+      </select>
+
+      <label for="verticalBehaviorSelect">Vertical Behavior</label>
+      <select id="verticalBehaviorSelect">
+        <option value="native" selected>Native Vertical</option>
+        <option value="crop">Center Crop from Landscape</option>
+        <option value="fit">Fit Landscape in Vertical</option>
       </select>
 
       <label for="formatSelect">Video Format</label>
@@ -650,6 +657,7 @@
     const recordBtn = document.getElementById("recordBtn");
 
     const exportFormatSelect = document.getElementById("exportFormatSelect");
+    const verticalBehaviorSelect = document.getElementById("verticalBehaviorSelect");
     const formatSelect = document.getElementById("formatSelect");
     const qualitySelect = document.getElementById("qualitySelect");
     const durationSelect = document.getElementById("durationSelect");
@@ -921,6 +929,10 @@
       return { width: w, height: h };
     }
 
+    function isPortraitFormat(width, height) {
+      return height > width;
+    }
+
     window.addEventListener("keydown", (e) => {
       keys[e.key] = true;
     });
@@ -1070,6 +1082,28 @@
     }
 
     async function exportStill(width, height) {
+      const behavior = verticalBehaviorSelect.value;
+      const portrait = isPortraitFormat(width, height);
+
+      if (!portrait || behavior === "native") {
+        await exportNativeStill(width, height);
+        return;
+      }
+
+      if (behavior === "crop") {
+        await exportCroppedVerticalStill(width, height);
+        return;
+      }
+
+      if (behavior === "fit") {
+        await exportFitVerticalStill(width, height);
+        return;
+      }
+
+      await exportNativeStill(width, height);
+    }
+
+    async function exportNativeStill(width, height) {
       const originalSize = new THREE.Vector2();
       renderer.getSize(originalSize);
 
@@ -1093,6 +1127,120 @@
           const url = URL.createObjectURL(blob);
           link.href = url;
           link.download = `fractal-${width}x${height}.png`;
+          link.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      } finally {
+        renderer.setPixelRatio(originalPixelRatio);
+        renderer.setSize(originalSize.x, originalSize.y, false);
+        material.uniforms.iResolution.value.copy(originalResolution);
+        renderer.render(scene, orthoCamera);
+      }
+    }
+
+    async function exportCroppedVerticalStill(width, height) {
+      const landscapeWidth = Math.max(width, height);
+      const landscapeHeight = Math.min(width, height);
+
+      const originalSize = new THREE.Vector2();
+      renderer.getSize(originalSize);
+
+      const originalPixelRatio = renderer.getPixelRatio();
+      const originalResolution = material.uniforms.iResolution.value.clone();
+
+      try {
+        renderer.setPixelRatio(1);
+        renderer.setSize(landscapeWidth, landscapeHeight, false);
+        material.uniforms.iResolution.value.set(landscapeWidth, landscapeHeight);
+
+        renderer.render(scene, orthoCamera);
+
+        const srcCanvas = renderer.domElement;
+        const outCanvas = document.createElement("canvas");
+        outCanvas.width = width;
+        outCanvas.height = height;
+
+        const ctx = outCanvas.getContext("2d");
+
+        const cropWidth = Math.round(landscapeHeight * (width / height));
+        const cropHeight = landscapeHeight;
+        const sx = Math.round((landscapeWidth - cropWidth) / 2);
+        const sy = 0;
+
+        ctx.drawImage(
+          srcCanvas,
+          sx, sy, cropWidth, cropHeight,
+          0, 0, width, height
+        );
+
+        outCanvas.toBlob((blob) => {
+          if (!blob) {
+            alert("Export failed.");
+            return;
+          }
+
+          const link = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          link.download = `fractal-${width}x${height}-crop.png`;
+          link.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      } finally {
+        renderer.setPixelRatio(originalPixelRatio);
+        renderer.setSize(originalSize.x, originalSize.y, false);
+        material.uniforms.iResolution.value.copy(originalResolution);
+        renderer.render(scene, orthoCamera);
+      }
+    }
+
+    async function exportFitVerticalStill(width, height) {
+      const landscapeWidth = Math.max(width, height);
+      const landscapeHeight = Math.min(width, height);
+
+      const originalSize = new THREE.Vector2();
+      renderer.getSize(originalSize);
+
+      const originalPixelRatio = renderer.getPixelRatio();
+      const originalResolution = material.uniforms.iResolution.value.clone();
+
+      try {
+        renderer.setPixelRatio(1);
+        renderer.setSize(landscapeWidth, landscapeHeight, false);
+        material.uniforms.iResolution.value.set(landscapeWidth, landscapeHeight);
+
+        renderer.render(scene, orthoCamera);
+
+        const srcCanvas = renderer.domElement;
+        const outCanvas = document.createElement("canvas");
+        outCanvas.width = width;
+        outCanvas.height = height;
+
+        const ctx = outCanvas.getContext("2d");
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, width, height);
+
+        const scale = width / landscapeWidth;
+        const drawWidth = width;
+        const drawHeight = landscapeHeight * scale;
+        const dy = (height - drawHeight) / 2;
+
+        ctx.drawImage(
+          srcCanvas,
+          0, 0, landscapeWidth, landscapeHeight,
+          0, dy, drawWidth, drawHeight
+        );
+
+        outCanvas.toBlob((blob) => {
+          if (!blob) {
+            alert("Export failed.");
+            return;
+          }
+
+          const link = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          link.download = `fractal-${width}x${height}-fit.png`;
           link.click();
           URL.revokeObjectURL(url);
         }, "image/png");
