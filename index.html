@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Output Window</title>
+  <title>Fractal Explorer – Sharp Output + Live Preview</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -194,7 +194,7 @@
   <div id="startOverlay">
     <div id="startCard">
       <h1>Fractal Explorer</h1>
-      <p>Audio reactive fractal visuals, HD exports, presets, and clean output window mode.</p>
+      <p>Audio reactive fractal visuals, HD exports, presets, and a clean output window.</p>
       <div class="startButtons">
         <button id="enterWithMicBtn">Enter with Microphone</button>
         <button id="enterWithoutMicBtn" class="secondary">Continue without Microphone</button>
@@ -524,6 +524,11 @@
     let outputQuad = null;
 
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
+    const MAIN_PIXEL_RATIO_NORMAL = Math.min(window.devicePixelRatio || 1, 2);
+    const MAIN_PIXEL_RATIO_PREVIEW = 0.65;
+    const MAIN_PREVIEW_ITERATION_SCALE = 0.72;
+    const MAIN_PREVIEW_STEP_SCALE = 0.72;
+    const MAIN_PREVIEW_EPSILON_SCALE = 1.6;
 
     let params = {
       flySpeed: 0.05,
@@ -927,6 +932,62 @@
       return height > width;
     }
 
+    function setMainPreviewQuality() {
+      if (!renderer || !material) return;
+
+      const usingOutput = !!(outputWindowRef && !outputWindowRef.closed && outputRenderer);
+      const pixelRatio = usingOutput ? MAIN_PIXEL_RATIO_PREVIEW : MAIN_PIXEL_RATIO_NORMAL;
+
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight, false);
+      material.uniforms.iResolution.value.set(
+        Math.floor(window.innerWidth * pixelRatio),
+        Math.floor(window.innerHeight * pixelRatio)
+      );
+    }
+
+    function buildSharedUniforms(width, height) {
+      return {
+        iResolution: { value: new THREE.Vector2(width, height) },
+        iTime: { value: 0 },
+        uPower: { value: params.uPower },
+        uBailout: { value: params.uBailout },
+        uIterations: { value: params.uIterations },
+        uSurfaceEpsilon: { value: params.uSurfaceEpsilon },
+        uMaxSteps: { value: params.uMaxSteps },
+        uMaxDistance: { value: params.uMaxDistance },
+        uColor: { value: new THREE.Color(params.uColor) },
+        uRainbow: { value: params.rainbow ? 1.0 : 0.0 },
+        uPulse: { value: params.pulse ? 1.0 : 0.0 },
+        uCamPos: { value: new THREE.Vector3() },
+        uCamRight: { value: new THREE.Vector3() },
+        uCamUp: { value: new THREE.Vector3() },
+        uCamForward: { value: new THREE.Vector3() },
+        uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
+        uShape: { value: params.uShape },
+        uMusic: { value: 0.0 },
+        uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
+        uMirror: { value: params.mirror ? 1.0 : 0.0 },
+        uLightIntensity: { value: params.lightIntensity },
+        uLightAngle: { value: params.lightAngle },
+        uShadowStrength: { value: params.shadowStrength },
+        uShadowTint: { value: new THREE.Color(params.shadowTint) },
+        uContrast: { value: params.contrast },
+        uSpecularStrength: { value: params.specularStrength },
+        uEdgeHighlight: { value: params.edgeHighlight ? 1.0 : 0.0 },
+        uEdgeColorA: { value: new THREE.Color(params.edgeColorA) },
+        uEdgeAlphaA: { value: params.edgeAlphaA },
+        uEdgeColorB: { value: new THREE.Color(params.edgeColorB) },
+        uEdgeAlphaB: { value: params.edgeAlphaB },
+        uEdgeStrength: { value: params.edgeStrength },
+        uEdgeWidth: { value: params.edgeWidth },
+        uEdgeEmission: { value: params.edgeEmission },
+        uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
+        uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
+        uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 }
+      };
+    }
+
     function createOutputWindow() {
       if (outputWindowRef && !outputWindowRef.closed) {
         outputWindowRef.focus();
@@ -967,73 +1028,38 @@
       `);
       doc.close();
 
-      const outCanvasHost = doc.body;
       outputRenderer = new THREE.WebGLRenderer({
         antialias: true,
         preserveDrawingBuffer: false
       });
-      outputRenderer.setPixelRatio(1);
-      outputRenderer.setSize(outputWindowRef.innerWidth, outputWindowRef.innerHeight);
-      outCanvasHost.appendChild(outputRenderer.domElement);
+      outputRenderer.setPixelRatio(Math.min(outputWindowRef.devicePixelRatio || 1, 2));
+      outputRenderer.setSize(outputWindowRef.innerWidth, outputWindowRef.innerHeight, false);
+      outputWindowRef.document.body.appendChild(outputRenderer.domElement);
 
       outputScene = new THREE.Scene();
       outputOrthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       outputMaterial = new THREE.ShaderMaterial({
         fragmentShader: document.getElementById("fragmentShader").textContent,
-        uniforms: {
-          iResolution: { value: new THREE.Vector2(outputWindowRef.innerWidth, outputWindowRef.innerHeight) },
-          iTime: { value: 0 },
-          uPower: { value: params.uPower },
-          uBailout: { value: params.uBailout },
-          uIterations: { value: params.uIterations },
-          uSurfaceEpsilon: { value: params.uSurfaceEpsilon },
-          uMaxSteps: { value: params.uMaxSteps },
-          uMaxDistance: { value: params.uMaxDistance },
-          uColor: { value: new THREE.Color(params.uColor) },
-          uRainbow: { value: params.rainbow ? 1.0 : 0.0 },
-          uPulse: { value: params.pulse ? 1.0 : 0.0 },
-          uCamPos: { value: new THREE.Vector3() },
-          uCamRight: { value: new THREE.Vector3() },
-          uCamUp: { value: new THREE.Vector3() },
-          uCamForward: { value: new THREE.Vector3() },
-          uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
-          uShape: { value: params.uShape },
-          uMusic: { value: 0.0 },
-          uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
-          uMirror: { value: params.mirror ? 1.0 : 0.0 },
-          uLightIntensity: { value: params.lightIntensity },
-          uLightAngle: { value: params.lightAngle },
-          uShadowStrength: { value: params.shadowStrength },
-          uShadowTint: { value: new THREE.Color(params.shadowTint) },
-          uContrast: { value: params.contrast },
-          uSpecularStrength: { value: params.specularStrength },
-          uEdgeHighlight: { value: params.edgeHighlight ? 1.0 : 0.0 },
-          uEdgeColorA: { value: new THREE.Color(params.edgeColorA) },
-          uEdgeAlphaA: { value: params.edgeAlphaA },
-          uEdgeColorB: { value: new THREE.Color(params.edgeColorB) },
-          uEdgeAlphaB: { value: params.edgeAlphaB },
-          uEdgeStrength: { value: params.edgeStrength },
-          uEdgeWidth: { value: params.edgeWidth },
-          uEdgeEmission: { value: params.edgeEmission },
-          uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
-          uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
-          uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 }
-        }
+        uniforms: buildSharedUniforms(outputWindowRef.innerWidth, outputWindowRef.innerHeight)
       });
-
       outputQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), outputMaterial);
       outputScene.add(outputQuad);
 
       outputWindowRef.addEventListener("resize", handleOutputResize);
       outputWindowRef.addEventListener("beforeunload", cleanupOutputWindow);
+
+      setMainPreviewQuality();
     }
 
     function handleOutputResize() {
       if (!outputWindowRef || outputWindowRef.closed || !outputRenderer || !outputMaterial) return;
-      const w = outputWindowRef.innerWidth;
-      const h = outputWindowRef.innerHeight;
-      outputRenderer.setSize(w, h);
-      outputMaterial.uniforms.iResolution.value.set(w, h);
+      const pixelRatio = Math.min(outputWindowRef.devicePixelRatio || 1, 2);
+      outputRenderer.setPixelRatio(pixelRatio);
+      outputRenderer.setSize(outputWindowRef.innerWidth, outputWindowRef.innerHeight, false);
+      outputMaterial.uniforms.iResolution.value.set(
+        Math.floor(outputWindowRef.innerWidth * pixelRatio),
+        Math.floor(outputWindowRef.innerHeight * pixelRatio)
+      );
     }
 
     function cleanupOutputWindow() {
@@ -1043,14 +1069,11 @@
       outputOrthoCamera = null;
       outputQuad = null;
       outputWindowRef = null;
+      setMainPreviewQuality();
     }
 
     async function fullscreenOutputWindow() {
-      if (!outputWindowRef || outputWindowRef.closed) {
-        createOutputWindow();
-      }
       if (!outputWindowRef || outputWindowRef.closed) return;
-
       try {
         const el = outputWindowRef.document.documentElement;
         if (el.requestFullscreen) {
@@ -1459,8 +1482,8 @@
         antialias: true,
         preserveDrawingBuffer: true
       });
-
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(MAIN_PIXEL_RATIO_NORMAL);
+      renderer.setSize(window.innerWidth, window.innerHeight, false);
       document.body.appendChild(renderer.domElement);
 
       navCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -1478,45 +1501,10 @@
       const geometry = new THREE.PlaneGeometry(2, 2);
       material = new THREE.ShaderMaterial({
         fragmentShader: document.getElementById("fragmentShader").textContent,
-        uniforms: {
-          iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-          iTime: { value: 0 },
-          uPower: { value: params.uPower },
-          uBailout: { value: params.uBailout },
-          uIterations: { value: params.uIterations },
-          uSurfaceEpsilon: { value: params.uSurfaceEpsilon },
-          uMaxSteps: { value: params.uMaxSteps },
-          uMaxDistance: { value: params.uMaxDistance },
-          uColor: { value: new THREE.Color(params.uColor) },
-          uRainbow: { value: params.rainbow ? 1.0 : 0.0 },
-          uPulse: { value: params.pulse ? 1.0 : 0.0 },
-          uCamPos: { value: new THREE.Vector3() },
-          uCamRight: { value: new THREE.Vector3() },
-          uCamUp: { value: new THREE.Vector3() },
-          uCamForward: { value: new THREE.Vector3() },
-          uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
-          uShape: { value: params.uShape },
-          uMusic: { value: 0.0 },
-          uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
-          uMirror: { value: params.mirror ? 1.0 : 0.0 },
-          uLightIntensity: { value: params.lightIntensity },
-          uLightAngle: { value: params.lightAngle },
-          uShadowStrength: { value: params.shadowStrength },
-          uShadowTint: { value: new THREE.Color(params.shadowTint) },
-          uContrast: { value: params.contrast },
-          uSpecularStrength: { value: params.specularStrength },
-          uEdgeHighlight: { value: params.edgeHighlight ? 1.0 : 0.0 },
-          uEdgeColorA: { value: new THREE.Color(params.edgeColorA) },
-          uEdgeAlphaA: { value: params.edgeAlphaA },
-          uEdgeColorB: { value: new THREE.Color(params.edgeColorB) },
-          uEdgeAlphaB: { value: params.edgeAlphaB },
-          uEdgeStrength: { value: params.edgeStrength },
-          uEdgeWidth: { value: params.edgeWidth },
-          uEdgeEmission: { value: params.edgeEmission },
-          uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
-          uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
-          uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 }
-        }
+        uniforms: buildSharedUniforms(
+          Math.floor(window.innerWidth * MAIN_PIXEL_RATIO_NORMAL),
+          Math.floor(window.innerHeight * MAIN_PIXEL_RATIO_NORMAL)
+        )
       });
 
       quad = new THREE.Mesh(geometry, material);
@@ -1608,19 +1596,22 @@
     function onWindowResize() {
       navCamera.aspect = window.innerWidth / window.innerHeight;
       navCamera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
+      setMainPreviewQuality();
     }
 
-    function syncMaterialUniforms(targetMaterial, elapsedTime, musicValue) {
+    function syncMaterialUniforms(targetMaterial, elapsedTime, musicValue, isPreview = false) {
       if (!targetMaterial) return;
+
+      const previewIterations = isPreview ? Math.max(3, Math.round(params.uIterations * MAIN_PREVIEW_ITERATION_SCALE)) : params.uIterations;
+      const previewMaxSteps = isPreview ? Math.max(50, Math.round(params.uMaxSteps * MAIN_PREVIEW_STEP_SCALE)) : params.uMaxSteps;
+      const previewEpsilon = isPreview ? params.uSurfaceEpsilon * MAIN_PREVIEW_EPSILON_SCALE : params.uSurfaceEpsilon;
 
       targetMaterial.uniforms.iTime.value = elapsedTime;
       targetMaterial.uniforms.uPower.value = material.uniforms.uPower.value;
       targetMaterial.uniforms.uBailout.value = params.uBailout;
-      targetMaterial.uniforms.uIterations.value = params.uIterations;
-      targetMaterial.uniforms.uSurfaceEpsilon.value = params.uSurfaceEpsilon;
-      targetMaterial.uniforms.uMaxSteps.value = params.uMaxSteps;
+      targetMaterial.uniforms.uIterations.value = previewIterations;
+      targetMaterial.uniforms.uSurfaceEpsilon.value = previewEpsilon;
+      targetMaterial.uniforms.uMaxSteps.value = previewMaxSteps;
       targetMaterial.uniforms.uMaxDistance.value = params.uMaxDistance;
       targetMaterial.uniforms.uColor.value.copy(material.uniforms.uColor.value);
       targetMaterial.uniforms.uRainbow.value = params.rainbow ? 1.0 : 0.0;
@@ -1735,7 +1726,18 @@
       }
 
       const musicValue = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
-      syncMaterialUniforms(material, elapsedTime, musicValue);
+
+      if (outputWindowRef && outputWindowRef.closed) {
+        cleanupOutputWindow();
+      }
+
+      syncMaterialUniforms(material, elapsedTime, musicValue, !!outputRenderer);
+      renderer.render(scene, orthoCamera);
+
+      if (outputRenderer && outputMaterial && outputScene && outputOrthoCamera) {
+        syncMaterialUniforms(outputMaterial, elapsedTime, musicValue, false);
+        outputRenderer.render(outputScene, outputOrthoCamera);
+      }
 
       if (keys["ArrowUp"] || keys["w"]) navCamera.translateZ(-params.flySpeed);
       if (keys["ArrowDown"] || keys["s"]) navCamera.translateZ(params.flySpeed);
@@ -1743,15 +1745,6 @@
       if (keys["ArrowRight"] || keys["d"]) navCamera.translateX(params.flySpeed);
       if (keys["q"]) navCamera.translateY(params.flySpeed);
       if (keys["e"]) navCamera.translateY(-params.flySpeed);
-
-      renderer.render(scene, orthoCamera);
-
-      if (outputWindowRef && outputWindowRef.closed) {
-        cleanupOutputWindow();
-      } else if (outputRenderer && outputMaterial && outputScene && outputOrthoCamera) {
-        syncMaterialUniforms(outputMaterial, elapsedTime, musicValue);
-        outputRenderer.render(outputScene, outputOrthoCamera);
-      }
     }
 
     refreshPresetSelect();
