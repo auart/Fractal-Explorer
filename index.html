@@ -203,8 +203,6 @@
     uniform int uMaxSteps;
     uniform float uMaxDistance;
     uniform vec3 uColor;
-    uniform float uRainbow;
-    uniform float uPulse;
 
     uniform float uMusic;
     uniform int uShape;
@@ -417,17 +415,6 @@
         edgeGlow *= (1.0 + uEdgeEmission);
 
         col = baseCol + specular + edgeGlow;
-
-        if (uPulse > 0.5) {
-          float pulse = 0.5 + 0.5 * sin(iTime * 2.0 + uMusic * 10.0);
-          float tt = tVal / uMaxDistance;
-          vec3 pulseColor = 0.5 + 0.5 * cos(6.28318 * (tt + iTime * 0.2 + vec3(0.0, 0.33, 0.66)));
-          col *= mix(vec3(1.0), pulseColor, 0.3 * pulse * (0.5 + uMusic));
-        } else if (uRainbow > 0.5) {
-          float tt = tVal / uMaxDistance;
-          vec3 rainbowColor = 0.5 + 0.5 * cos(6.28318 * (tt + iTime * 0.2 + vec3(0.0, 0.33, 0.66)));
-          col = mix(col, rainbowColor, 0.5);
-        }
       }
 
       col *= uLightIntensity;
@@ -450,8 +437,6 @@
       uMaxSteps: 150,
       uMaxDistance: 200.0,
       uColor: "#FFD700",
-      rainbow: false,
-      pulse: true,
       uFractalRotationX: 0.0,
       uFractalRotationY: 0.0,
       uFractalRotationZ: 0.0,
@@ -496,7 +481,7 @@
       edgeReverse: false,
 
       trippyMode: false,
-      trippySpeed: 0.5,
+      trippySpeed: 1.0,
       kaleidoscopeMode: false,
       kaleidoscopeSpeed: 1.0,
       musicMatch: false,
@@ -512,8 +497,6 @@
       "uMaxSteps",
       "uMaxDistance",
       "uColor",
-      "rainbow",
-      "pulse",
       "uFractalRotationX",
       "uFractalRotationY",
       "uFractalRotationZ",
@@ -1171,8 +1154,6 @@
           uMaxSteps: { value: params.uMaxSteps },
           uMaxDistance: { value: params.uMaxDistance },
           uColor: { value: new THREE.Color(params.uColor) },
-          uRainbow: { value: params.rainbow ? 1.0 : 0.0 },
-          uPulse: { value: params.pulse ? 1.0 : 0.0 },
           uCamPos: { value: new THREE.Vector3() },
           uCamRight: { value: new THREE.Vector3() },
           uCamUp: { value: new THREE.Vector3() },
@@ -1235,10 +1216,8 @@
 
       const colorFolder = gui.addFolder("Color & Effects");
       colorFolder.addColor(params, "uColor").name("Base Color");
-      colorFolder.add(params, "rainbow").name("Rainbow Mode");
-      colorFolder.add(params, "pulse").name("Pulse Mode");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
-      colorFolder.add(params, "trippySpeed", 0, 1).name("Trippy Speed");
+      colorFolder.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
 
       colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
       colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
@@ -1324,7 +1303,7 @@
       }
 
       if (params.trippyMode) {
-        let effectiveTrippySpeed = params.trippySpeed * 5.0;
+        let effectiveTrippySpeed = (params.trippySpeed / 10.0) * 0.4;
         let hue = (elapsedTime * effectiveTrippySpeed) % 1;
         let newColor = new THREE.Color().setHSL(hue, 0.7, 0.5);
         material.uniforms.uColor.value.copy(newColor);
@@ -1393,8 +1372,6 @@
       material.uniforms.uSurfaceEpsilon.value = params.uSurfaceEpsilon;
       material.uniforms.uMaxSteps.value = params.uMaxSteps;
       material.uniforms.uMaxDistance.value = params.uMaxDistance;
-      material.uniforms.uRainbow.value = params.rainbow ? 1.0 : 0.0;
-      material.uniforms.uPulse.value = params.pulse ? 1.0 : 0.0;
       material.uniforms.uShape.value = params.uShape;
       material.uniforms.uMirror.value = params.mirror ? 1.0 : 0.0;
       material.uniforms.uMirrorQuad.value = params.mirrorQuad ? 1.0 : 0.0;
