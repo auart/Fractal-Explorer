@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Presets + Vertical Export</title>
+  <title>Fractal Explorer, Presets + Vertical Export</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -314,6 +314,21 @@
     uniform float uEdgeScrollSpeed;
     uniform float uEdgeReverse;
 
+    uniform float uContourMode;
+    uniform float uRingScale;
+    uniform float uRingStrength;
+    uniform vec3 uWarmColor;
+    uniform vec3 uCoolColor;
+
+    uniform float uPsyPaletteMode;
+    uniform float uPsyScale;
+    uniform float uPsyFlow;
+    uniform float uPsyMix;
+    uniform vec3 uPsyColor1;
+    uniform vec3 uPsyColor2;
+    uniform vec3 uPsyColor3;
+    uniform vec3 uPsyColor4;
+
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
       float cy = cos(angles.y), sy = sin(angles.y);
@@ -424,6 +439,16 @@
       return normalize(n);
     }
 
+    vec3 psyPalette(float t) {
+      if (t < 0.3333) {
+        return mix(uPsyColor1, uPsyColor2, t / 0.3333);
+      } else if (t < 0.6666) {
+        return mix(uPsyColor2, uPsyColor3, (t - 0.3333) / 0.3333);
+      } else {
+        return mix(uPsyColor3, uPsyColor4, (t - 0.6666) / 0.3334);
+      }
+    }
+
     void main() {
       vec2 uv;
       vec2 baseUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
@@ -471,11 +496,39 @@
         lightVal = mix(1.0, lightVal, uShadowStrength);
         lightVal = pow(clamp(lightVal, 0.0, 1.0), max(0.05, uContrast));
 
-        vec3 litBaseColor = uColor * mix(vec3(1.0), uLightColor, 0.35);
-        vec3 baseCol = mix(uShadowTint, litBaseColor, lightVal);
+        vec3 baseCol;
+
+        if (uPsyPaletteMode > 0.5) {
+          float ringField = length(pos.xy) * uPsyScale;
+          float swirlField = atan(pos.y, pos.x) * 1.5;
+          float zField = pos.z * 0.9;
+          float timeField = iTime * uPsyFlow;
+          float pattern = 0.5 + 0.5 * sin(ringField + swirlField + zField + timeField);
+
+          float ridge = pow(clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0), 1.5);
+          float litBias = lightVal * 0.35;
+          float paletteT = fract(pattern + ridge * uPsyMix + litBias);
+
+          vec3 psyCol = psyPalette(paletteT);
+          vec3 warmLift = mix(uShadowTint, psyCol, lightVal);
+          vec3 ridgeTint = mix(vec3(0.0), uCoolColor, ridge * 0.8);
+          baseCol = warmLift + ridgeTint * uPsyMix;
+        } else if (uContourMode > 0.5) {
+          float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale);
+          rings = smoothstep(0.2, 0.8, rings);
+
+          vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
+          float ridge = pow(1.0 - abs(dot(normal, viewDir)), 2.0);
+          vec3 cool = uCoolColor * ridge;
+
+          vec3 ringMix = mix(warm, cool, rings * uRingStrength);
+          baseCol = ringMix;
+        } else {
+          vec3 litBaseColor = uColor * mix(vec3(1.0), uLightColor, 0.35);
+          baseCol = mix(uShadowTint, litBaseColor, lightVal);
+        }
 
         float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
-
         float widthExp = mix(3.5, 0.35, clamp(uEdgeWidth / 4.0, 0.0, 1.0));
         float rimPow = pow(rim, widthExp);
 
@@ -569,7 +622,22 @@
       kaleidoscopeMode: false,
       kaleidoscopeSpeed: 1.0,
       musicMatch: false,
-      zoomValue: 2.2
+      zoomValue: 2.2,
+
+      contourMode: true,
+      ringScale: 6.0,
+      ringStrength: 0.6,
+      warmColor: "#ff8c3a",
+      coolColor: "#2fe1d6",
+
+      psyPaletteMode: false,
+      psyScale: 8.0,
+      psyFlow: 0.7,
+      psyMix: 0.75,
+      psyColor1: "#18d8d8",
+      psyColor2: "#a6ff3c",
+      psyColor3: "#ff9a1f",
+      psyColor4: "#ff4d7a"
     };
 
     const PRESET_KEYS = [
@@ -623,7 +691,20 @@
       "kaleidoscopeMode",
       "kaleidoscopeSpeed",
       "musicMatch",
-      "zoomValue"
+      "zoomValue",
+      "contourMode",
+      "ringScale",
+      "ringStrength",
+      "warmColor",
+      "coolColor",
+      "psyPaletteMode",
+      "psyScale",
+      "psyFlow",
+      "psyMix",
+      "psyColor1",
+      "psyColor2",
+      "psyColor3",
+      "psyColor4"
     ];
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -1305,7 +1386,22 @@
           uEdgeEmission: { value: params.edgeEmission },
           uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
           uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
-          uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 }
+          uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 },
+
+          uContourMode: { value: params.contourMode ? 1.0 : 0.0 },
+          uRingScale: { value: params.ringScale },
+          uRingStrength: { value: params.ringStrength },
+          uWarmColor: { value: new THREE.Color(params.warmColor) },
+          uCoolColor: { value: new THREE.Color(params.coolColor) },
+
+          uPsyPaletteMode: { value: params.psyPaletteMode ? 1.0 : 0.0 },
+          uPsyScale: { value: params.psyScale },
+          uPsyFlow: { value: params.psyFlow },
+          uPsyMix: { value: params.psyMix },
+          uPsyColor1: { value: new THREE.Color(params.psyColor1) },
+          uPsyColor2: { value: new THREE.Color(params.psyColor2) },
+          uPsyColor3: { value: new THREE.Color(params.psyColor3) },
+          uPsyColor4: { value: new THREE.Color(params.psyColor4) }
         }
       });
 
@@ -1341,6 +1437,21 @@
       colorFolder.addColor(params, "uColor").name("Base Color");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
       colorFolder.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
+
+      colorFolder.add(params, "contourMode").name("Contour Mode");
+      colorFolder.add(params, "ringScale", 0.5, 20).name("Ring Scale");
+      colorFolder.add(params, "ringStrength", 0, 1).name("Ring Strength");
+      colorFolder.addColor(params, "warmColor").name("Warm Color");
+      colorFolder.addColor(params, "coolColor").name("Cool Color");
+
+      colorFolder.add(params, "psyPaletteMode").name("Psy Palette Mode");
+      colorFolder.add(params, "psyScale", 0.5, 20).name("Psy Scale");
+      colorFolder.add(params, "psyFlow", 0, 4).name("Psy Flow");
+      colorFolder.add(params, "psyMix", 0, 1.5).name("Psy Mix");
+      colorFolder.addColor(params, "psyColor1").name("Psy Color 1");
+      colorFolder.addColor(params, "psyColor2").name("Psy Color 2");
+      colorFolder.addColor(params, "psyColor3").name("Psy Color 3");
+      colorFolder.addColor(params, "psyColor4").name("Psy Color 4");
 
       colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
       colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
@@ -1474,15 +1585,9 @@
       }
 
       if (!isDragging) {
-        if (params.autoRotateX) {
-          params.uFractalRotationX += deltaTime * params.rotateSpeedX;
-        }
-        if (params.autoRotateY) {
-          params.uFractalRotationY += deltaTime * params.rotateSpeedY;
-        }
-        if (params.autoRotateZ) {
-          params.uFractalRotationZ += deltaTime * params.rotateSpeedZ;
-        }
+        if (params.autoRotateX) params.uFractalRotationX += deltaTime * params.rotateSpeedX;
+        if (params.autoRotateY) params.uFractalRotationY += deltaTime * params.rotateSpeedY;
+        if (params.autoRotateZ) params.uFractalRotationZ += deltaTime * params.rotateSpeedZ;
 
         if (rotXController) rotXController.updateDisplay();
         if (rotYController) rotYController.updateDisplay();
@@ -1512,6 +1617,21 @@
       material.uniforms.uShadowTint.value.set(params.shadowTint);
       material.uniforms.uContrast.value = params.contrast;
       material.uniforms.uSpecularStrength.value = params.specularStrength;
+
+      material.uniforms.uContourMode.value = params.contourMode ? 1.0 : 0.0;
+      material.uniforms.uRingScale.value = params.ringScale;
+      material.uniforms.uRingStrength.value = params.ringStrength;
+      material.uniforms.uWarmColor.value.set(params.warmColor);
+      material.uniforms.uCoolColor.value.set(params.coolColor);
+
+      material.uniforms.uPsyPaletteMode.value = params.psyPaletteMode ? 1.0 : 0.0;
+      material.uniforms.uPsyScale.value = params.psyScale;
+      material.uniforms.uPsyFlow.value = params.psyFlow;
+      material.uniforms.uPsyMix.value = params.psyMix;
+      material.uniforms.uPsyColor1.value.set(params.psyColor1);
+      material.uniforms.uPsyColor2.value.set(params.psyColor2);
+      material.uniforms.uPsyColor3.value.set(params.psyColor3);
+      material.uniforms.uPsyColor4.value.set(params.psyColor4);
 
       material.uniforms.uEdgeHighlight.value = params.edgeHighlight ? 1.0 : 0.0;
       material.uniforms.uEdgeColorA.value.set(params.edgeColorA);
