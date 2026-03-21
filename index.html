@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer – Sharp Output + Live Preview</title>
+  <title>Fractal Explorer, Single Output Render</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -121,10 +121,10 @@
       left: 10px;
       bottom: 10px;
       z-index: 25;
-      width: 240px;
+      width: 220px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     #leftPanel button,
@@ -132,8 +132,8 @@
     #leftPanel input {
       width: 100%;
       box-sizing: border-box;
-      padding: 10px 12px;
-      font-size: 14px;
+      padding: 8px 10px;
+      font-size: 13px;
       border: 1px solid #000;
     }
 
@@ -152,26 +152,34 @@
     .panelBox {
       background: rgba(255,255,255,0.92);
       color: #000;
-      padding: 10px;
+      padding: 8px;
       border: 1px solid #000;
       box-sizing: border-box;
     }
 
     .panelBox label {
       display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
+      margin-bottom: 4px;
+      font-size: 12px;
       font-weight: bold;
     }
 
     .rowGap {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
+    }
+
+    #presetNameInput {
+      font-size: 12px;
     }
 
     .ui-hidden #gui,
     .ui-hidden #leftPanel {
+      display: none !important;
+    }
+
+    .output-active canvas.main-canvas {
       display: none !important;
     }
 
@@ -194,7 +202,7 @@
   <div id="startOverlay">
     <div id="startCard">
       <h1>Fractal Explorer</h1>
-      <p>Audio reactive fractal visuals, HD exports, presets, and a clean output window.</p>
+      <p>Audio reactive fractal visuals, presets, exports, and clean output window mode.</p>
       <div class="startButtons">
         <button id="enterWithMicBtn">Enter with Microphone</button>
         <button id="enterWithoutMicBtn" class="secondary">Continue without Microphone</button>
@@ -306,6 +314,7 @@
 
     uniform float uLightIntensity;
     uniform float uLightAngle;
+    uniform vec3 uLightColor;
 
     uniform float uShadowStrength;
     uniform vec3 uShadowTint;
@@ -470,13 +479,14 @@
         vec3 halfDir = normalize(lightDir + viewDir);
 
         float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
-        vec3 specular = vec3(1.0) * spec * uSpecularStrength * shadow;
+        vec3 specular = uLightColor * spec * uSpecularStrength * shadow;
 
         float lightVal = ambient + (1.0 - ambient) * diffuse * shadow;
         lightVal = mix(1.0, lightVal, uShadowStrength);
         lightVal = pow(clamp(lightVal, 0.0, 1.0), max(0.05, uContrast));
 
-        vec3 baseCol = mix(uShadowTint, uColor, lightVal);
+        vec3 litBaseColor = uColor * mix(vec3(1.0), uLightColor, 0.35);
+        vec3 baseCol = mix(uShadowTint, litBaseColor, lightVal);
 
         float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
         float edgeMask = pow(rim, max(0.08, uEdgeWidth));
@@ -524,11 +534,6 @@
     let outputQuad = null;
 
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
-    const MAIN_PIXEL_RATIO_NORMAL = Math.min(window.devicePixelRatio || 1, 2);
-    const MAIN_PIXEL_RATIO_PREVIEW = 0.65;
-    const MAIN_PREVIEW_ITERATION_SCALE = 0.72;
-    const MAIN_PREVIEW_STEP_SCALE = 0.72;
-    const MAIN_PREVIEW_EPSILON_SCALE = 1.6;
 
     let params = {
       flySpeed: 0.05,
@@ -565,6 +570,7 @@
 
       lightIntensity: 1.0,
       lightAngle: 0.0,
+      lightColor: "#ffffff",
       shadowStrength: 1.0,
       shadowTint: "#000000",
       contrast: 1.0,
@@ -621,6 +627,7 @@
       "mirrorQuad",
       "lightIntensity",
       "lightAngle",
+      "lightColor",
       "shadowStrength",
       "shadowTint",
       "contrast",
@@ -932,21 +939,7 @@
       return height > width;
     }
 
-    function setMainPreviewQuality() {
-      if (!renderer || !material) return;
-
-      const usingOutput = !!(outputWindowRef && !outputWindowRef.closed && outputRenderer);
-      const pixelRatio = usingOutput ? MAIN_PIXEL_RATIO_PREVIEW : MAIN_PIXEL_RATIO_NORMAL;
-
-      renderer.setPixelRatio(pixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight, false);
-      material.uniforms.iResolution.value.set(
-        Math.floor(window.innerWidth * pixelRatio),
-        Math.floor(window.innerHeight * pixelRatio)
-      );
-    }
-
-    function buildSharedUniforms(width, height) {
+    function buildUniforms(width, height) {
       return {
         iResolution: { value: new THREE.Vector2(width, height) },
         iTime: { value: 0 },
@@ -959,17 +952,18 @@
         uColor: { value: new THREE.Color(params.uColor) },
         uRainbow: { value: params.rainbow ? 1.0 : 0.0 },
         uPulse: { value: params.pulse ? 1.0 : 0.0 },
+        uMusic: { value: 0.0 },
+        uShape: { value: params.uShape },
         uCamPos: { value: new THREE.Vector3() },
         uCamRight: { value: new THREE.Vector3() },
         uCamUp: { value: new THREE.Vector3() },
         uCamForward: { value: new THREE.Vector3() },
         uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
-        uShape: { value: params.uShape },
-        uMusic: { value: 0.0 },
-        uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
         uMirror: { value: params.mirror ? 1.0 : 0.0 },
+        uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
         uLightIntensity: { value: params.lightIntensity },
         uLightAngle: { value: params.lightAngle },
+        uLightColor: { value: new THREE.Color(params.lightColor) },
         uShadowStrength: { value: params.shadowStrength },
         uShadowTint: { value: new THREE.Color(params.shadowTint) },
         uContrast: { value: params.contrast },
@@ -1028,11 +1022,13 @@
       `);
       doc.close();
 
+      const pixelRatio = Math.min(outputWindowRef.devicePixelRatio || 1, 2);
+
       outputRenderer = new THREE.WebGLRenderer({
         antialias: true,
         preserveDrawingBuffer: false
       });
-      outputRenderer.setPixelRatio(Math.min(outputWindowRef.devicePixelRatio || 1, 2));
+      outputRenderer.setPixelRatio(pixelRatio);
       outputRenderer.setSize(outputWindowRef.innerWidth, outputWindowRef.innerHeight, false);
       outputWindowRef.document.body.appendChild(outputRenderer.domElement);
 
@@ -1040,19 +1036,24 @@
       outputOrthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       outputMaterial = new THREE.ShaderMaterial({
         fragmentShader: document.getElementById("fragmentShader").textContent,
-        uniforms: buildSharedUniforms(outputWindowRef.innerWidth, outputWindowRef.innerHeight)
+        uniforms: buildUniforms(
+          Math.floor(outputWindowRef.innerWidth * pixelRatio),
+          Math.floor(outputWindowRef.innerHeight * pixelRatio)
+        )
       });
+
       outputQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), outputMaterial);
       outputScene.add(outputQuad);
 
       outputWindowRef.addEventListener("resize", handleOutputResize);
       outputWindowRef.addEventListener("beforeunload", cleanupOutputWindow);
 
-      setMainPreviewQuality();
+      document.body.classList.add("output-active");
     }
 
     function handleOutputResize() {
       if (!outputWindowRef || outputWindowRef.closed || !outputRenderer || !outputMaterial) return;
+
       const pixelRatio = Math.min(outputWindowRef.devicePixelRatio || 1, 2);
       outputRenderer.setPixelRatio(pixelRatio);
       outputRenderer.setSize(outputWindowRef.innerWidth, outputWindowRef.innerHeight, false);
@@ -1069,7 +1070,7 @@
       outputOrthoCamera = null;
       outputQuad = null;
       outputWindowRef = null;
-      setMainPreviewQuality();
+      document.body.classList.remove("output-active");
     }
 
     async function fullscreenOutputWindow() {
@@ -1266,7 +1267,9 @@
         renderer.setPixelRatio(1);
         renderer.setSize(width, height, false);
         material.uniforms.iResolution.value.set(width, height);
-        renderer.render(scene, orthoCamera);
+        if (!document.body.classList.contains("output-active")) {
+          renderer.render(scene, orthoCamera);
+        }
 
         renderer.domElement.toBlob((blob) => {
           if (!blob) {
@@ -1284,7 +1287,6 @@
         renderer.setPixelRatio(originalPixelRatio);
         renderer.setSize(originalSize.x, originalSize.y, false);
         material.uniforms.iResolution.value.copy(originalResolution);
-        renderer.render(scene, orthoCamera);
       }
     }
 
@@ -1302,7 +1304,9 @@
         renderer.setPixelRatio(1);
         renderer.setSize(landscapeWidth, landscapeHeight, false);
         material.uniforms.iResolution.value.set(landscapeWidth, landscapeHeight);
-        renderer.render(scene, orthoCamera);
+        if (!document.body.classList.contains("output-active")) {
+          renderer.render(scene, orthoCamera);
+        }
 
         const srcCanvas = renderer.domElement;
         const outCanvas = document.createElement("canvas");
@@ -1333,7 +1337,6 @@
         renderer.setPixelRatio(originalPixelRatio);
         renderer.setSize(originalSize.x, originalSize.y, false);
         material.uniforms.iResolution.value.copy(originalResolution);
-        renderer.render(scene, orthoCamera);
       }
     }
 
@@ -1351,7 +1354,9 @@
         renderer.setPixelRatio(1);
         renderer.setSize(landscapeWidth, landscapeHeight, false);
         material.uniforms.iResolution.value.set(landscapeWidth, landscapeHeight);
-        renderer.render(scene, orthoCamera);
+        if (!document.body.classList.contains("output-active")) {
+          renderer.render(scene, orthoCamera);
+        }
 
         const srcCanvas = renderer.domElement;
         const outCanvas = document.createElement("canvas");
@@ -1384,7 +1389,6 @@
         renderer.setPixelRatio(originalPixelRatio);
         renderer.setSize(originalSize.x, originalSize.y, false);
         material.uniforms.iResolution.value.copy(originalResolution);
-        renderer.render(scene, orthoCamera);
       }
     }
 
@@ -1419,7 +1423,6 @@
         renderer.setPixelRatio(1);
         renderer.setSize(width, height, false);
         material.uniforms.iResolution.value.set(width, height);
-        renderer.render(scene, orthoCamera);
 
         const canvas = renderer.domElement;
         const stream = canvas.captureStream(60);
@@ -1456,7 +1459,6 @@
           renderer.setPixelRatio(originalPixelRatio);
           renderer.setSize(originalSize.x, originalSize.y, false);
           material.uniforms.iResolution.value.copy(originalResolution);
-          renderer.render(scene, orthoCamera);
         };
 
         recorder.start();
@@ -1473,7 +1475,6 @@
         renderer.setPixelRatio(originalPixelRatio);
         renderer.setSize(originalSize.x, originalSize.y, false);
         material.uniforms.iResolution.value.copy(originalResolution);
-        renderer.render(scene, orthoCamera);
       }
     }
 
@@ -1482,7 +1483,8 @@
         antialias: true,
         preserveDrawingBuffer: true
       });
-      renderer.setPixelRatio(MAIN_PIXEL_RATIO_NORMAL);
+      renderer.domElement.classList.add("main-canvas");
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(window.innerWidth, window.innerHeight, false);
       document.body.appendChild(renderer.domElement);
 
@@ -1501,10 +1503,7 @@
       const geometry = new THREE.PlaneGeometry(2, 2);
       material = new THREE.ShaderMaterial({
         fragmentShader: document.getElementById("fragmentShader").textContent,
-        uniforms: buildSharedUniforms(
-          Math.floor(window.innerWidth * MAIN_PIXEL_RATIO_NORMAL),
-          Math.floor(window.innerHeight * MAIN_PIXEL_RATIO_NORMAL)
-        )
+        uniforms: buildUniforms(window.innerWidth, window.innerHeight)
       });
 
       quad = new THREE.Mesh(geometry, material);
@@ -1555,6 +1554,7 @@
       const lightingFolder = gui.addFolder("Lighting");
       lightingFolder.add(params, "lightIntensity", 0, 2).name("Light Intensity");
       lightAngleController = lightingFolder.add(params, "lightAngle", 0, Math.PI * 2).name("Light Angle").listen();
+      lightingFolder.addColor(params, "lightColor").name("Light Color");
       lightingFolder.add(params, "shadowStrength", 0, 1.5).name("Shadow Strength");
       lightingFolder.addColor(params, "shadowTint").name("Shadow Tint");
       lightingFolder.add(params, "contrast", 0.3, 2.5).name("Contrast");
@@ -1596,22 +1596,20 @@
     function onWindowResize() {
       navCamera.aspect = window.innerWidth / window.innerHeight;
       navCamera.updateProjectionMatrix();
-      setMainPreviewQuality();
+
+      renderer.setSize(window.innerWidth, window.innerHeight, false);
+      material.uniforms.iResolution.value.set(window.innerWidth, window.innerHeight);
     }
 
-    function syncMaterialUniforms(targetMaterial, elapsedTime, musicValue, isPreview = false) {
+    function syncMaterialUniforms(targetMaterial, elapsedTime, musicValue) {
       if (!targetMaterial) return;
-
-      const previewIterations = isPreview ? Math.max(3, Math.round(params.uIterations * MAIN_PREVIEW_ITERATION_SCALE)) : params.uIterations;
-      const previewMaxSteps = isPreview ? Math.max(50, Math.round(params.uMaxSteps * MAIN_PREVIEW_STEP_SCALE)) : params.uMaxSteps;
-      const previewEpsilon = isPreview ? params.uSurfaceEpsilon * MAIN_PREVIEW_EPSILON_SCALE : params.uSurfaceEpsilon;
 
       targetMaterial.uniforms.iTime.value = elapsedTime;
       targetMaterial.uniforms.uPower.value = material.uniforms.uPower.value;
       targetMaterial.uniforms.uBailout.value = params.uBailout;
-      targetMaterial.uniforms.uIterations.value = previewIterations;
-      targetMaterial.uniforms.uSurfaceEpsilon.value = previewEpsilon;
-      targetMaterial.uniforms.uMaxSteps.value = previewMaxSteps;
+      targetMaterial.uniforms.uIterations.value = params.uIterations;
+      targetMaterial.uniforms.uSurfaceEpsilon.value = params.uSurfaceEpsilon;
+      targetMaterial.uniforms.uMaxSteps.value = params.uMaxSteps;
       targetMaterial.uniforms.uMaxDistance.value = params.uMaxDistance;
       targetMaterial.uniforms.uColor.value.copy(material.uniforms.uColor.value);
       targetMaterial.uniforms.uRainbow.value = params.rainbow ? 1.0 : 0.0;
@@ -1629,6 +1627,7 @@
       targetMaterial.uniforms.uMirrorQuad.value = params.mirrorQuad ? 1.0 : 0.0;
       targetMaterial.uniforms.uLightIntensity.value = params.lightIntensity;
       targetMaterial.uniforms.uLightAngle.value = params.lightAngle;
+      targetMaterial.uniforms.uLightColor.value.set(params.lightColor);
       targetMaterial.uniforms.uShadowStrength.value = params.shadowStrength;
       targetMaterial.uniforms.uShadowTint.value.set(params.shadowTint);
       targetMaterial.uniforms.uContrast.value = params.contrast;
@@ -1731,11 +1730,14 @@
         cleanupOutputWindow();
       }
 
-      syncMaterialUniforms(material, elapsedTime, musicValue, !!outputRenderer);
-      renderer.render(scene, orthoCamera);
+      syncMaterialUniforms(material, elapsedTime, musicValue);
+
+      if (!document.body.classList.contains("output-active")) {
+        renderer.render(scene, orthoCamera);
+      }
 
       if (outputRenderer && outputMaterial && outputScene && outputOrthoCamera) {
-        syncMaterialUniforms(outputMaterial, elapsedTime, musicValue, false);
+        syncMaterialUniforms(outputMaterial, elapsedTime, musicValue);
         outputRenderer.render(outputScene, outputOrthoCamera);
       }
 
