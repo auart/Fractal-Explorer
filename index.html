@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer, Presets + Vertical Export</title>
+  <title>Fractal Explorer, Centered Layout</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -10,19 +10,114 @@
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
       width: 100%;
       height: 100%;
+      overflow: hidden;
       background: black;
       font-family: Arial, sans-serif;
     }
 
+    body {
+      color: white;
+    }
+
+    #appShell {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      position: relative;
+      background: black;
+    }
+
+    #leftPanel {
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+      border-right: 1px solid rgba(255,255,255,0.12);
+      z-index: 20;
+    }
+
+    #rightPanel {
+      width: 320px;
+      min-width: 320px;
+      max-width: 320px;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+      border-left: 1px solid rgba(255,255,255,0.12);
+      z-index: 20;
+    }
+
+    #canvasContainer {
+      flex: 1;
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: black;
+    }
+
     canvas {
       display: block;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panelBox {
+      background: rgba(255,255,255,0.92);
+      color: #000;
+      padding: 10px;
+      border: 1px solid #000;
+      box-sizing: border-box;
+    }
+
+    .panelBox label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .rowGap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #leftPanel button,
+    #leftPanel select,
+    #leftPanel input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #000;
+    }
+
+    #leftPanel button {
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    #leftPanel button:disabled {
+      opacity: 0.7;
+      cursor: wait;
     }
 
     #startOverlay {
@@ -91,92 +186,61 @@
       color: rgba(255,255,255,0.72);
     }
 
-    #gui {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 10;
-      max-height: calc(100vh - 20px);
-      overflow-y: auto;
-      overflow-x: hidden;
-      width: 320px;
-      box-sizing: border-box;
-      padding-right: 4px;
+    .dg.main {
+      width: 100% !important;
     }
 
-    #gui::-webkit-scrollbar {
-      width: 10px;
+    .dg {
+      color: #fff !important;
     }
 
-    #gui::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.08);
+    .dg .cr.number input[type=text] {
+      color: #000 !important;
     }
 
-    #gui::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.4);
+    #rightPanel .dg.main {
+      margin: 0 !important;
     }
 
-    #leftPanel {
-      position: fixed;
-      left: 10px;
-      bottom: 10px;
-      z-index: 25;
-      width: 240px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    @media only screen and (max-width: 1100px) {
+      #leftPanel {
+        width: 210px;
+        min-width: 210px;
+        max-width: 210px;
+      }
+
+      #rightPanel {
+        width: 290px;
+        min-width: 290px;
+        max-width: 290px;
+      }
     }
 
-    #leftPanel button,
-    #leftPanel select,
-    #leftPanel input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px 12px;
-      font-size: 14px;
-      border: 1px solid #000;
-    }
+    @media only screen and (max-width: 900px) {
+      #appShell {
+        flex-direction: column;
+      }
 
-    #leftPanel button {
-      background: #fff;
-      color: #000;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    #leftPanel button:disabled {
-      opacity: 0.7;
-      cursor: wait;
-    }
-
-    .panelBox {
-      background: rgba(255,255,255,0.92);
-      color: #000;
-      padding: 10px;
-      border: 1px solid #000;
-      box-sizing: border-box;
-    }
-
-    .panelBox label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .rowGap {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    @media only screen and (max-width: 768px) {
-      #gui {
-        width: 92vw;
+      #leftPanel,
+      #rightPanel {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 28vh;
+        border: none;
       }
 
       #leftPanel {
-        width: 220px;
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+      }
+
+      #rightPanel {
+        border-top: 1px solid rgba(255,255,255,0.12);
+      }
+
+      #canvasContainer {
+        height: 44vh;
       }
 
       #startCard h1 {
@@ -198,65 +262,71 @@
     </div>
   </div>
 
-  <div id="leftPanel">
-    <div class="panelBox rowGap">
-      <label for="presetNameInput">Preset Name</label>
-      <input id="presetNameInput" type="text" placeholder="My preset">
+  <div id="appShell">
+    <div id="leftPanel">
+      <div class="panelBox rowGap">
+        <label for="presetNameInput">Preset Name</label>
+        <input id="presetNameInput" type="text" placeholder="My preset">
 
-      <button id="savePresetBtn">Save Preset</button>
-      <button id="overwritePresetBtn">Overwrite Selected</button>
+        <button id="savePresetBtn">Save Preset</button>
+        <button id="overwritePresetBtn">Overwrite Selected</button>
 
-      <label for="presetSelect">Load Preset</label>
-      <select id="presetSelect">
-        <option value="">No saved presets</option>
-      </select>
+        <label for="presetSelect">Load Preset</label>
+        <select id="presetSelect">
+          <option value="">No saved presets</option>
+        </select>
 
-      <button id="loadPresetBtn">Load Selected</button>
-      <button id="deletePresetBtn">Delete Selected</button>
-      <button id="exportPresetBtn">Export Preset JSON</button>
-      <button id="importPresetBtn">Import Preset JSON</button>
-      <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;">
+        <button id="loadPresetBtn">Load Selected</button>
+        <button id="deletePresetBtn">Delete Selected</button>
+        <button id="exportPresetBtn">Export Preset JSON</button>
+        <button id="importPresetBtn">Import Preset JSON</button>
+        <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;">
+      </div>
+
+      <div class="panelBox rowGap">
+        <label for="exportFormatSelect">Export Format</label>
+        <select id="exportFormatSelect">
+          <option value="3840x2160" selected>Landscape 4K, 3840 x 2160</option>
+          <option value="2160x3840">Vertical 4K, 2160 x 3840</option>
+          <option value="1080x1920">Vertical HD, 1080 x 1920</option>
+          <option value="2160x2160">Square 4K, 2160 x 2160</option>
+        </select>
+
+        <label for="formatSelect">Video Format</label>
+        <select id="formatSelect">
+          <option value="webm-vp9">WebM VP9</option>
+          <option value="webm">WebM Basic</option>
+          <option value="mp4">MP4, if supported</option>
+        </select>
+
+        <label for="qualitySelect">Video Quality</label>
+        <select id="qualitySelect">
+          <option value="low">Low, 5 Mbps</option>
+          <option value="medium">Medium, 12 Mbps</option>
+          <option value="high" selected>High, 25 Mbps</option>
+          <option value="ultra">Ultra, 50 Mbps</option>
+        </select>
+
+        <label for="durationSelect">Clip Duration</label>
+        <select id="durationSelect">
+          <option value="5">5 sec</option>
+          <option value="10" selected>10 sec</option>
+          <option value="15">15 sec</option>
+          <option value="30">30 sec</option>
+        </select>
+      </div>
+
+      <button id="exportStillBtn">Export Still</button>
+      <button id="recordBtn">Record Clip</button>
+      <button id="fsToggleBtn">Enter Full Screen</button>
     </div>
 
-    <div class="panelBox rowGap">
-      <label for="exportFormatSelect">Export Format</label>
-      <select id="exportFormatSelect">
-        <option value="3840x2160" selected>Landscape 4K, 3840 x 2160</option>
-        <option value="2160x3840">Vertical 4K, 2160 x 3840</option>
-        <option value="1080x1920">Vertical HD, 1080 x 1920</option>
-        <option value="2160x2160">Square 4K, 2160 x 2160</option>
-      </select>
+    <div id="canvasContainer"></div>
 
-      <label for="formatSelect">Video Format</label>
-      <select id="formatSelect">
-        <option value="webm-vp9">WebM VP9</option>
-        <option value="webm">WebM Basic</option>
-        <option value="mp4">MP4, if supported</option>
-      </select>
-
-      <label for="qualitySelect">Video Quality</label>
-      <select id="qualitySelect">
-        <option value="low">Low, 5 Mbps</option>
-        <option value="medium">Medium, 12 Mbps</option>
-        <option value="high" selected>High, 25 Mbps</option>
-        <option value="ultra">Ultra, 50 Mbps</option>
-      </select>
-
-      <label for="durationSelect">Clip Duration</label>
-      <select id="durationSelect">
-        <option value="5">5 sec</option>
-        <option value="10" selected>10 sec</option>
-        <option value="15">15 sec</option>
-        <option value="30">30 sec</option>
-      </select>
+    <div id="rightPanel">
+      <div id="gui"></div>
     </div>
-
-    <button id="exportStillBtn">Export Still</button>
-    <button id="recordBtn">Record Clip</button>
-    <button id="fsToggleBtn">Enter Full Screen</button>
   </div>
-
-  <div id="gui"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
@@ -314,20 +384,15 @@
     uniform float uEdgeScrollSpeed;
     uniform float uEdgeReverse;
 
-    uniform float uContourMode;
+    uniform float uPaletteMode;
     uniform float uRingScale;
     uniform float uRingStrength;
     uniform vec3 uWarmColor;
     uniform vec3 uCoolColor;
-
-    uniform float uPsyPaletteMode;
-    uniform float uPsyScale;
-    uniform float uPsyFlow;
+    uniform vec3 uPsyColorA;
+    uniform vec3 uPsyColorB;
+    uniform vec3 uPsyColorC;
     uniform float uPsyMix;
-    uniform vec3 uPsyColor1;
-    uniform vec3 uPsyColor2;
-    uniform vec3 uPsyColor3;
-    uniform vec3 uPsyColor4;
 
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
@@ -439,16 +504,6 @@
       return normalize(n);
     }
 
-    vec3 psyPalette(float t) {
-      if (t < 0.3333) {
-        return mix(uPsyColor1, uPsyColor2, t / 0.3333);
-      } else if (t < 0.6666) {
-        return mix(uPsyColor2, uPsyColor3, (t - 0.3333) / 0.3333);
-      } else {
-        return mix(uPsyColor3, uPsyColor4, (t - 0.6666) / 0.3334);
-      }
-    }
-
     void main() {
       vec2 uv;
       vec2 baseUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
@@ -496,39 +551,37 @@
         lightVal = mix(1.0, lightVal, uShadowStrength);
         lightVal = pow(clamp(lightVal, 0.0, 1.0), max(0.05, uContrast));
 
+        float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
+        float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 1.5);
+        rings = smoothstep(0.18, 0.82, rings);
+
         vec3 baseCol;
 
-        if (uPsyPaletteMode > 0.5) {
-          float ringField = length(pos.xy) * uPsyScale;
-          float swirlField = atan(pos.y, pos.x) * 1.5;
-          float zField = pos.z * 0.9;
-          float timeField = iTime * uPsyFlow;
-          float pattern = 0.5 + 0.5 * sin(ringField + swirlField + zField + timeField);
-
-          float ridge = pow(clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0), 1.5);
-          float litBias = lightVal * 0.35;
-          float paletteT = fract(pattern + ridge * uPsyMix + litBias);
-
-          vec3 psyCol = psyPalette(paletteT);
-          vec3 warmLift = mix(uShadowTint, psyCol, lightVal);
-          vec3 ridgeTint = mix(vec3(0.0), uCoolColor, ridge * 0.8);
-          baseCol = warmLift + ridgeTint * uPsyMix;
-        } else if (uContourMode > 0.5) {
-          float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale);
-          rings = smoothstep(0.2, 0.8, rings);
-
-          vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
-          float ridge = pow(1.0 - abs(dot(normal, viewDir)), 2.0);
-          vec3 cool = uCoolColor * ridge;
-
-          vec3 ringMix = mix(warm, cool, rings * uRingStrength);
-          baseCol = ringMix;
-        } else {
+        if (uPaletteMode < 0.5) {
           vec3 litBaseColor = uColor * mix(vec3(1.0), uLightColor, 0.35);
           baseCol = mix(uShadowTint, litBaseColor, lightVal);
+        } else if (uPaletteMode < 1.5) {
+          vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
+          float ridge = pow(rim, 2.0);
+          vec3 cool = uCoolColor * ridge;
+          vec3 ringMix = mix(warm, cool, rings * uRingStrength);
+          baseCol = mix(uShadowTint, ringMix, clamp(lightVal + 0.18, 0.0, 1.0));
+        } else {
+          float band1 = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 2.0);
+          float band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uRingScale * 0.7 + rim * 6.0);
+          float band3 = 0.5 + 0.5 * sin(length(pos) * uRingScale * 0.65 - pos.z * 1.5);
+
+          vec3 psycho = mix(uPsyColorA, uPsyColorB, band1);
+          psycho = mix(psycho, uPsyColorC, band2 * 0.7);
+          psycho = mix(psycho, uCoolColor, band3 * 0.35 * uPsyMix);
+
+          psycho *= mix(0.65, 1.25, lightVal);
+          psycho += uCoolColor * pow(rim, 2.0) * 0.25;
+          psycho += uWarmColor * rings * 0.12 * uRingStrength;
+
+          baseCol = mix(uShadowTint, psycho, clamp(lightVal + 0.25, 0.0, 1.0));
         }
 
-        float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
         float widthExp = mix(3.5, 0.35, clamp(uEdgeWidth / 4.0, 0.0, 1.0));
         float rimPow = pow(rim, widthExp);
 
@@ -617,27 +670,22 @@
       edgeScrollSpeed: 0.3,
       edgeReverse: false,
 
+      paletteMode: 1,
+      ringScale: 6.0,
+      ringStrength: 0.6,
+      warmColor: "#ff8c3a",
+      coolColor: "#2fe1d6",
+      psyColorA: "#22d3ee",
+      psyColorB: "#a3e635",
+      psyColorC: "#fb7185",
+      psyMix: 0.75,
+
       trippyMode: false,
       trippySpeed: 1.0,
       kaleidoscopeMode: false,
       kaleidoscopeSpeed: 1.0,
       musicMatch: false,
-      zoomValue: 2.2,
-
-      contourMode: true,
-      ringScale: 6.0,
-      ringStrength: 0.6,
-      warmColor: "#ff8c3a",
-      coolColor: "#2fe1d6",
-
-      psyPaletteMode: false,
-      psyScale: 8.0,
-      psyFlow: 0.7,
-      psyMix: 0.75,
-      psyColor1: "#18d8d8",
-      psyColor2: "#a6ff3c",
-      psyColor3: "#ff9a1f",
-      psyColor4: "#ff4d7a"
+      zoomValue: 2.2
     };
 
     const PRESET_KEYS = [
@@ -686,31 +734,25 @@
       "edgeScroll",
       "edgeScrollSpeed",
       "edgeReverse",
+      "paletteMode",
+      "ringScale",
+      "ringStrength",
+      "warmColor",
+      "coolColor",
+      "psyColorA",
+      "psyColorB",
+      "psyColorC",
+      "psyMix",
       "trippyMode",
       "trippySpeed",
       "kaleidoscopeMode",
       "kaleidoscopeSpeed",
       "musicMatch",
-      "zoomValue",
-      "contourMode",
-      "ringScale",
-      "ringStrength",
-      "warmColor",
-      "coolColor",
-      "psyPaletteMode",
-      "psyScale",
-      "psyFlow",
-      "psyMix",
-      "psyColor1",
-      "psyColor2",
-      "psyColor3",
-      "psyColor4"
+      "zoomValue"
     ];
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile) {
-      params.zoomValue = 3.8;
-    }
+    if (isMobile) params.zoomValue = 3.8;
 
     let lastBeatTime = 0;
     let bpm = 120;
@@ -746,25 +788,19 @@
 
     function getCurrentPresetData() {
       const data = {};
-      PRESET_KEYS.forEach((key) => {
-        data[key] = params[key];
-      });
+      PRESET_KEYS.forEach((key) => { data[key] = params[key]; });
       return data;
     }
 
     function applyPresetData(data) {
       PRESET_KEYS.forEach((key) => {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
-          params[key] = data[key];
-        }
+        if (Object.prototype.hasOwnProperty.call(data, key)) params[key] = data[key];
       });
       refreshGuiDisplays();
     }
 
     function refreshGuiDisplays() {
-      if (gui && gui.__controllers) {
-        gui.__controllers.forEach((c) => c.updateDisplay());
-      }
+      if (gui && gui.__controllers) gui.__controllers.forEach((c) => c.updateDisplay());
       if (gui && gui.__folders) {
         Object.values(gui.__folders).forEach((folder) => {
           folder.__controllers.forEach((c) => c.updateDisplay());
@@ -923,10 +959,7 @@
       presetNameInput.value = finalName;
     }
 
-    savePresetBtn.addEventListener("click", () => {
-      savePresetByName(presetNameInput.value, false);
-    });
-
+    savePresetBtn.addEventListener("click", () => savePresetByName(presetNameInput.value, false));
     overwritePresetBtn.addEventListener("click", () => {
       const selected = presetSelect.value || presetNameInput.value.trim();
       if (!selected) {
@@ -935,14 +968,10 @@
       }
       savePresetByName(selected, true);
     });
-
     loadPresetBtn.addEventListener("click", loadSelectedPreset);
     deletePresetBtn.addEventListener("click", deleteSelectedPreset);
     exportPresetBtn.addEventListener("click", exportSelectedPreset);
-
-    importPresetBtn.addEventListener("click", () => {
-      importPresetInput.click();
-    });
+    importPresetBtn.addEventListener("click", () => importPresetInput.click());
 
     importPresetInput.addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
@@ -1058,14 +1087,11 @@
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;
-
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
     async function enableMicrophone() {
-      if (audioCtx.state === "suspended") {
-        await audioCtx.resume();
-      }
+      if (audioCtx.state === "suspended") await audioCtx.resume();
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -1111,9 +1137,7 @@
       e.stopPropagation();
 
       try {
-        if (audioCtx.state === "suspended") {
-          await audioCtx.resume();
-        }
+        if (audioCtx.state === "suspended") await audioCtx.resume();
       } catch (err) {
         console.error(err);
       }
@@ -1209,7 +1233,7 @@
         }, "image/png");
       } finally {
         renderer.setPixelRatio(originalPixelRatio);
-        renderer.setSize(originalSize.x, originalSize.y, false);
+        resizeRendererToContainer();
         material.uniforms.iResolution.value.copy(originalResolution);
         renderer.render(scene, orthoCamera);
       }
@@ -1268,9 +1292,7 @@
         const fileExt = getFileExtensionFromMimeType(mimeType);
 
         recorder.ondataavailable = (event) => {
-          if (event.data && event.data.size > 0) {
-            chunks.push(event.data);
-          }
+          if (event.data && event.data.size > 0) chunks.push(event.data);
         };
 
         recorder.onstop = () => {
@@ -1285,13 +1307,12 @@
           setTimeout(() => URL.revokeObjectURL(url), 1000);
 
           renderer.setPixelRatio(originalPixelRatio);
-          renderer.setSize(originalSize.x, originalSize.y, false);
+          resizeRendererToContainer();
           material.uniforms.iResolution.value.copy(originalResolution);
           renderer.render(scene, orthoCamera);
         };
 
         recorder.start();
-
         recordBtn.disabled = true;
         recordBtn.textContent = "Recording...";
 
@@ -1303,10 +1324,21 @@
       } catch (err) {
         console.error(err);
         renderer.setPixelRatio(originalPixelRatio);
-        renderer.setSize(originalSize.x, originalSize.y, false);
+        resizeRendererToContainer();
         material.uniforms.iResolution.value.copy(originalResolution);
         renderer.render(scene, orthoCamera);
       }
+    }
+
+    function resizeRendererToContainer() {
+      const container = document.getElementById("canvasContainer");
+      const width = Math.max(1, container.clientWidth);
+      const height = Math.max(1, container.clientHeight);
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(width, height, false);
+      material.uniforms.iResolution.value.set(width * pixelRatio, height * pixelRatio);
     }
 
     function init() {
@@ -1315,17 +1347,9 @@
         preserveDrawingBuffer: true
       });
 
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      renderer.setPixelRatio(pixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+      document.getElementById("canvasContainer").appendChild(renderer.domElement);
 
-      navCamera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-      );
+      navCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 
       if (isMobile) {
         navCamera.position.set(0, 0, 3.8);
@@ -1344,12 +1368,7 @@
       material = new THREE.ShaderMaterial({
         fragmentShader: fs,
         uniforms: {
-          iResolution: {
-            value: new THREE.Vector2(
-              window.innerWidth * pixelRatio,
-              window.innerHeight * pixelRatio
-            )
-          },
+          iResolution: { value: new THREE.Vector2(1, 1) },
           iTime: { value: 0 },
           uPower: { value: params.uPower },
           uBailout: { value: params.uBailout },
@@ -1387,28 +1406,24 @@
           uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
           uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
           uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 },
-
-          uContourMode: { value: params.contourMode ? 1.0 : 0.0 },
+          uPaletteMode: { value: params.paletteMode },
           uRingScale: { value: params.ringScale },
           uRingStrength: { value: params.ringStrength },
           uWarmColor: { value: new THREE.Color(params.warmColor) },
           uCoolColor: { value: new THREE.Color(params.coolColor) },
-
-          uPsyPaletteMode: { value: params.psyPaletteMode ? 1.0 : 0.0 },
-          uPsyScale: { value: params.psyScale },
-          uPsyFlow: { value: params.psyFlow },
-          uPsyMix: { value: params.psyMix },
-          uPsyColor1: { value: new THREE.Color(params.psyColor1) },
-          uPsyColor2: { value: new THREE.Color(params.psyColor2) },
-          uPsyColor3: { value: new THREE.Color(params.psyColor3) },
-          uPsyColor4: { value: new THREE.Color(params.psyColor4) }
+          uPsyColorA: { value: new THREE.Color(params.psyColorA) },
+          uPsyColorB: { value: new THREE.Color(params.psyColorB) },
+          uPsyColorC: { value: new THREE.Color(params.psyColorC) },
+          uPsyMix: { value: params.psyMix }
         }
       });
 
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
 
-      gui = new dat.GUI({ autoPlace: false, width: 320 });
+      resizeRendererToContainer();
+
+      gui = new dat.GUI({ autoPlace: false, width: 300 });
       document.getElementById("gui").appendChild(gui.domElement);
 
       const fractalFolder = gui.addFolder("Fractal Settings");
@@ -1425,7 +1440,6 @@
       motionFolder.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
       motionFolder.add(params, "powerMin", 2, 100).name("Power Min").listen();
       motionFolder.add(params, "powerMax", 2, 100).name("Power Max").listen();
-
       motionFolder.add(params, "autoRotateX").name("Auto Rotate X");
       motionFolder.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
       motionFolder.add(params, "autoRotateY").name("Auto Rotate Y");
@@ -1434,24 +1448,18 @@
       motionFolder.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
 
       const colorFolder = gui.addFolder("Color & Effects");
+      colorFolder.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
       colorFolder.addColor(params, "uColor").name("Base Color");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
       colorFolder.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
-
-      colorFolder.add(params, "contourMode").name("Contour Mode");
       colorFolder.add(params, "ringScale", 0.5, 20).name("Ring Scale");
       colorFolder.add(params, "ringStrength", 0, 1).name("Ring Strength");
       colorFolder.addColor(params, "warmColor").name("Warm Color");
       colorFolder.addColor(params, "coolColor").name("Cool Color");
-
-      colorFolder.add(params, "psyPaletteMode").name("Psy Palette Mode");
-      colorFolder.add(params, "psyScale", 0.5, 20).name("Psy Scale");
-      colorFolder.add(params, "psyFlow", 0, 4).name("Psy Flow");
-      colorFolder.add(params, "psyMix", 0, 1.5).name("Psy Mix");
-      colorFolder.addColor(params, "psyColor1").name("Psy Color 1");
-      colorFolder.addColor(params, "psyColor2").name("Psy Color 2");
-      colorFolder.addColor(params, "psyColor3").name("Psy Color 3");
-      colorFolder.addColor(params, "psyColor4").name("Psy Color 4");
+      colorFolder.addColor(params, "psyColorA").name("Psy Color A");
+      colorFolder.addColor(params, "psyColorB").name("Psy Color B");
+      colorFolder.addColor(params, "psyColorC").name("Psy Color C");
+      colorFolder.add(params, "psyMix", 0, 1).name("Psy Mix");
 
       colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
       colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
@@ -1509,16 +1517,7 @@
     }
 
     function onWindowResize() {
-      navCamera.aspect = window.innerWidth / window.innerHeight;
-      navCamera.updateProjectionMatrix();
-
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      renderer.setPixelRatio(pixelRatio);
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      material.uniforms.iResolution.value.set(
-        window.innerWidth * pixelRatio,
-        window.innerHeight * pixelRatio
-      );
+      resizeRendererToContainer();
     }
 
     function animate() {
@@ -1535,9 +1534,7 @@
       if (params.musicReact && micEnabled) {
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
+        for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
         let avg = sum / bufferLength / 255.0;
         sensitiveAvg = avg * params.micSensitivity;
       }
@@ -1618,21 +1615,6 @@
       material.uniforms.uContrast.value = params.contrast;
       material.uniforms.uSpecularStrength.value = params.specularStrength;
 
-      material.uniforms.uContourMode.value = params.contourMode ? 1.0 : 0.0;
-      material.uniforms.uRingScale.value = params.ringScale;
-      material.uniforms.uRingStrength.value = params.ringStrength;
-      material.uniforms.uWarmColor.value.set(params.warmColor);
-      material.uniforms.uCoolColor.value.set(params.coolColor);
-
-      material.uniforms.uPsyPaletteMode.value = params.psyPaletteMode ? 1.0 : 0.0;
-      material.uniforms.uPsyScale.value = params.psyScale;
-      material.uniforms.uPsyFlow.value = params.psyFlow;
-      material.uniforms.uPsyMix.value = params.psyMix;
-      material.uniforms.uPsyColor1.value.set(params.psyColor1);
-      material.uniforms.uPsyColor2.value.set(params.psyColor2);
-      material.uniforms.uPsyColor3.value.set(params.psyColor3);
-      material.uniforms.uPsyColor4.value.set(params.psyColor4);
-
       material.uniforms.uEdgeHighlight.value = params.edgeHighlight ? 1.0 : 0.0;
       material.uniforms.uEdgeColorA.value.set(params.edgeColorA);
       material.uniforms.uEdgeAlphaA.value = params.edgeAlphaA;
@@ -1644,6 +1626,16 @@
       material.uniforms.uEdgeScroll.value = params.edgeScroll ? 1.0 : 0.0;
       material.uniforms.uEdgeScrollSpeed.value = params.edgeScrollSpeed;
       material.uniforms.uEdgeReverse.value = params.edgeReverse ? 1.0 : 0.0;
+
+      material.uniforms.uPaletteMode.value = params.paletteMode;
+      material.uniforms.uRingScale.value = params.ringScale;
+      material.uniforms.uRingStrength.value = params.ringStrength;
+      material.uniforms.uWarmColor.value.set(params.warmColor);
+      material.uniforms.uCoolColor.value.set(params.coolColor);
+      material.uniforms.uPsyColorA.value.set(params.psyColorA);
+      material.uniforms.uPsyColorB.value.set(params.psyColorB);
+      material.uniforms.uPsyColorC.value.set(params.psyColorC);
+      material.uniforms.uPsyMix.value = params.psyMix;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
