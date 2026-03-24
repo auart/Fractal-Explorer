@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Fractal Explorer, Fixed Preview + Pattern Layer</title>
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta charset="UTF-8" />
+  <title>Fractal Explorer, Color Control + Edge Line + Patterns</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <style>
     html, body {
       margin: 0;
@@ -48,9 +48,9 @@
     }
 
     #rightPanel {
-      width: 320px;
-      min-width: 320px;
-      max-width: 320px;
+      width: 340px;
+      min-width: 340px;
+      max-width: 340px;
       height: 100vh;
       overflow-y: auto;
       overflow-x: hidden;
@@ -217,9 +217,9 @@
       }
 
       #rightPanel {
-        width: 290px;
-        min-width: 290px;
-        max-width: 290px;
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
       }
     }
 
@@ -273,7 +273,7 @@
     <div id="leftPanel">
       <div class="panelBox rowGap">
         <label for="presetNameInput">Preset Name</label>
-        <input id="presetNameInput" type="text" placeholder="My preset">
+        <input id="presetNameInput" type="text" placeholder="My preset" />
 
         <button id="savePresetBtn">Save Preset</button>
         <button id="overwritePresetBtn">Overwrite Selected</button>
@@ -287,7 +287,7 @@
         <button id="deletePresetBtn">Delete Selected</button>
         <button id="exportPresetBtn">Export Preset JSON</button>
         <button id="importPresetBtn">Import Preset JSON</button>
-        <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;">
+        <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;" />
       </div>
 
       <div class="panelBox rowGap">
@@ -383,17 +383,38 @@
     uniform float uSpecularStrength;
     uniform float uSpecularSize;
 
-    uniform float uEdgeHighlight;
-    uniform vec3 uEdgeColorA;
-    uniform float uEdgeAlphaA;
-    uniform vec3 uEdgeColorB;
-    uniform float uEdgeAlphaB;
-    uniform float uEdgeStrength;
-    uniform float uEdgeWidth;
-    uniform float uEdgeEmission;
-    uniform float uEdgeScroll;
-    uniform float uEdgeScrollSpeed;
-    uniform float uEdgeReverse;
+    uniform float uColorSaturation;
+    uniform float uColorVibrance;
+    uniform float uPaletteContrast;
+    uniform float uColorIntensity;
+    uniform float uPreserveHighlightColor;
+
+    uniform float uRidgeAccent;
+    uniform float uCavityStrength;
+
+    uniform float uGlowOn;
+    uniform vec3 uGlowColorA;
+    uniform float uGlowAlphaA;
+    uniform vec3 uGlowColorB;
+    uniform float uGlowAlphaB;
+    uniform float uGlowStrength;
+    uniform float uGlowWidth;
+    uniform float uGlowEmission;
+    uniform float uGlowScroll;
+    uniform float uGlowScrollSpeed;
+    uniform float uGlowReverse;
+
+    uniform float uLineOn;
+    uniform vec3 uLineColorA;
+    uniform float uLineAlphaA;
+    uniform vec3 uLineColorB;
+    uniform float uLineAlphaB;
+    uniform float uLineStrength;
+    uniform float uLineWidth;
+    uniform float uLineSoftness;
+    uniform float uLineScroll;
+    uniform float uLineScrollSpeed;
+    uniform float uLineReverse;
 
     uniform float uInnerGlowStrength;
     uniform float uInnerGlowWidth;
@@ -423,6 +444,7 @@
     uniform float uPatternBlend;
 
     uniform float uColorBands;
+    uniform float uBandStrength;
 
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
@@ -462,7 +484,7 @@
         if (r > uBailout) break;
 
         if (uShape == 0) {
-          float theta = acos(z.z / r);
+          float theta = acos(z.z / max(r, 0.00001));
           float phi = atan(z.y, z.x);
           dr = pow(r, uPower - 1.0) * uPower * dr + 1.0;
           float zr = pow(r, uPower);
@@ -471,32 +493,31 @@
           z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
         } else if (uShape == 1) {
           float rCube = max(max(abs(z.x), abs(z.y)), abs(z.z));
-          dr = pow(rCube, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(rCube, uPower);
+          dr = pow(max(rCube, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rCube, 0.00001), uPower);
           z = sign(z) * zr;
         } else if (uShape == 2) {
           float rPyr = max((abs(z.x) + abs(z.y)), abs(z.z));
-          dr = pow(rPyr, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(rPyr, uPower);
+          dr = pow(max(rPyr, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rPyr, 0.00001), uPower);
           z = sign(z) * zr;
-        } else if (uShape == 3) {
+        } else {
           float rHexXY = length(vec2(z.x, z.y)) / cos(3.14159 / 6.0);
           float rHex = max(rHexXY, abs(z.z));
-          dr = pow(rHex, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(rHex, uPower);
+          dr = pow(max(rHex, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rHex, 0.00001), uPower);
           z = sign(z) * zr;
         }
 
         z += pos;
       }
 
-      return 0.5 * log(r) * r / dr;
+      return 0.5 * log(max(r, 0.00001)) * r / max(dr, 0.00001);
     }
 
     float calcShadow(vec3 ro, vec3 rd) {
       float t = 0.01;
       float shadow = 1.0;
-
       for (int i = 0; i < 50; i++) {
         float d = mandelbulb(ro + rd * t);
         if (d < uSurfaceEpsilon) {
@@ -506,13 +527,11 @@
         t += d;
         if (t > uMaxDistance) break;
       }
-
       return shadow;
     }
 
     float rayMarch(vec3 ro, vec3 rd) {
       float t = 0.0;
-
       for (int i = 0; i < 300; i++) {
         if (i >= uMaxSteps) break;
         vec3 pos = ro + rd * t;
@@ -521,7 +540,6 @@
         t += d;
         if (t > uMaxDistance) break;
       }
-
       return t;
     }
 
@@ -532,6 +550,32 @@
       n.y = mandelbulb(pos + vec3(0.0, eps, 0.0)) - mandelbulb(pos - vec3(0.0, eps, 0.0));
       n.z = mandelbulb(pos + vec3(0.0, 0.0, eps)) - mandelbulb(pos - vec3(0.0, 0.0, eps));
       return normalize(n);
+    }
+
+    float luma(vec3 c) {
+      return dot(c, vec3(0.299, 0.587, 0.114));
+    }
+
+    vec3 applySaturationAndVibrance(vec3 c, float saturation, float vibrance) {
+      float lum = luma(c);
+      vec3 gray = vec3(lum);
+      c = mix(gray, c, saturation);
+
+      float mx = max(max(c.r, c.g), c.b);
+      float mn = min(min(c.r, c.g), c.b);
+      float sat = mx - mn;
+      float vibAmount = (1.0 - sat) * vibrance;
+      c = mix(vec3(luma(c)), c, 1.0 + vibAmount);
+      return c;
+    }
+
+    float quantizeBands(float v) {
+      if (uColorBands < 1.5) return v;
+      float bands = max(1.0, uColorBands);
+      float q = floor(v * bands) / bands;
+      float strength = clamp(uBandStrength, 0.0, 1.0);
+      float hard = mix(v, q, strength);
+      return hard;
     }
 
     vec3 psyPalette(float t) {
@@ -545,26 +589,78 @@
       }
     }
 
-    float patternValue(vec3 pos, float rim, float cyclePhase) {
+    float patternValue(vec3 pos, float cyclePhase) {
+      float x = pos.x;
+      float y = pos.y;
+      float z = pos.z;
+      float r = length(pos.xy);
+      float r3 = length(pos);
+      float a = atan(y, x);
+      float s = uPatternScale;
+      float t = cyclePhase * uPatternSpeed;
+
       if (uPatternMode < 0.5) {
         return 0.0;
-      } else if (uPatternMode < 1.5) {
-        float a = atan(pos.y, pos.x);
-        return 0.5 + 0.5 * sin(a * uPatternScale + cyclePhase * uPatternSpeed);
-      } else if (uPatternMode < 2.5) {
-        return 0.5 + 0.5 * sin((pos.x + pos.y * 0.7) * uPatternScale + cyclePhase * uPatternSpeed);
-      } else if (uPatternMode < 3.5) {
-        return 0.5 + 0.5 * sin(length(pos.xy) * uPatternScale - cyclePhase * uPatternSpeed);
-      } else {
-        float a = atan(pos.y, pos.x);
-        return 0.5 + 0.5 * sin(length(pos.xy) * uPatternScale + a * 3.0 - cyclePhase * uPatternSpeed);
+      } else if (uPatternMode < 1.5) {             // Horizontal Lines
+        return 0.5 + 0.5 * sin(y * s + t);
+      } else if (uPatternMode < 2.5) {             // Vertical Lines
+        return 0.5 + 0.5 * sin(x * s + t);
+      } else if (uPatternMode < 3.5) {             // Diagonal Lines
+        return 0.5 + 0.5 * sin((x + y) * s + t);
+      } else if (uPatternMode < 4.5) {             // Wavy Horizontal
+        return 0.5 + 0.5 * sin(y * s + sin(x * s * 0.75 + t) * 2.0 + t);
+      } else if (uPatternMode < 5.5) {             // Wavy Vertical
+        return 0.5 + 0.5 * sin(x * s + sin(y * s * 0.75 + t) * 2.0 + t);
+      } else if (uPatternMode < 6.5) {             // Checkerboard
+        float cx = sin(x * s + t);
+        float cy = sin(y * s + t);
+        return step(0.0, cx * cy);
+      } else if (uPatternMode < 7.5) {             // Checker Warp
+        float wx = x + sin(y * s * 0.65 + t) * 0.6;
+        float wy = y + sin(x * s * 0.65 - t) * 0.6;
+        float cx = sin(wx * s);
+        float cy = sin(wy * s);
+        return step(0.0, cx * cy);
+      } else if (uPatternMode < 8.5) {             // Hex-ish Grid
+        float qx = x * 0.866025 + y * 0.5;
+        float qy = y;
+        float h1 = abs(fract(qx * s) - 0.5);
+        float h2 = abs(fract(qy * s) - 0.5);
+        float h3 = abs(fract((qx - qy * 0.5) * s) - 0.5);
+        return 1.0 - smoothstep(0.18, 0.24, min(min(h1, h2), h3));
+      } else if (uPatternMode < 9.5) {             // Contour
+        return 0.5 + 0.5 * sin(r3 * s + t);
+      } else if (uPatternMode < 10.5) {            // Topographic Bands
+        return 0.5 + 0.5 * sin((r3 + z * 0.4) * s + t);
+      } else if (uPatternMode < 11.5) {            // Interference Waves
+        float p1 = sin(x * s + t);
+        float p2 = sin(y * s * 1.2 - t * 0.8);
+        return 0.5 + 0.5 * (p1 * p2);
+      } else if (uPatternMode < 12.5) {            // Ripple
+        return 0.5 + 0.5 * sin(r * s - t);
+      } else if (uPatternMode < 13.5) {            // Pinwheel
+        return 0.5 + 0.5 * sin(a * s + t);
+      } else if (uPatternMode < 14.5) {            // Spiral
+        return 0.5 + 0.5 * sin(r * s + a * 3.0 - t);
+      } else if (uPatternMode < 15.5) {            // Double Spiral
+        return 0.5 + 0.5 * sin(r * s + a * 6.0 - t);
+      } else if (uPatternMode < 16.5) {            // Voronoi-ish Cells
+        vec2 p = pos.xy * s;
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        float md = 10.0;
+        for (int yy = -1; yy <= 1; yy++) {
+          for (int xx = -1; xx <= 1; xx++) {
+            vec2 g = vec2(float(xx), float(yy));
+            vec2 o = 0.5 + 0.35 * sin(vec2(1.7, 2.9) * dot(i + g, vec2(7.1, 5.3)) + t);
+            vec2 r2 = g + o - f;
+            md = min(md, dot(r2, r2));
+          }
+        }
+        return 1.0 - smoothstep(0.0, 0.4, sqrt(md));
+      } else {                                     // Noise-ish Marble
+        return 0.5 + 0.5 * sin((x + y + z) * s + sin((x - y) * s * 0.7 + t) * 2.0 + t);
       }
-    }
-
-    float applyBands(float t) {
-      if (uColorBands <= 0.5) return fract(t);
-      float bands = max(1.0, uColorBands);
-      return floor(fract(t) * bands) / bands;
     }
 
     void main() {
@@ -601,7 +697,7 @@
         ));
 
         float diffuse = max(dot(normal, lightDir), 0.0);
-        float ambient = 0.2;
+        float ambient = 0.14;
 
         float shadow = calcShadow(pos + normal * uSurfaceEpsilon * 2.0, lightDir);
         vec3 viewDir = normalize(ro - pos);
@@ -619,28 +715,26 @@
 
         float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
         float cyclePhase = uPaletteCycle > 0.5 ? iTime * uPaletteCycleSpeed : 0.0;
-        float pattern = patternValue(pos, rim, cyclePhase);
+        float pattern = patternValue(pos, cyclePhase);
+        pattern = quantizeBands(pattern);
 
         vec3 baseCol;
 
         if (uPaletteMode < 0.5) {
-          vec3 litBaseColor = uColor * mix(vec3(1.0), uLightColor, 0.35);
+          vec3 litBaseColor = uColor;
           baseCol = mix(uShadowTint, litBaseColor, lightVal);
         } else if (uPaletteMode < 1.5) {
           float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 1.5 + cyclePhase);
           rings = smoothstep(0.18, 0.82, rings);
-
-          if (uColorBands > 0.5) {
-            float bands = max(1.0, uColorBands);
-            rings = floor(rings * bands) / bands;
-          }
+          rings = quantizeBands(rings);
 
           vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
-          float ridge = pow(rim, 2.0);
-          vec3 cool = uCoolColor * ridge;
-
+          vec3 cool = uCoolColor * pow(rim, 2.0);
           vec3 ringMix = mix(warm, cool, rings * uRingStrength);
-          ringMix = mix(ringMix, mix(uWarmColor, uCoolColor, pattern), uPatternBlend * uPatternStrength * 0.35);
+
+          float patternDrive = pattern * uPatternBlend * uPatternStrength;
+          ringMix = mix(ringMix, mix(uWarmColor, uCoolColor, pattern), patternDrive * 0.9);
+
           baseCol = mix(uShadowTint, ringMix, clamp(lightVal + 0.18, 0.0, 1.0));
         } else {
           float radiusField = length(pos.xy) * uPsyScale;
@@ -667,77 +761,107 @@
             band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.72 + angleField * 1.6 - pos.z * 1.8 - flowField * 0.7);
           }
 
+          band1 = quantizeBands(band1);
+          band2 = quantizeBands(band2);
+          band3 = quantizeBands(band3);
+
+          float patternDrive = pattern * uPatternBlend * uPatternStrength;
           float paletteT = fract(
-            band1 * 0.35 +
-            band2 * 0.30 +
-            band3 * 0.25 +
-            rim * uPsyMix * 0.18 +
-            lightVal * 0.12 +
-            pattern * uPatternBlend * uPatternStrength * 0.22
+            band1 * 0.30 +
+            band2 * 0.26 +
+            band3 * 0.20 +
+            rim * uPsyMix * 0.16 +
+            lightVal * 0.10 +
+            patternDrive * 0.55
           );
 
-          paletteT = applyBands(paletteT);
+          paletteT = pow(clamp(paletteT, 0.0, 1.0), max(0.1, uPaletteContrast));
+          paletteT = quantizeBands(paletteT);
 
           vec3 psycho = psyPalette(paletteT);
-          vec3 psycho2 = psyPalette(applyBands(paletteT + 0.22));
-          vec3 psycho3 = psyPalette(applyBands(paletteT + 0.47));
+          vec3 psycho2 = psyPalette(quantizeBands(fract(paletteT + 0.22)));
+          vec3 psycho3 = psyPalette(quantizeBands(fract(paletteT + 0.47)));
 
-          vec3 layeredPsy = mix(psycho, psycho2, band2 * 0.6);
-          layeredPsy = mix(layeredPsy, psycho3, band3 * 0.45);
+          vec3 layeredPsy = mix(psycho, psycho2, band2 * 0.65);
+          layeredPsy = mix(layeredPsy, psycho3, band3 * 0.5);
 
-          float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + angleField * 0.6 + cyclePhase);
-          if (uColorBands > 0.5) {
-            float bands = max(1.0, uColorBands);
-            rings = floor((0.5 + 0.5 * sin(length(pos.xy) * uRingScale + angleField * 0.6 + cyclePhase)) * bands) / bands;
-          }
-
-          vec3 warmLift = mix(vec3(0.0), uWarmColor, rings * 0.22 * uRingStrength);
+          float rings = quantizeBands(0.5 + 0.5 * sin(length(pos.xy) * uRingScale + angleField * 0.6 + cyclePhase));
+          vec3 warmLift = mix(vec3(0.0), uWarmColor, rings * 0.24 * uRingStrength);
           vec3 ridgeCool = uCoolColor * pow(rim, 1.8) * 0.35;
 
-          layeredPsy *= mix(0.65, 1.28, lightVal);
+          layeredPsy *= mix(0.7, 1.3, lightVal);
           layeredPsy += warmLift + ridgeCool;
 
           vec3 patternColor = mix(uPsyColorA, uPsyColorD, pattern);
-          layeredPsy = mix(layeredPsy, patternColor, uPatternBlend * uPatternStrength * 0.28);
+          layeredPsy = mix(layeredPsy, patternColor, patternDrive * 0.75);
 
           baseCol = mix(uShadowTint, layeredPsy, clamp(lightVal + 0.22, 0.0, 1.0));
         }
 
-        float widthExp = mix(3.5, 0.35, clamp(uEdgeWidth / 4.0, 0.0, 1.0));
-        float rimPow = pow(rim, widthExp);
+        float ridge = pow(rim, 2.2);
+        float cavity = pow(1.0 - diffuse, 2.0) * (1.0 - shadow);
+        baseCol += uLightColor * ridge * uRidgeAccent * 0.35;
+        baseCol -= vec3(cavity * uCavityStrength * 0.35);
 
-        float edgeStart = 0.02;
-        float edgeEnd = 0.65;
-        float aa = fwidth(rimPow) * 1.75 + 0.0005;
+        baseCol *= uColorIntensity;
+        baseCol = applySaturationAndVibrance(baseCol, uColorSaturation, uColorVibrance);
 
-        float edgeMask = smoothstep(edgeStart - aa, edgeStart + aa, rimPow)
-                       * (1.0 - smoothstep(edgeEnd - aa, edgeEnd + aa, rimPow));
+        vec3 shadedColor;
+        if (uPreserveHighlightColor > 0.5) {
+          vec3 lit = mix(vec3(0.25), uLightColor, lightVal);
+          shadedColor = baseCol * lit;
+        } else {
+          shadedColor = mix(baseCol * 0.35, baseCol, lightVal);
+          shadedColor += uLightColor * spec * 0.25;
+        }
+
+        float glowWidthExp = mix(3.5, 0.35, clamp(uGlowWidth / 4.0, 0.0, 1.0));
+        float rimPow = pow(rim, glowWidthExp);
+        float glowAA = fwidth(rimPow) * 1.75 + 0.0005;
+        float glowMask = smoothstep(0.02 - glowAA, 0.02 + glowAA, rimPow)
+                       * (1.0 - smoothstep(0.65 - glowAA, 0.65 + glowAA, rimPow));
+
+        float glowCoord = rim;
+        if (uGlowScroll > 0.5) {
+          float dir = mix(1.0, -1.0, step(0.5, uGlowReverse));
+          glowCoord = fract(rim + iTime * uGlowScrollSpeed * dir);
+        }
+
+        vec3 glowGradColor = mix(uGlowColorA, uGlowColorB, glowCoord);
+        float glowGradAlpha = mix(uGlowAlphaA, uGlowAlphaB, glowCoord);
+        vec3 glowLayer = glowGradColor * glowMask * glowGradAlpha * uGlowStrength * uGlowOn;
+        glowLayer *= (1.0 + uGlowEmission);
+
+        float lineWidthExp = mix(7.5, 1.2, clamp(uLineWidth / 4.0, 0.0, 1.0));
+        float lineRim = pow(rim, lineWidthExp);
+        float lineAA = fwidth(lineRim) * (0.5 + uLineSoftness * 2.0) + 0.0003;
+        float lineCenter = 0.18;
+        float lineMask = smoothstep(lineCenter - lineAA, lineCenter, lineRim) - smoothstep(lineCenter, lineCenter + lineAA, lineRim);
+        lineMask = clamp(lineMask * 8.0, 0.0, 1.0);
+
+        float lineCoord = rim;
+        if (uLineScroll > 0.5) {
+          float dir = mix(1.0, -1.0, step(0.5, uLineReverse));
+          lineCoord = fract(rim + iTime * uLineScrollSpeed * dir);
+        }
+
+        vec3 lineGradColor = mix(uLineColorA, uLineColorB, lineCoord);
+        float lineGradAlpha = mix(uLineAlphaA, uLineAlphaB, lineCoord);
+        float lineMixAmt = lineMask * lineGradAlpha * uLineStrength * uLineOn;
 
         float innerExp = mix(6.0, 1.0, clamp(uInnerGlowWidth / 4.0, 0.0, 1.0));
         float innerPow = pow(rim, innerExp);
         float innerAA = fwidth(innerPow) * 2.0 + 0.0005;
         float innerMask = smoothstep(0.0, innerAA + 0.0001, innerPow)
                         * (1.0 - smoothstep(0.82 - innerAA, 0.82 + innerAA, innerPow));
-
-        float gradCoord = rim;
-        if (uEdgeScroll > 0.5) {
-          float dir = mix(1.0, -1.0, step(0.5, uEdgeReverse));
-          gradCoord = fract(rim + iTime * uEdgeScrollSpeed * dir);
-        }
-
-        vec3 edgeGradColor = mix(uEdgeColorA, uEdgeColorB, gradCoord);
-        float edgeGradAlpha = mix(uEdgeAlphaA, uEdgeAlphaB, gradCoord);
-
-        vec3 edgeGlow = edgeGradColor * edgeMask * edgeGradAlpha * uEdgeStrength * uEdgeHighlight;
-        edgeGlow *= (1.0 + uEdgeEmission);
-
         vec3 innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
 
-        col = baseCol + specular + edgeGlow + innerGlow;
+        col = shadedColor + specular + glowLayer + innerGlow;
+        col = mix(col, lineGradColor, clamp(lineMixAmt, 0.0, 1.0));
       }
 
       col *= uLightIntensity;
-      gl_FragColor = vec4(col, 1.0);
+      gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
     }
   </script>
 
@@ -745,7 +869,7 @@
     let navCamera, orthoCamera, scene, renderer, material, quad, clock;
     let gui;
 
-    const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
+    const PRESET_STORAGE_KEY = "fractalExplorerPresetsV2";
     const FIXED_PREVIEW_ASPECT = 16 / 9;
 
     let params = {
@@ -786,23 +910,44 @@
       shadowStrength: 1.0,
       shadowTint: "#000000",
       contrast: 1.0,
-      midtoneLift: 0.45,
-      specularStrength: 0.55,
-      specularSize: 1.0,
+      midtoneLift: 0.55,
+      specularStrength: 0.65,
+      specularSize: 0.95,
 
-      edgeHighlight: false,
-      edgeColorA: "#fff0a8",
-      edgeAlphaA: 1.0,
-      edgeColorB: "#fff0a8",
-      edgeAlphaB: 0.0,
-      edgeStrength: 0.45,
-      edgeWidth: 1.25,
-      edgeEmission: 0.35,
-      edgeScroll: false,
-      edgeScrollSpeed: 0.3,
-      edgeReverse: false,
+      colorSaturation: 1.2,
+      colorVibrance: 0.7,
+      paletteContrast: 1.2,
+      colorIntensity: 1.1,
+      preserveHighlightColor: true,
 
-      innerGlowStrength: 0.2,
+      ridgeAccent: 0.35,
+      cavityStrength: 0.2,
+
+      glowOn: true,
+      glowColorA: "#ff8c3a",
+      glowAlphaA: 1.0,
+      glowColorB: "#ffb65f",
+      glowAlphaB: 0.0,
+      glowStrength: 0.55,
+      glowWidth: 1.25,
+      glowEmission: 0.35,
+      glowScroll: false,
+      glowScrollSpeed: 0.3,
+      glowReverse: false,
+
+      lineOn: true,
+      lineColorA: "#000000",
+      lineAlphaA: 0.85,
+      lineColorB: "#000000",
+      lineAlphaB: 0.85,
+      lineStrength: 0.85,
+      lineWidth: 0.65,
+      lineSoftness: 0.35,
+      lineScroll: false,
+      lineScrollSpeed: 0.3,
+      lineReverse: false,
+
+      innerGlowStrength: 0.12,
       innerGlowWidth: 1.25,
       innerGlowColor: "#66fff4",
 
@@ -825,12 +970,13 @@
       psyStyle: 0,
 
       patternMode: 0,
-      patternStrength: 0.5,
+      patternStrength: 0.7,
       patternScale: 8.0,
       patternSpeed: 1.0,
-      patternBlend: 0.6,
+      patternBlend: 0.75,
 
-      colorBands: 8,
+      colorBands: 8.0,
+      bandStrength: 1.0,
 
       trippyMode: false,
       trippySpeed: 1.0,
@@ -840,86 +986,28 @@
       zoomValue: 2.2
     };
 
-    const PRESET_KEYS = [
-      "flySpeed",
-      "uPower",
-      "uBailout",
-      "uIterations",
-      "uSurfaceEpsilon",
-      "uMaxSteps",
-      "uMaxDistance",
-      "uColor",
-      "uFractalRotationX",
-      "uFractalRotationY",
-      "uFractalRotationZ",
-      "uShape",
-      "musicReact",
-      "micSensitivity",
-      "powerAnimation",
-      "powerAnimationSpeed",
-      "powerMin",
-      "powerMax",
-      "autoRotateX",
-      "autoRotateY",
-      "autoRotateZ",
-      "rotateSpeedX",
-      "rotateSpeedY",
-      "rotateSpeedZ",
-      "mirror",
-      "mirrorQuad",
-      "lightIntensity",
-      "lightAzimuth",
-      "lightElevation",
-      "lightColor",
-      "shadowStrength",
-      "shadowTint",
-      "contrast",
-      "midtoneLift",
-      "specularStrength",
-      "specularSize",
-      "edgeHighlight",
-      "edgeColorA",
-      "edgeAlphaA",
-      "edgeColorB",
-      "edgeAlphaB",
-      "edgeStrength",
-      "edgeWidth",
-      "edgeEmission",
-      "edgeScroll",
-      "edgeScrollSpeed",
-      "edgeReverse",
-      "innerGlowStrength",
-      "innerGlowWidth",
-      "innerGlowColor",
-      "paletteMode",
-      "ringScale",
-      "ringStrength",
-      "warmColor",
-      "coolColor",
-      "psyColorA",
-      "psyColorB",
-      "psyColorC",
-      "psyColorD",
-      "psyMix",
-      "psyScale",
-      "psyFlow",
-      "psySpinStrength",
-      "paletteCycle",
-      "paletteCycleSpeed",
-      "psyStyle",
-      "patternMode",
-      "patternStrength",
-      "patternScale",
-      "patternSpeed",
-      "patternBlend",
-      "colorBands",
-      "trippyMode",
-      "trippySpeed",
-      "kaleidoscopeMode",
-      "kaleidoscopeSpeed",
-      "musicMatch",
-      "zoomValue"
-    ];
+    const PRESET_KEYS = Object.keys(params);
+
+    const PATTERN_OPTIONS = {
+      Off: 0,
+      "Horizontal Lines": 1,
+      "Vertical Lines": 2,
+      "Diagonal Lines": 3,
+      "Wavy Horizontal": 4,
+      "Wavy Vertical": 5,
+      Checkerboard: 6,
+      "Checker Warp": 7,
+      "Hex Grid": 8,
+      Contour: 9,
+      Topographic: 10,
+      Interference: 11,
+      Ripple: 12,
+      Pinwheel: 13,
+      Spiral: 14,
+      "Double Spiral": 15,
+      Voronoi: 16,
+      Marble: 17
+    };
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobile) params.zoomValue = 3.8;
@@ -1164,13 +1252,8 @@
       return { width: w, height: h };
     }
 
-    window.addEventListener("keydown", (e) => {
-      keys[e.key] = true;
-    });
-
-    window.addEventListener("keyup", (e) => {
-      keys[e.key] = false;
-    });
+    window.addEventListener("keydown", (e) => { keys[e.key] = true; });
+    window.addEventListener("keyup", (e) => { keys[e.key] = false; });
 
     let isDragging = false;
     let prevMouse = { x: 0, y: 0 };
@@ -1354,16 +1437,13 @@
         if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
         if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
-
       if (format === "webm") {
         if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       }
-
       if (format === "mp4") {
         if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) return "video/mp4;codecs=avc1";
         if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
       }
-
       if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
       if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
       return "";
@@ -1577,33 +1657,58 @@
           uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
           uShape: { value: params.uShape },
           uMusic: { value: 0.0 },
-          uRotationPivot: { value: new THREE.Vector3(0, 0, 0) },
           uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
           uMirror: { value: params.mirror ? 1.0 : 0.0 },
+
           uLightIntensity: { value: params.lightIntensity },
           uLightAzimuth: { value: params.lightAzimuth },
           uLightElevation: { value: params.lightElevation },
           uLightColor: { value: new THREE.Color(params.lightColor) },
+
           uShadowStrength: { value: params.shadowStrength },
           uShadowTint: { value: new THREE.Color(params.shadowTint) },
           uContrast: { value: params.contrast },
           uMidtoneLift: { value: params.midtoneLift },
           uSpecularStrength: { value: params.specularStrength },
           uSpecularSize: { value: params.specularSize },
-          uEdgeHighlight: { value: params.edgeHighlight ? 1.0 : 0.0 },
-          uEdgeColorA: { value: new THREE.Color(params.edgeColorA) },
-          uEdgeAlphaA: { value: params.edgeAlphaA },
-          uEdgeColorB: { value: new THREE.Color(params.edgeColorB) },
-          uEdgeAlphaB: { value: params.edgeAlphaB },
-          uEdgeStrength: { value: params.edgeStrength },
-          uEdgeWidth: { value: params.edgeWidth },
-          uEdgeEmission: { value: params.edgeEmission },
-          uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
-          uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
-          uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 },
+
+          uColorSaturation: { value: params.colorSaturation },
+          uColorVibrance: { value: params.colorVibrance },
+          uPaletteContrast: { value: params.paletteContrast },
+          uColorIntensity: { value: params.colorIntensity },
+          uPreserveHighlightColor: { value: params.preserveHighlightColor ? 1.0 : 0.0 },
+
+          uRidgeAccent: { value: params.ridgeAccent },
+          uCavityStrength: { value: params.cavityStrength },
+
+          uGlowOn: { value: params.glowOn ? 1.0 : 0.0 },
+          uGlowColorA: { value: new THREE.Color(params.glowColorA) },
+          uGlowAlphaA: { value: params.glowAlphaA },
+          uGlowColorB: { value: new THREE.Color(params.glowColorB) },
+          uGlowAlphaB: { value: params.glowAlphaB },
+          uGlowStrength: { value: params.glowStrength },
+          uGlowWidth: { value: params.glowWidth },
+          uGlowEmission: { value: params.glowEmission },
+          uGlowScroll: { value: params.glowScroll ? 1.0 : 0.0 },
+          uGlowScrollSpeed: { value: params.glowScrollSpeed },
+          uGlowReverse: { value: params.glowReverse ? 1.0 : 0.0 },
+
+          uLineOn: { value: params.lineOn ? 1.0 : 0.0 },
+          uLineColorA: { value: new THREE.Color(params.lineColorA) },
+          uLineAlphaA: { value: params.lineAlphaA },
+          uLineColorB: { value: new THREE.Color(params.lineColorB) },
+          uLineAlphaB: { value: params.lineAlphaB },
+          uLineStrength: { value: params.lineStrength },
+          uLineWidth: { value: params.lineWidth },
+          uLineSoftness: { value: params.lineSoftness },
+          uLineScroll: { value: params.lineScroll ? 1.0 : 0.0 },
+          uLineScrollSpeed: { value: params.lineScrollSpeed },
+          uLineReverse: { value: params.lineReverse ? 1.0 : 0.0 },
+
           uInnerGlowStrength: { value: params.innerGlowStrength },
           uInnerGlowWidth: { value: params.innerGlowWidth },
           uInnerGlowColor: { value: new THREE.Color(params.innerGlowColor) },
+
           uPaletteMode: { value: params.paletteMode },
           uRingScale: { value: params.ringScale },
           uRingStrength: { value: params.ringStrength },
@@ -1620,12 +1725,15 @@
           uPaletteCycle: { value: params.paletteCycle ? 1.0 : 0.0 },
           uPaletteCycleSpeed: { value: params.paletteCycleSpeed },
           uPsyStyle: { value: params.psyStyle },
+
           uPatternMode: { value: params.patternMode },
           uPatternStrength: { value: params.patternStrength },
           uPatternScale: { value: params.patternScale },
           uPatternSpeed: { value: params.patternSpeed },
           uPatternBlend: { value: params.patternBlend },
-          uColorBands: { value: params.colorBands }
+
+          uColorBands: { value: params.colorBands },
+          uBandStrength: { value: params.bandStrength }
         }
       });
 
@@ -1635,7 +1743,7 @@
       layoutPreviewFrame();
       resizeRendererToPreviewFrame();
 
-      gui = new dat.GUI({ autoPlace: false, width: 300 });
+      gui = new dat.GUI({ autoPlace: false, width: 320 });
       document.getElementById("gui").appendChild(gui.domElement);
 
       const fractalFolder = gui.addFolder("Fractal Settings");
@@ -1659,7 +1767,7 @@
       motionFolder.add(params, "autoRotateZ").name("Auto Rotate Z");
       motionFolder.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
 
-      const colorFolder = gui.addFolder("Color & Effects");
+      const colorFolder = gui.addFolder("Color & Palette");
       colorFolder.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
       colorFolder.add(params, "psyStyle", { Old: 0, Hybrid: 1, New: 2 }).name("Psy Style");
       colorFolder.addColor(params, "uColor").name("Base Color");
@@ -1680,35 +1788,21 @@
       colorFolder.add(params, "paletteCycle").name("Palette Cycle");
       colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
 
-      colorFolder.add(params, "patternMode", {
-        Off: 0,
-        Pinwheel: 1,
-        Wavy: 2,
-        Ripple: 3,
-        Spiral: 4
-      }).name("Pattern Mode");
-      colorFolder.add(params, "patternStrength", 0, 1.5).name("Pattern Strength");
-      colorFolder.add(params, "patternScale", 0.5, 20).name("Pattern Scale");
-      colorFolder.add(params, "patternSpeed", 0, 4).name("Pattern Speed");
-      colorFolder.add(params, "patternBlend", 0, 1).name("Pattern Blend");
+      const gradingFolder = gui.addFolder("Color Grading");
+      gradingFolder.add(params, "colorSaturation", 0, 2.5).name("Saturation");
+      gradingFolder.add(params, "colorVibrance", 0, 2.5).name("Vibrance");
+      gradingFolder.add(params, "paletteContrast", 0.5, 2.5).name("Palette Contrast");
+      gradingFolder.add(params, "colorIntensity", 0.25, 2.5).name("Color Intensity");
+      gradingFolder.add(params, "preserveHighlightColor").name("Preserve Highlights");
+      gradingFolder.add(params, "colorBands", 0, 20).step(1).name("Color Bands");
+      gradingFolder.add(params, "bandStrength", 0, 1).name("Band Strength");
 
-      colorFolder.add(params, "colorBands", 0, 20).step(1).name("Color Bands");
-
-      colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
-      colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
-      colorFolder.add(params, "edgeAlphaA", 0, 1).name("Edge Alpha A");
-      colorFolder.addColor(params, "edgeColorB").name("Edge Color B");
-      colorFolder.add(params, "edgeAlphaB", 0, 1).name("Edge Alpha B");
-      colorFolder.add(params, "edgeStrength", 0, 2).name("Edge Strength");
-      colorFolder.add(params, "edgeWidth", 0.15, 4).name("Edge Width");
-      colorFolder.add(params, "edgeEmission", 0, 3).name("Edge Emission");
-      colorFolder.add(params, "edgeScroll").name("Edge Scroll");
-      colorFolder.add(params, "edgeScrollSpeed", 0, 3).name("Edge Scroll Speed");
-      colorFolder.add(params, "edgeReverse").name("Edge Reverse");
-
-      colorFolder.add(params, "innerGlowStrength", 0, 2).name("Inner Glow Strength");
-      colorFolder.add(params, "innerGlowWidth", 0.1, 4).name("Inner Glow Width");
-      colorFolder.addColor(params, "innerGlowColor").name("Inner Glow Color");
+      const patternFolder = gui.addFolder("Patterns");
+      patternFolder.add(params, "patternMode", PATTERN_OPTIONS).name("Pattern Mode");
+      patternFolder.add(params, "patternStrength", 0, 2).name("Pattern Strength");
+      patternFolder.add(params, "patternScale", 0.5, 20).name("Pattern Scale");
+      patternFolder.add(params, "patternSpeed", 0, 5).name("Pattern Speed");
+      patternFolder.add(params, "patternBlend", 0, 1.5).name("Pattern Blend");
 
       const lightingFolder = gui.addFolder("Lighting");
       lightingFolder.add(params, "lightIntensity", 0, 2).name("Light Intensity");
@@ -1721,8 +1815,41 @@
       lightingFolder.add(params, "midtoneLift", 0, 2).name("Midtone Lift");
       lightingFolder.add(params, "specularStrength", 0, 2.5).name("Specular");
       lightingFolder.add(params, "specularSize", 0.1, 3).name("Specular Size");
+      lightingFolder.add(params, "ridgeAccent", 0, 2).name("Ridge Accent");
+      lightingFolder.add(params, "cavityStrength", 0, 2).name("Cavity");
       lightingFolder.add(params, "kaleidoscopeMode").name("Kaleidoscope Mode");
       lightingFolder.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
+
+      const glowFolder = gui.addFolder("Edge Glow");
+      glowFolder.add(params, "glowOn").name("Glow On");
+      glowFolder.addColor(params, "glowColorA").name("Glow Color A");
+      glowFolder.add(params, "glowAlphaA", 0, 1).name("Glow Alpha A");
+      glowFolder.addColor(params, "glowColorB").name("Glow Color B");
+      glowFolder.add(params, "glowAlphaB", 0, 1).name("Glow Alpha B");
+      glowFolder.add(params, "glowStrength", 0, 2).name("Glow Strength");
+      glowFolder.add(params, "glowWidth", 0.15, 4).name("Glow Width");
+      glowFolder.add(params, "glowEmission", 0, 3).name("Glow Emission");
+      glowFolder.add(params, "glowScroll").name("Glow Scroll");
+      glowFolder.add(params, "glowScrollSpeed", 0, 3).name("Glow Scroll Speed");
+      glowFolder.add(params, "glowReverse").name("Glow Reverse");
+
+      const lineFolder = gui.addFolder("Edge Line");
+      lineFolder.add(params, "lineOn").name("Line On");
+      lineFolder.addColor(params, "lineColorA").name("Line Color A");
+      lineFolder.add(params, "lineAlphaA", 0, 1).name("Line Alpha A");
+      lineFolder.addColor(params, "lineColorB").name("Line Color B");
+      lineFolder.add(params, "lineAlphaB", 0, 1).name("Line Alpha B");
+      lineFolder.add(params, "lineStrength", 0, 2).name("Line Strength");
+      lineFolder.add(params, "lineWidth", 0.1, 4).name("Line Width");
+      lineFolder.add(params, "lineSoftness", 0, 1).name("Line Softness");
+      lineFolder.add(params, "lineScroll").name("Line Scroll");
+      lineFolder.add(params, "lineScrollSpeed", 0, 3).name("Line Scroll Speed");
+      lineFolder.add(params, "lineReverse").name("Line Reverse");
+
+      const innerGlowFolder = gui.addFolder("Inner Glow");
+      innerGlowFolder.add(params, "innerGlowStrength", 0, 2).name("Inner Glow Strength");
+      innerGlowFolder.add(params, "innerGlowWidth", 0.1, 4).name("Inner Glow Width");
+      innerGlowFolder.addColor(params, "innerGlowColor").name("Inner Glow Color");
 
       const audioFolder = gui.addFolder("Audio Settings");
       audioFolder.add(params, "musicReact").name("Mic Reactive");
@@ -1738,9 +1865,13 @@
       miscFolder.add(params, "mirrorQuad").name("Quad Mirror Mode");
 
       fractalFolder.open();
-      motionFolder.open();
-      lightingFolder.open();
       colorFolder.open();
+      gradingFolder.open();
+      patternFolder.open();
+      lightingFolder.open();
+      glowFolder.close();
+      lineFolder.close();
+      innerGlowFolder.close();
       audioFolder.close();
       miscFolder.close();
 
@@ -1780,9 +1911,9 @@
       }
 
       if (params.trippyMode) {
-        let effectiveTrippySpeed = (params.trippySpeed / 10.0) * 1.0;
-        let hue = (elapsedTime * effectiveTrippySpeed) % 1.0;
-        let newColor = new THREE.Color().setHSL(hue, 0.7, 0.5);
+        const effectiveTrippySpeed = (params.trippySpeed / 10.0) * 1.0;
+        const hue = (elapsedTime * effectiveTrippySpeed) % 1.0;
+        const newColor = new THREE.Color().setHSL(hue, 0.7, 0.5);
         material.uniforms.uColor.value.copy(newColor);
       } else {
         material.uniforms.uColor.value.set(params.uColor);
@@ -1798,9 +1929,9 @@
         let effectivePowerSpeed = params.powerAnimationSpeed;
 
         if (params.musicMatch && micEnabled) {
-          let threshold = 0.4;
+          const threshold = 0.4;
           if (sensitiveAvg > threshold && (elapsedTime - lastBeatTime > 0.3)) {
-            let beatInterval = elapsedTime - lastBeatTime;
+            const beatInterval = elapsedTime - lastBeatTime;
             lastBeatTime = elapsedTime;
             bpm = 60.0 / beatInterval;
           }
@@ -1846,6 +1977,7 @@
       material.uniforms.uShape.value = params.uShape;
       material.uniforms.uMirror.value = params.mirror ? 1.0 : 0.0;
       material.uniforms.uMirrorQuad.value = params.mirrorQuad ? 1.0 : 0.0;
+
       material.uniforms.uLightIntensity.value = params.lightIntensity;
       material.uniforms.uLightAzimuth.value = params.lightAzimuth;
       material.uniforms.uLightElevation.value = params.lightElevation;
@@ -1857,17 +1989,38 @@
       material.uniforms.uSpecularStrength.value = params.specularStrength;
       material.uniforms.uSpecularSize.value = params.specularSize;
 
-      material.uniforms.uEdgeHighlight.value = params.edgeHighlight ? 1.0 : 0.0;
-      material.uniforms.uEdgeColorA.value.set(params.edgeColorA);
-      material.uniforms.uEdgeAlphaA.value = params.edgeAlphaA;
-      material.uniforms.uEdgeColorB.value.set(params.edgeColorB);
-      material.uniforms.uEdgeAlphaB.value = params.edgeAlphaB;
-      material.uniforms.uEdgeStrength.value = params.edgeStrength;
-      material.uniforms.uEdgeWidth.value = params.edgeWidth;
-      material.uniforms.uEdgeEmission.value = params.edgeEmission;
-      material.uniforms.uEdgeScroll.value = params.edgeScroll ? 1.0 : 0.0;
-      material.uniforms.uEdgeScrollSpeed.value = params.edgeScrollSpeed;
-      material.uniforms.uEdgeReverse.value = params.edgeReverse ? 1.0 : 0.0;
+      material.uniforms.uColorSaturation.value = params.colorSaturation;
+      material.uniforms.uColorVibrance.value = params.colorVibrance;
+      material.uniforms.uPaletteContrast.value = params.paletteContrast;
+      material.uniforms.uColorIntensity.value = params.colorIntensity;
+      material.uniforms.uPreserveHighlightColor.value = params.preserveHighlightColor ? 1.0 : 0.0;
+
+      material.uniforms.uRidgeAccent.value = params.ridgeAccent;
+      material.uniforms.uCavityStrength.value = params.cavityStrength;
+
+      material.uniforms.uGlowOn.value = params.glowOn ? 1.0 : 0.0;
+      material.uniforms.uGlowColorA.value.set(params.glowColorA);
+      material.uniforms.uGlowAlphaA.value = params.glowAlphaA;
+      material.uniforms.uGlowColorB.value.set(params.glowColorB);
+      material.uniforms.uGlowAlphaB.value = params.glowAlphaB;
+      material.uniforms.uGlowStrength.value = params.glowStrength;
+      material.uniforms.uGlowWidth.value = params.glowWidth;
+      material.uniforms.uGlowEmission.value = params.glowEmission;
+      material.uniforms.uGlowScroll.value = params.glowScroll ? 1.0 : 0.0;
+      material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
+      material.uniforms.uGlowReverse.value = params.glowReverse ? 1.0 : 0.0;
+
+      material.uniforms.uLineOn.value = params.lineOn ? 1.0 : 0.0;
+      material.uniforms.uLineColorA.value.set(params.lineColorA);
+      material.uniforms.uLineAlphaA.value = params.lineAlphaA;
+      material.uniforms.uLineColorB.value.set(params.lineColorB);
+      material.uniforms.uLineAlphaB.value = params.lineAlphaB;
+      material.uniforms.uLineStrength.value = params.lineStrength;
+      material.uniforms.uLineWidth.value = params.lineWidth;
+      material.uniforms.uLineSoftness.value = params.lineSoftness;
+      material.uniforms.uLineScroll.value = params.lineScroll ? 1.0 : 0.0;
+      material.uniforms.uLineScrollSpeed.value = params.lineScrollSpeed;
+      material.uniforms.uLineReverse.value = params.lineReverse ? 1.0 : 0.0;
 
       material.uniforms.uInnerGlowStrength.value = params.innerGlowStrength;
       material.uniforms.uInnerGlowWidth.value = params.innerGlowWidth;
@@ -1897,12 +2050,13 @@
       material.uniforms.uPatternBlend.value = params.patternBlend;
 
       material.uniforms.uColorBands.value = params.colorBands;
+      material.uniforms.uBandStrength.value = params.bandStrength;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
-      let forward = new THREE.Vector3(0, 0, -1).applyQuaternion(navCamera.quaternion).normalize();
-      let right = new THREE.Vector3(1, 0, 0).applyQuaternion(navCamera.quaternion).normalize();
-      let up = new THREE.Vector3(0, 1, 0).applyQuaternion(navCamera.quaternion).normalize();
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(navCamera.quaternion).normalize();
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(navCamera.quaternion).normalize();
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(navCamera.quaternion).normalize();
 
       material.uniforms.uCamForward.value.copy(forward);
       material.uniforms.uCamRight.value.copy(right);
