@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fractal Explorer, Centered Layout</title>
+  <title>Fractal Explorer, Fixed Preview + Pattern Layer</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
@@ -69,6 +69,13 @@
       min-height: 0;
       overflow: hidden;
       background: black;
+    }
+
+    #previewFrame {
+      position: absolute;
+      background: black;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
     }
 
     canvas {
@@ -321,7 +328,9 @@
       <button id="fsToggleBtn">Enter Full Screen</button>
     </div>
 
-    <div id="canvasContainer"></div>
+    <div id="canvasContainer">
+      <div id="previewFrame"></div>
+    </div>
 
     <div id="rightPanel">
       <div id="gui"></div>
@@ -405,6 +414,13 @@
     uniform float uPsySpinStrength;
     uniform float uPaletteCycle;
     uniform float uPaletteCycleSpeed;
+    uniform float uPsyStyle;
+
+    uniform float uPatternMode;
+    uniform float uPatternStrength;
+    uniform float uPatternScale;
+    uniform float uPatternSpeed;
+    uniform float uPatternBlend;
 
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
@@ -527,6 +543,22 @@
       }
     }
 
+    float patternValue(vec3 pos, float rim, float cyclePhase) {
+      if (uPatternMode < 0.5) {
+        return 0.0;
+      } else if (uPatternMode < 1.5) {
+        float a = atan(pos.y, pos.x);
+        return 0.5 + 0.5 * sin(a * uPatternScale + cyclePhase * uPatternSpeed);
+      } else if (uPatternMode < 2.5) {
+        return 0.5 + 0.5 * sin((pos.x + pos.y * 0.7) * uPatternScale + cyclePhase * uPatternSpeed);
+      } else if (uPatternMode < 3.5) {
+        return 0.5 + 0.5 * sin(length(pos.xy) * uPatternScale - cyclePhase * uPatternSpeed);
+      } else {
+        float a = atan(pos.y, pos.x);
+        return 0.5 + 0.5 * sin(length(pos.xy) * uPatternScale + a * 3.0 - cyclePhase * uPatternSpeed);
+      }
+    }
+
     void main() {
       vec2 uv;
       vec2 baseUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
@@ -579,6 +611,7 @@
 
         float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
         float cyclePhase = uPaletteCycle > 0.5 ? iTime * uPaletteCycleSpeed : 0.0;
+        float pattern = patternValue(pos, rim, cyclePhase);
 
         vec3 baseCol;
 
@@ -594,6 +627,7 @@
           vec3 cool = uCoolColor * ridge;
 
           vec3 ringMix = mix(warm, cool, rings * uRingStrength);
+          ringMix = mix(ringMix, mix(uWarmColor, uCoolColor, pattern), uPatternBlend * uPatternStrength * 0.35);
           baseCol = mix(uShadowTint, ringMix, clamp(lightVal + 0.18, 0.0, 1.0));
         } else {
           float radiusField = length(pos.xy) * uPsyScale;
@@ -602,16 +636,31 @@
           float flowField = cyclePhase + iTime * uPsyFlow;
           float ridgeField = rim * 5.0;
 
-          float band1 = 0.5 + 0.5 * sin(radiusField + angleField + depthField + flowField);
-          float band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.65 - angleField * 0.75 + ridgeField + flowField * 0.7);
-          float band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.55 + angleField * 1.4 - pos.z * 1.6 - flowField * 0.45);
+          float band1;
+          float band2;
+          float band3;
+
+          if (uPsyStyle < 0.5) {
+            band1 = 0.5 + 0.5 * sin(radiusField * 0.8 + angleField * 0.75 + flowField * 0.7);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.45 + depthField * 0.7 + flowField * 0.5);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.42 - angleField * 0.35);
+          } else if (uPsyStyle < 1.5) {
+            band1 = 0.5 + 0.5 * sin(radiusField + angleField + depthField + flowField);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.65 - angleField * 0.75 + ridgeField + flowField * 0.7);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.55 + angleField * 1.2 - pos.z * 1.2 - flowField * 0.45);
+          } else {
+            band1 = 0.5 + 0.5 * sin(radiusField * 1.15 + angleField * 1.25 + depthField + flowField * 1.2);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.9 - angleField * 1.1 + ridgeField * 1.2 + flowField);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.72 + angleField * 1.6 - pos.z * 1.8 - flowField * 0.7);
+          }
 
           float paletteT = fract(
             band1 * 0.35 +
             band2 * 0.30 +
             band3 * 0.25 +
             rim * uPsyMix * 0.18 +
-            lightVal * 0.12
+            lightVal * 0.12 +
+            pattern * uPatternBlend * uPatternStrength * 0.22
           );
 
           vec3 psycho = psyPalette(paletteT);
@@ -627,6 +676,9 @@
 
           layeredPsy *= mix(0.65, 1.28, lightVal);
           layeredPsy += warmLift + ridgeCool;
+
+          vec3 patternColor = mix(uPsyColorA, uPsyColorD, pattern);
+          layeredPsy = mix(layeredPsy, patternColor, uPatternBlend * uPatternStrength * 0.28);
 
           baseCol = mix(uShadowTint, layeredPsy, clamp(lightVal + 0.22, 0.0, 1.0));
         }
@@ -674,6 +726,7 @@
     let gui;
 
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
+    const FIXED_PREVIEW_ASPECT = 16 / 9;
 
     let params = {
       flySpeed: 0.05,
@@ -739,16 +792,23 @@
       warmColor: "#ff8c3a",
       coolColor: "#2fe1d6",
 
-      psyColorA: "#22d3ee",
-      psyColorB: "#a3e635",
-      psyColorC: "#fb7185",
-      psyColorD: "#f59e0b",
+      psyColorA: "#18d8d8",
+      psyColorB: "#a6ff3c",
+      psyColorC: "#ff9a1f",
+      psyColorD: "#ff4d7a",
       psyMix: 0.85,
       psyScale: 8.0,
       psyFlow: 0.7,
       psySpinStrength: 2.3,
       paletteCycle: true,
       paletteCycleSpeed: 0.5,
+      psyStyle: 0,
+
+      patternMode: 0,
+      patternStrength: 0.5,
+      patternScale: 8.0,
+      patternSpeed: 1.0,
+      patternBlend: 0.6,
 
       trippyMode: false,
       trippySpeed: 1.0,
@@ -824,6 +884,12 @@
       "psySpinStrength",
       "paletteCycle",
       "paletteCycleSpeed",
+      "psyStyle",
+      "patternMode",
+      "patternStrength",
+      "patternScale",
+      "patternSpeed",
+      "patternBlend",
       "trippyMode",
       "trippySpeed",
       "kaleidoscopeMode",
@@ -1314,7 +1380,7 @@
         }, "image/png");
       } finally {
         renderer.setPixelRatio(originalPixelRatio);
-        resizeRendererToContainer();
+        resizeRendererToPreviewFrame();
         material.uniforms.iResolution.value.copy(originalResolution);
         renderer.render(scene, orthoCamera);
       }
@@ -1388,7 +1454,7 @@
           setTimeout(() => URL.revokeObjectURL(url), 1000);
 
           renderer.setPixelRatio(originalPixelRatio);
-          resizeRendererToContainer();
+          resizeRendererToPreviewFrame();
           material.uniforms.iResolution.value.copy(originalResolution);
           renderer.render(scene, orthoCamera);
         };
@@ -1405,16 +1471,39 @@
       } catch (err) {
         console.error(err);
         renderer.setPixelRatio(originalPixelRatio);
-        resizeRendererToContainer();
+        resizeRendererToPreviewFrame();
         material.uniforms.iResolution.value.copy(originalResolution);
         renderer.render(scene, orthoCamera);
       }
     }
 
-    function resizeRendererToContainer() {
+    function layoutPreviewFrame() {
       const container = document.getElementById("canvasContainer");
-      const width = Math.max(1, container.clientWidth);
-      const height = Math.max(1, container.clientHeight);
+      const frame = document.getElementById("previewFrame");
+
+      const cw = Math.max(1, container.clientWidth);
+      const ch = Math.max(1, container.clientHeight);
+      const containerAspect = cw / ch;
+
+      let fw, fh;
+      if (containerAspect > FIXED_PREVIEW_ASPECT) {
+        fh = ch;
+        fw = fh * FIXED_PREVIEW_ASPECT;
+      } else {
+        fw = cw;
+        fh = fw / FIXED_PREVIEW_ASPECT;
+      }
+
+      frame.style.width = `${fw}px`;
+      frame.style.height = `${fh}px`;
+      frame.style.left = `${(cw - fw) * 0.5}px`;
+      frame.style.top = `${(ch - fh) * 0.5}px`;
+    }
+
+    function resizeRendererToPreviewFrame() {
+      const frame = document.getElementById("previewFrame");
+      const width = Math.max(1, frame.clientWidth);
+      const height = Math.max(1, frame.clientHeight);
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
       renderer.setPixelRatio(pixelRatio);
@@ -1428,9 +1517,9 @@
         preserveDrawingBuffer: true
       });
 
-      document.getElementById("canvasContainer").appendChild(renderer.domElement);
+      document.getElementById("previewFrame").appendChild(renderer.domElement);
 
-      navCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+      navCamera = new THREE.PerspectiveCamera(75, FIXED_PREVIEW_ASPECT, 0.1, 1000);
 
       if (isMobile) {
         navCamera.position.set(0, 0, 3.8);
@@ -1506,14 +1595,21 @@
           uPsyFlow: { value: params.psyFlow },
           uPsySpinStrength: { value: params.psySpinStrength },
           uPaletteCycle: { value: params.paletteCycle ? 1.0 : 0.0 },
-          uPaletteCycleSpeed: { value: params.paletteCycleSpeed }
+          uPaletteCycleSpeed: { value: params.paletteCycleSpeed },
+          uPsyStyle: { value: params.psyStyle },
+          uPatternMode: { value: params.patternMode },
+          uPatternStrength: { value: params.patternStrength },
+          uPatternScale: { value: params.patternScale },
+          uPatternSpeed: { value: params.patternSpeed },
+          uPatternBlend: { value: params.patternBlend }
         }
       });
 
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
 
-      resizeRendererToContainer();
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
 
       gui = new dat.GUI({ autoPlace: false, width: 300 });
       document.getElementById("gui").appendChild(gui.domElement);
@@ -1541,6 +1637,7 @@
 
       const colorFolder = gui.addFolder("Color & Effects");
       colorFolder.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
+      colorFolder.add(params, "psyStyle", { Old: 0, Hybrid: 1, New: 2 }).name("Psy Style");
       colorFolder.addColor(params, "uColor").name("Base Color");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
       colorFolder.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
@@ -1558,6 +1655,18 @@
       colorFolder.add(params, "psySpinStrength", 0, 6).name("Psy Spin");
       colorFolder.add(params, "paletteCycle").name("Palette Cycle");
       colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
+
+      colorFolder.add(params, "patternMode", {
+        Off: 0,
+        Pinwheel: 1,
+        Wavy: 2,
+        Ripple: 3,
+        Spiral: 4
+      }).name("Pattern Mode");
+      colorFolder.add(params, "patternStrength", 0, 1.5).name("Pattern Strength");
+      colorFolder.add(params, "patternScale", 0.5, 20).name("Pattern Scale");
+      colorFolder.add(params, "patternSpeed", 0, 4).name("Pattern Speed");
+      colorFolder.add(params, "patternBlend", 0, 1).name("Pattern Blend");
 
       colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
       colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
@@ -1621,7 +1730,8 @@
     }
 
     function onWindowResize() {
-      resizeRendererToContainer();
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
     }
 
     function animate() {
@@ -1752,6 +1862,13 @@
       material.uniforms.uPsySpinStrength.value = params.psySpinStrength;
       material.uniforms.uPaletteCycle.value = params.paletteCycle ? 1.0 : 0.0;
       material.uniforms.uPaletteCycleSpeed.value = params.paletteCycleSpeed;
+      material.uniforms.uPsyStyle.value = params.psyStyle;
+
+      material.uniforms.uPatternMode.value = params.patternMode;
+      material.uniforms.uPatternStrength.value = params.patternStrength;
+      material.uniforms.uPatternScale.value = params.patternScale;
+      material.uniforms.uPatternSpeed.value = params.patternSpeed;
+      material.uniforms.uPatternBlend.value = params.patternBlend;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
