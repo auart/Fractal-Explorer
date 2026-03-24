@@ -422,6 +422,8 @@
     uniform float uPatternSpeed;
     uniform float uPatternBlend;
 
+    uniform float uColorBands;
+
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
       float cy = cos(angles.y), sy = sin(angles.y);
@@ -559,6 +561,12 @@
       }
     }
 
+    float applyBands(float t) {
+      if (uColorBands <= 0.5) return fract(t);
+      float bands = max(1.0, uColorBands);
+      return floor(fract(t) * bands) / bands;
+    }
+
     void main() {
       vec2 uv;
       vec2 baseUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
@@ -622,6 +630,11 @@
           float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 1.5 + cyclePhase);
           rings = smoothstep(0.18, 0.82, rings);
 
+          if (uColorBands > 0.5) {
+            float bands = max(1.0, uColorBands);
+            rings = floor(rings * bands) / bands;
+          }
+
           vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
           float ridge = pow(rim, 2.0);
           vec3 cool = uCoolColor * ridge;
@@ -663,14 +676,21 @@
             pattern * uPatternBlend * uPatternStrength * 0.22
           );
 
+          paletteT = applyBands(paletteT);
+
           vec3 psycho = psyPalette(paletteT);
-          vec3 psycho2 = psyPalette(paletteT + 0.22);
-          vec3 psycho3 = psyPalette(paletteT + 0.47);
+          vec3 psycho2 = psyPalette(applyBands(paletteT + 0.22));
+          vec3 psycho3 = psyPalette(applyBands(paletteT + 0.47));
 
           vec3 layeredPsy = mix(psycho, psycho2, band2 * 0.6);
           layeredPsy = mix(layeredPsy, psycho3, band3 * 0.45);
 
           float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + angleField * 0.6 + cyclePhase);
+          if (uColorBands > 0.5) {
+            float bands = max(1.0, uColorBands);
+            rings = floor((0.5 + 0.5 * sin(length(pos.xy) * uRingScale + angleField * 0.6 + cyclePhase)) * bands) / bands;
+          }
+
           vec3 warmLift = mix(vec3(0.0), uWarmColor, rings * 0.22 * uRingStrength);
           vec3 ridgeCool = uCoolColor * pow(rim, 1.8) * 0.35;
 
@@ -810,6 +830,8 @@
       patternSpeed: 1.0,
       patternBlend: 0.6,
 
+      colorBands: 8,
+
       trippyMode: false,
       trippySpeed: 1.0,
       kaleidoscopeMode: false,
@@ -890,6 +912,7 @@
       "patternScale",
       "patternSpeed",
       "patternBlend",
+      "colorBands",
       "trippyMode",
       "trippySpeed",
       "kaleidoscopeMode",
@@ -1601,7 +1624,8 @@
           uPatternStrength: { value: params.patternStrength },
           uPatternScale: { value: params.patternScale },
           uPatternSpeed: { value: params.patternSpeed },
-          uPatternBlend: { value: params.patternBlend }
+          uPatternBlend: { value: params.patternBlend },
+          uColorBands: { value: params.colorBands }
         }
       });
 
@@ -1667,6 +1691,8 @@
       colorFolder.add(params, "patternScale", 0.5, 20).name("Pattern Scale");
       colorFolder.add(params, "patternSpeed", 0, 4).name("Pattern Speed");
       colorFolder.add(params, "patternBlend", 0, 1).name("Pattern Blend");
+
+      colorFolder.add(params, "colorBands", 0, 20).step(1).name("Color Bands");
 
       colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
       colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
@@ -1869,6 +1895,8 @@
       material.uniforms.uPatternScale.value = params.patternScale;
       material.uniforms.uPatternSpeed.value = params.patternSpeed;
       material.uniforms.uPatternBlend.value = params.patternBlend;
+
+      material.uniforms.uColorBands.value = params.colorBands;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
