@@ -370,7 +370,9 @@
     uniform float uShadowStrength;
     uniform vec3 uShadowTint;
     uniform float uContrast;
+    uniform float uMidtoneLift;
     uniform float uSpecularStrength;
+    uniform float uSpecularSize;
 
     uniform float uEdgeHighlight;
     uniform vec3 uEdgeColorA;
@@ -384,6 +386,10 @@
     uniform float uEdgeScrollSpeed;
     uniform float uEdgeReverse;
 
+    uniform float uInnerGlowStrength;
+    uniform float uInnerGlowWidth;
+    uniform vec3 uInnerGlowColor;
+
     uniform float uPaletteMode;
     uniform float uRingScale;
     uniform float uRingStrength;
@@ -392,7 +398,13 @@
     uniform vec3 uPsyColorA;
     uniform vec3 uPsyColorB;
     uniform vec3 uPsyColorC;
+    uniform vec3 uPsyColorD;
     uniform float uPsyMix;
+    uniform float uPsyScale;
+    uniform float uPsyFlow;
+    uniform float uPsySpinStrength;
+    uniform float uPaletteCycle;
+    uniform float uPaletteCycleSpeed;
 
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
@@ -504,6 +516,17 @@
       return normalize(n);
     }
 
+    vec3 psyPalette(float t) {
+      t = fract(t);
+      if (t < 0.333333) {
+        return mix(uPsyColorA, uPsyColorB, t / 0.333333);
+      } else if (t < 0.666666) {
+        return mix(uPsyColorB, uPsyColorC, (t - 0.333333) / 0.333333);
+      } else {
+        return mix(uPsyColorC, uPsyColorD, (t - 0.666666) / 0.333334);
+      }
+    }
+
     void main() {
       vec2 uv;
       vec2 baseUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
@@ -544,16 +567,18 @@
         vec3 viewDir = normalize(ro - pos);
         vec3 halfDir = normalize(lightDir + viewDir);
 
-        float spec = pow(max(dot(normal, halfDir), 0.0), 32.0);
+        float specularSizeT = clamp((uSpecularSize - 0.1) / 2.9, 0.0, 1.0);
+        float specularExp = mix(96.0, 6.0, specularSizeT);
+        float spec = pow(max(dot(normal, halfDir), 0.0), specularExp);
         vec3 specular = uLightColor * spec * uSpecularStrength * shadow;
 
         float lightVal = ambient + (1.0 - ambient) * diffuse * shadow;
         lightVal = mix(1.0, lightVal, uShadowStrength);
         lightVal = pow(clamp(lightVal, 0.0, 1.0), max(0.05, uContrast));
+        lightVal = clamp(lightVal + (lightVal * (1.0 - lightVal)) * uMidtoneLift, 0.0, 1.0);
 
         float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
-        float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 1.5);
-        rings = smoothstep(0.18, 0.82, rings);
+        float cyclePhase = uPaletteCycle > 0.5 ? iTime * uPaletteCycleSpeed : 0.0;
 
         vec3 baseCol;
 
@@ -561,25 +586,49 @@
           vec3 litBaseColor = uColor * mix(vec3(1.0), uLightColor, 0.35);
           baseCol = mix(uShadowTint, litBaseColor, lightVal);
         } else if (uPaletteMode < 1.5) {
+          float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 1.5 + cyclePhase);
+          rings = smoothstep(0.18, 0.82, rings);
+
           vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
           float ridge = pow(rim, 2.0);
           vec3 cool = uCoolColor * ridge;
+
           vec3 ringMix = mix(warm, cool, rings * uRingStrength);
           baseCol = mix(uShadowTint, ringMix, clamp(lightVal + 0.18, 0.0, 1.0));
         } else {
-          float band1 = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 2.0);
-          float band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uRingScale * 0.7 + rim * 6.0);
-          float band3 = 0.5 + 0.5 * sin(length(pos) * uRingScale * 0.65 - pos.z * 1.5);
+          float radiusField = length(pos.xy) * uPsyScale;
+          float angleField = atan(pos.y, pos.x) * uPsySpinStrength;
+          float depthField = pos.z * 1.3;
+          float flowField = cyclePhase + iTime * uPsyFlow;
+          float ridgeField = rim * 5.0;
 
-          vec3 psycho = mix(uPsyColorA, uPsyColorB, band1);
-          psycho = mix(psycho, uPsyColorC, band2 * 0.7);
-          psycho = mix(psycho, uCoolColor, band3 * 0.35 * uPsyMix);
+          float band1 = 0.5 + 0.5 * sin(radiusField + angleField + depthField + flowField);
+          float band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.65 - angleField * 0.75 + ridgeField + flowField * 0.7);
+          float band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.55 + angleField * 1.4 - pos.z * 1.6 - flowField * 0.45);
 
-          psycho *= mix(0.65, 1.25, lightVal);
-          psycho += uCoolColor * pow(rim, 2.0) * 0.25;
-          psycho += uWarmColor * rings * 0.12 * uRingStrength;
+          float paletteT = fract(
+            band1 * 0.35 +
+            band2 * 0.30 +
+            band3 * 0.25 +
+            rim * uPsyMix * 0.18 +
+            lightVal * 0.12
+          );
 
-          baseCol = mix(uShadowTint, psycho, clamp(lightVal + 0.25, 0.0, 1.0));
+          vec3 psycho = psyPalette(paletteT);
+          vec3 psycho2 = psyPalette(paletteT + 0.22);
+          vec3 psycho3 = psyPalette(paletteT + 0.47);
+
+          vec3 layeredPsy = mix(psycho, psycho2, band2 * 0.6);
+          layeredPsy = mix(layeredPsy, psycho3, band3 * 0.45);
+
+          float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + angleField * 0.6 + cyclePhase);
+          vec3 warmLift = mix(vec3(0.0), uWarmColor, rings * 0.22 * uRingStrength);
+          vec3 ridgeCool = uCoolColor * pow(rim, 1.8) * 0.35;
+
+          layeredPsy *= mix(0.65, 1.28, lightVal);
+          layeredPsy += warmLift + ridgeCool;
+
+          baseCol = mix(uShadowTint, layeredPsy, clamp(lightVal + 0.22, 0.0, 1.0));
         }
 
         float widthExp = mix(3.5, 0.35, clamp(uEdgeWidth / 4.0, 0.0, 1.0));
@@ -591,6 +640,12 @@
 
         float edgeMask = smoothstep(edgeStart - aa, edgeStart + aa, rimPow)
                        * (1.0 - smoothstep(edgeEnd - aa, edgeEnd + aa, rimPow));
+
+        float innerExp = mix(6.0, 1.0, clamp(uInnerGlowWidth / 4.0, 0.0, 1.0));
+        float innerPow = pow(rim, innerExp);
+        float innerAA = fwidth(innerPow) * 2.0 + 0.0005;
+        float innerMask = smoothstep(0.0, innerAA + 0.0001, innerPow)
+                        * (1.0 - smoothstep(0.82 - innerAA, 0.82 + innerAA, innerPow));
 
         float gradCoord = rim;
         if (uEdgeScroll > 0.5) {
@@ -604,7 +659,9 @@
         vec3 edgeGlow = edgeGradColor * edgeMask * edgeGradAlpha * uEdgeStrength * uEdgeHighlight;
         edgeGlow *= (1.0 + uEdgeEmission);
 
-        col = baseCol + specular + edgeGlow;
+        vec3 innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
+
+        col = baseCol + specular + edgeGlow + innerGlow;
       }
 
       col *= uLightIntensity;
@@ -656,7 +713,9 @@
       shadowStrength: 1.0,
       shadowTint: "#000000",
       contrast: 1.0,
-      specularStrength: 0.5,
+      midtoneLift: 0.45,
+      specularStrength: 0.55,
+      specularSize: 1.0,
 
       edgeHighlight: false,
       edgeColorA: "#fff0a8",
@@ -670,15 +729,26 @@
       edgeScrollSpeed: 0.3,
       edgeReverse: false,
 
-      paletteMode: 1,
+      innerGlowStrength: 0.2,
+      innerGlowWidth: 1.25,
+      innerGlowColor: "#66fff4",
+
+      paletteMode: 2,
       ringScale: 6.0,
       ringStrength: 0.6,
       warmColor: "#ff8c3a",
       coolColor: "#2fe1d6",
+
       psyColorA: "#22d3ee",
       psyColorB: "#a3e635",
       psyColorC: "#fb7185",
-      psyMix: 0.75,
+      psyColorD: "#f59e0b",
+      psyMix: 0.85,
+      psyScale: 8.0,
+      psyFlow: 0.7,
+      psySpinStrength: 2.3,
+      paletteCycle: true,
+      paletteCycleSpeed: 0.5,
 
       trippyMode: false,
       trippySpeed: 1.0,
@@ -722,7 +792,9 @@
       "shadowStrength",
       "shadowTint",
       "contrast",
+      "midtoneLift",
       "specularStrength",
+      "specularSize",
       "edgeHighlight",
       "edgeColorA",
       "edgeAlphaA",
@@ -734,6 +806,9 @@
       "edgeScroll",
       "edgeScrollSpeed",
       "edgeReverse",
+      "innerGlowStrength",
+      "innerGlowWidth",
+      "innerGlowColor",
       "paletteMode",
       "ringScale",
       "ringStrength",
@@ -742,7 +817,13 @@
       "psyColorA",
       "psyColorB",
       "psyColorC",
+      "psyColorD",
       "psyMix",
+      "psyScale",
+      "psyFlow",
+      "psySpinStrength",
+      "paletteCycle",
+      "paletteCycleSpeed",
       "trippyMode",
       "trippySpeed",
       "kaleidoscopeMode",
@@ -1394,7 +1475,9 @@
           uShadowStrength: { value: params.shadowStrength },
           uShadowTint: { value: new THREE.Color(params.shadowTint) },
           uContrast: { value: params.contrast },
+          uMidtoneLift: { value: params.midtoneLift },
           uSpecularStrength: { value: params.specularStrength },
+          uSpecularSize: { value: params.specularSize },
           uEdgeHighlight: { value: params.edgeHighlight ? 1.0 : 0.0 },
           uEdgeColorA: { value: new THREE.Color(params.edgeColorA) },
           uEdgeAlphaA: { value: params.edgeAlphaA },
@@ -1406,6 +1489,9 @@
           uEdgeScroll: { value: params.edgeScroll ? 1.0 : 0.0 },
           uEdgeScrollSpeed: { value: params.edgeScrollSpeed },
           uEdgeReverse: { value: params.edgeReverse ? 1.0 : 0.0 },
+          uInnerGlowStrength: { value: params.innerGlowStrength },
+          uInnerGlowWidth: { value: params.innerGlowWidth },
+          uInnerGlowColor: { value: new THREE.Color(params.innerGlowColor) },
           uPaletteMode: { value: params.paletteMode },
           uRingScale: { value: params.ringScale },
           uRingStrength: { value: params.ringStrength },
@@ -1414,7 +1500,13 @@
           uPsyColorA: { value: new THREE.Color(params.psyColorA) },
           uPsyColorB: { value: new THREE.Color(params.psyColorB) },
           uPsyColorC: { value: new THREE.Color(params.psyColorC) },
-          uPsyMix: { value: params.psyMix }
+          uPsyColorD: { value: new THREE.Color(params.psyColorD) },
+          uPsyMix: { value: params.psyMix },
+          uPsyScale: { value: params.psyScale },
+          uPsyFlow: { value: params.psyFlow },
+          uPsySpinStrength: { value: params.psySpinStrength },
+          uPaletteCycle: { value: params.paletteCycle ? 1.0 : 0.0 },
+          uPaletteCycleSpeed: { value: params.paletteCycleSpeed }
         }
       });
 
@@ -1459,7 +1551,13 @@
       colorFolder.addColor(params, "psyColorA").name("Psy Color A");
       colorFolder.addColor(params, "psyColorB").name("Psy Color B");
       colorFolder.addColor(params, "psyColorC").name("Psy Color C");
-      colorFolder.add(params, "psyMix", 0, 1).name("Psy Mix");
+      colorFolder.addColor(params, "psyColorD").name("Psy Color D");
+      colorFolder.add(params, "psyMix", 0, 1.5).name("Psy Mix");
+      colorFolder.add(params, "psyScale", 0.5, 20).name("Psy Scale");
+      colorFolder.add(params, "psyFlow", 0, 4).name("Psy Flow");
+      colorFolder.add(params, "psySpinStrength", 0, 6).name("Psy Spin");
+      colorFolder.add(params, "paletteCycle").name("Palette Cycle");
+      colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
 
       colorFolder.add(params, "edgeHighlight").name("Edge Highlight");
       colorFolder.addColor(params, "edgeColorA").name("Edge Color A");
@@ -1473,6 +1571,10 @@
       colorFolder.add(params, "edgeScrollSpeed", 0, 3).name("Edge Scroll Speed");
       colorFolder.add(params, "edgeReverse").name("Edge Reverse");
 
+      colorFolder.add(params, "innerGlowStrength", 0, 2).name("Inner Glow Strength");
+      colorFolder.add(params, "innerGlowWidth", 0.1, 4).name("Inner Glow Width");
+      colorFolder.addColor(params, "innerGlowColor").name("Inner Glow Color");
+
       const lightingFolder = gui.addFolder("Lighting");
       lightingFolder.add(params, "lightIntensity", 0, 2).name("Light Intensity");
       lightAzimuthController = lightingFolder.add(params, "lightAzimuth", -Math.PI, Math.PI).name("Light Azimuth").listen();
@@ -1481,7 +1583,9 @@
       lightingFolder.add(params, "shadowStrength", 0, 1.5).name("Shadow Strength");
       lightingFolder.addColor(params, "shadowTint").name("Shadow Tint");
       lightingFolder.add(params, "contrast", 0.3, 2.5).name("Contrast");
-      lightingFolder.add(params, "specularStrength", 0, 2).name("Specular");
+      lightingFolder.add(params, "midtoneLift", 0, 2).name("Midtone Lift");
+      lightingFolder.add(params, "specularStrength", 0, 2.5).name("Specular");
+      lightingFolder.add(params, "specularSize", 0.1, 3).name("Specular Size");
       lightingFolder.add(params, "kaleidoscopeMode").name("Kaleidoscope Mode");
       lightingFolder.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
 
@@ -1613,7 +1717,9 @@
       material.uniforms.uShadowStrength.value = params.shadowStrength;
       material.uniforms.uShadowTint.value.set(params.shadowTint);
       material.uniforms.uContrast.value = params.contrast;
+      material.uniforms.uMidtoneLift.value = params.midtoneLift;
       material.uniforms.uSpecularStrength.value = params.specularStrength;
+      material.uniforms.uSpecularSize.value = params.specularSize;
 
       material.uniforms.uEdgeHighlight.value = params.edgeHighlight ? 1.0 : 0.0;
       material.uniforms.uEdgeColorA.value.set(params.edgeColorA);
@@ -1627,6 +1733,10 @@
       material.uniforms.uEdgeScrollSpeed.value = params.edgeScrollSpeed;
       material.uniforms.uEdgeReverse.value = params.edgeReverse ? 1.0 : 0.0;
 
+      material.uniforms.uInnerGlowStrength.value = params.innerGlowStrength;
+      material.uniforms.uInnerGlowWidth.value = params.innerGlowWidth;
+      material.uniforms.uInnerGlowColor.value.set(params.innerGlowColor);
+
       material.uniforms.uPaletteMode.value = params.paletteMode;
       material.uniforms.uRingScale.value = params.ringScale;
       material.uniforms.uRingStrength.value = params.ringStrength;
@@ -1635,7 +1745,13 @@
       material.uniforms.uPsyColorA.value.set(params.psyColorA);
       material.uniforms.uPsyColorB.value.set(params.psyColorB);
       material.uniforms.uPsyColorC.value.set(params.psyColorC);
+      material.uniforms.uPsyColorD.value.set(params.psyColorD);
       material.uniforms.uPsyMix.value = params.psyMix;
+      material.uniforms.uPsyScale.value = params.psyScale;
+      material.uniforms.uPsyFlow.value = params.psyFlow;
+      material.uniforms.uPsySpinStrength.value = params.psySpinStrength;
+      material.uniforms.uPaletteCycle.value = params.paletteCycle ? 1.0 : 0.0;
+      material.uniforms.uPaletteCycleSpeed.value = params.paletteCycleSpeed;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
