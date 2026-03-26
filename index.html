@@ -456,14 +456,6 @@
     uniform float uPsyGlowThreshold;
     uniform float uPsyGlowOn;
 
-    // NEW UNIFORMS
-    uniform float uUseOutsideLight;
-    uniform float uFractalGlowAccumulation;
-    uniform float uPsyContrastBoost;
-    uniform float uPsyScaleCycle;
-    uniform float uPsyScaleCycleSpeed;
-    uniform float uEffectivePsyScale; // animated scale passed from JS
-
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
       float cy = cos(angles.y), sy = sin(angles.y);
@@ -572,53 +564,6 @@
 
     float luma(vec3 c) {
       return dot(c, vec3(0.299, 0.587, 0.114));
-    }
-
-    // --- HSV helpers for psychedelic color boosting ---
-    vec3 rgb2hsv(vec3 c) {
-      float maxC = max(max(c.r, c.g), c.b);
-      float minC = min(min(c.r, c.g), c.b);
-      float delta = maxC - minC;
-      float h = 0.0;
-      if (delta > 0.00001) {
-        if (maxC == c.r) h = mod((c.g - c.b) / delta, 6.0) / 6.0;
-        else if (maxC == c.g) h = ((c.b - c.r) / delta + 2.0) / 6.0;
-        else h = ((c.r - c.g) / delta + 4.0) / 6.0;
-      }
-      float s = (maxC < 0.00001) ? 0.0 : delta / maxC;
-      return vec3(h, s, maxC);
-    }
-
-    vec3 hsv2rgb(vec3 c) {
-      float h = c.x * 6.0;
-      float s = c.y;
-      float v = c.z;
-      float i = floor(h);
-      float f = h - i;
-      float p = v * (1.0 - s);
-      float q = v * (1.0 - s * f);
-      float t = v * (1.0 - s * (1.0 - f));
-      int ii = int(mod(i, 6.0));
-      if (ii == 0) return vec3(v, t, p);
-      if (ii == 1) return vec3(q, v, p);
-      if (ii == 2) return vec3(p, v, t);
-      if (ii == 3) return vec3(p, q, v);
-      if (ii == 4) return vec3(t, p, v);
-      return vec3(v, p, q);
-    }
-
-    // Boost saturation & value in HSV space, apply vibrance anti-pastel
-    vec3 boostPsyColor(vec3 rgb) {
-      vec3 hsv = rgb2hsv(clamp(rgb, 0.0, 1.0));
-      // Boost saturation strongly — pastel colours have low S
-      hsv.y = clamp(hsv.y * 1.6 + 0.18, 0.0, 1.0);
-      // Boost value so it is visible but not blown out
-      hsv.z = clamp(hsv.z * 1.15 + 0.05, 0.0, 1.0);
-      vec3 boosted = hsv2rgb(hsv);
-      // Vibrance: prevent already-saturated channels from clipping to white
-      float mx = max(max(boosted.r, boosted.g), boosted.b);
-      if (mx > 1.0) boosted /= mx;
-      return boosted;
     }
 
     vec3 applySaturationAndVibrance(vec3 c, float saturation, float vibrance) {
@@ -777,37 +722,31 @@
         lightVal = pow(clamp(lightVal, 0.0, 1.0), max(0.05, uContrast));
         lightVal = clamp(lightVal + (lightVal * (1.0 - lightVal)) * uMidtoneLift, 0.0, 1.0);
 
-        // When outside light is off, set lightVal to a neutral 1.0 so psy colors drive everything
-        float effectiveLightVal = (uUseOutsideLight > 0.5) ? lightVal : 1.0;
-
         float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
         float cyclePhase = uPaletteCycle > 0.5 ? iTime * uPaletteCycleSpeed : 0.0;
         float pattern = patternValue(pos, cyclePhase);
         pattern = quantizeBands(pattern);
 
-        // Use animated psy scale if cycle is on
-        float activePsyScale = (uPsyScaleCycle > 0.5) ? uEffectivePsyScale : uPsyScale;
-
         vec3 baseCol;
 
         if (uPaletteMode < 0.5) {
           vec3 litBaseColor = uColor;
-          baseCol = mix(uShadowTint, litBaseColor, effectiveLightVal);
+          baseCol = mix(uShadowTint, litBaseColor, lightVal);
         } else if (uPaletteMode < 1.5) {
           float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 1.5 + cyclePhase);
           rings = smoothstep(0.18, 0.82, rings);
           rings = quantizeBands(rings);
 
-          vec3 warm = mix(uShadowTint, uWarmColor, effectiveLightVal);
+          vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
           vec3 cool = uCoolColor * pow(rim, 2.0);
           vec3 ringMix = mix(warm, cool, rings * uRingStrength);
 
           float patternDrive = pattern * uPatternBlend * uPatternStrength;
           ringMix = mix(ringMix, mix(uWarmColor, uCoolColor, pattern), patternDrive * 0.9);
 
-          baseCol = mix(uShadowTint, ringMix, clamp(effectiveLightVal + 0.18, 0.0, 1.0));
+          baseCol = mix(uShadowTint, ringMix, clamp(lightVal + 0.18, 0.0, 1.0));
         } else {
-          float radiusField = length(pos.xy) * activePsyScale;
+          float radiusField = length(pos.xy) * uPsyScale;
           float angleField = atan(pos.y, pos.x) * uPsySpinStrength;
           float depthField = pos.z * 1.3;
           float flowField = cyclePhase + iTime * uPsyFlow;
@@ -819,16 +758,16 @@
 
           if (uPsyStyle < 0.5) {
             band1 = 0.5 + 0.5 * sin(radiusField * 0.8 + angleField * 0.75 + flowField * 0.7);
-            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * activePsyScale * 0.45 + depthField * 0.7 + flowField * 0.5);
-            band3 = 0.5 + 0.5 * sin(length(pos) * activePsyScale * 0.42 - angleField * 0.35);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.45 + depthField * 0.7 + flowField * 0.5);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.42 - angleField * 0.35);
           } else if (uPsyStyle < 1.5) {
             band1 = 0.5 + 0.5 * sin(radiusField + angleField + depthField + flowField);
-            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * activePsyScale * 0.65 - angleField * 0.75 + ridgeField + flowField * 0.7);
-            band3 = 0.5 + 0.5 * sin(length(pos) * activePsyScale * 0.55 + angleField * 1.2 - pos.z * 1.2 - flowField * 0.45);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.65 - angleField * 0.75 + ridgeField + flowField * 0.7);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.55 + angleField * 1.2 - pos.z * 1.2 - flowField * 0.45);
           } else {
             band1 = 0.5 + 0.5 * sin(radiusField * 1.15 + angleField * 1.25 + depthField + flowField * 1.2);
-            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * activePsyScale * 0.9 - angleField * 1.1 + ridgeField * 1.2 + flowField);
-            band3 = 0.5 + 0.5 * sin(length(pos) * activePsyScale * 0.72 + angleField * 1.6 - pos.z * 1.8 - flowField * 0.7);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.9 - angleField * 1.1 + ridgeField * 1.2 + flowField);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.72 + angleField * 1.6 - pos.z * 1.8 - flowField * 0.7);
           }
 
           band1 = quantizeBands(band1);
@@ -841,7 +780,7 @@
             band2 * 0.26 +
             band3 * 0.20 +
             rim * uPsyMix * 0.16 +
-            effectiveLightVal * 0.10 +
+            lightVal * 0.10 +
             patternDrive * 0.55
           );
 
@@ -852,11 +791,6 @@
           vec3 psycho2 = psyPalette(quantizeBands(fract(paletteT + 0.22)));
           vec3 psycho3 = psyPalette(quantizeBands(fract(paletteT + 0.47)));
 
-          // Boost each palette sample to full saturation before blending
-          psycho  = boostPsyColor(psycho);
-          psycho2 = boostPsyColor(psycho2);
-          psycho3 = boostPsyColor(psycho3);
-
           vec3 layeredPsy = mix(psycho, psycho2, band2 * 0.65);
           layeredPsy = mix(layeredPsy, psycho3, band3 * 0.5);
 
@@ -864,27 +798,19 @@
           vec3 warmLift = mix(vec3(0.0), uWarmColor, rings * 0.24 * uRingStrength);
           vec3 ridgeCool = uCoolColor * pow(rim, 1.8) * 0.35;
 
-          // Light scaling: with outside light on, vary brightness; with it off, keep full color
-          if (uUseOutsideLight > 0.5) {
-            layeredPsy *= mix(0.7, 1.3, lightVal);
-          } else {
-            layeredPsy *= 1.15; // slight boost when unlit
-          }
+          layeredPsy *= mix(0.7, 1.3, lightVal);
           layeredPsy += warmLift + ridgeCool;
 
           vec3 patternColor = mix(uPsyColorA, uPsyColorD, pattern);
           layeredPsy = mix(layeredPsy, patternColor, patternDrive * 0.75);
 
-          float shadowMix = (uUseOutsideLight > 0.5) ? clamp(effectiveLightVal + 0.22, 0.0, 1.0) : 1.0;
-          baseCol = mix(uShadowTint, layeredPsy, shadowMix);
+          baseCol = mix(uShadowTint, layeredPsy, clamp(lightVal + 0.22, 0.0, 1.0));
         }
 
         float ridge = pow(rim, 2.2);
         float cavity = pow(1.0 - diffuse, 2.0) * (1.0 - shadow);
-        if (uUseOutsideLight > 0.5) {
-          baseCol += uLightColor * ridge * uRidgeAccent * 0.35;
-          baseCol -= vec3(cavity * uCavityStrength * 0.35);
-        }
+        baseCol += uLightColor * ridge * uRidgeAccent * 0.35;
+        baseCol -= vec3(cavity * uCavityStrength * 0.35);
 
         baseCol *= uColorIntensity;
         baseCol = applySaturationAndVibrance(baseCol, uColorSaturation, uColorVibrance);
@@ -896,43 +822,17 @@
           vec3 psy = max(baseCol, vec3(0.0));
 
           float depthShade = mix(1.0, 0.35 + 0.65 * lightVal, clamp(uPsyDepthShade, 0.0, 1.0));
-          if (uUseOutsideLight > 0.5) psy *= depthShade;
+          psy *= depthShade;
 
           psy = pow(max(psy, vec3(0.0)), vec3(1.0 / max(0.001, uPsyContrast)));
 
           float psyLum = dot(psy, vec3(0.299, 0.587, 0.114));
           psy = mix(vec3(psyLum), psy, uPsySaturation);
 
-          // FIXED: internal glow — measure the per-pixel luminance proximity to edge structures
-          // by checking how close the shaded color is above the threshold; amplify those pixels
-          float brightnessMask = max(max(psy.r, psy.g), psy.b);
-          float glowMask = smoothstep(uPsyGlowThreshold - 0.25, uPsyGlowThreshold, brightnessMask);
-
-          // Additional edge-proximity factor using rim to concentrate glow inward
-          float rimInward = 1.0 - pow(clamp(rim * 2.5, 0.0, 1.0), 2.5);
-          float internalMask = glowMask * rimInward;
-
-          // psyInternalGlow now additively illuminates the colour, with a narrow band focus
-          vec3 psyInternalGlow = psy * internalMask * uPsyInternalGlow * uPsyGlowOn;
+          float glowMask = smoothstep(uPsyGlowThreshold, 1.0, max(max(psy.r, psy.g), psy.b));
+          vec3 psyInternalGlow = psy * glowMask * uPsyInternalGlow * uPsyGlowOn;
 
           vec3 emissiveCol = psy * uPsyEmission + psyInternalGlow;
-
-          // Contrast boost after emission: (c - 0.5) * boost + 0.5
-          if (uPsyContrastBoost > 0.001) {
-            emissiveCol = clamp((emissiveCol - 0.5) * (1.0 + uPsyContrastBoost) + 0.5, 0.0, 1.5);
-          }
-
-          // Fractal glow accumulation: bloom around high-contrast edges
-          if (uFractalGlowAccumulation > 0.001) {
-            float edgeFactor = pow(clamp(rim, 0.0, 1.0), 1.2);
-            float localContrast = length(emissiveCol - vec3(dot(emissiveCol, vec3(0.333))));
-            float glowAccum = edgeFactor * localContrast * uFractalGlowAccumulation;
-            emissiveCol += emissiveCol * glowAccum;
-          }
-
-          // Clamp to prevent white washout — preserve hue
-          float emMax = max(max(emissiveCol.r, emissiveCol.g), emissiveCol.b);
-          if (emMax > 1.0) emissiveCol /= emMax;
 
           if (uPsyShaderMode < 1.5) {
             shadedColor = emissiveCol;
@@ -943,18 +843,12 @@
 
           specular = vec3(0.0);
         } else {
-          if (uUseOutsideLight > 0.5) {
-            if (uPreserveHighlightColor > 0.5) {
-              vec3 lit = mix(vec3(0.25), uLightColor, lightVal);
-              shadedColor = baseCol * lit;
-            } else {
-              shadedColor = mix(baseCol * 0.35, baseCol, lightVal);
-              shadedColor += uLightColor * spec * 0.25;
-            }
+          if (uPreserveHighlightColor > 0.5) {
+            vec3 lit = mix(vec3(0.25), uLightColor, lightVal);
+            shadedColor = baseCol * lit;
           } else {
-            // Outside light off in lit mode: just show full base color
-            shadedColor = baseCol;
-            specular = vec3(0.0);
+            shadedColor = mix(baseCol * 0.35, baseCol, lightVal);
+            shadedColor += uLightColor * spec * 0.25;
           }
         }
 
@@ -1138,12 +1032,10 @@
       musicMatch: false,
       zoomValue: 2.2,
 
-      // NEW PARAMS
-      useOutsideLight: true,
-      fractalGlowAccumulation: 0.0,
-      psyContrastBoost: 0.0,
+      // --- ADDED: Psy Scale Cycle ---
       psyScaleCycle: false,
-      psyScaleCycleSpeed: 0.5
+      psyScaleCycleSpeed: 0.5,
+      psyScaleCycleAmount: 2.0
     };
 
     const PRESET_KEYS = Object.keys(params);
@@ -1907,15 +1799,7 @@
           uPsySaturation: { value: params.psySaturation },
           uPsyInternalGlow: { value: params.psyInternalGlow },
           uPsyGlowThreshold: { value: params.psyGlowThreshold },
-          uPsyGlowOn: { value: params.psyGlowOn ? 1.0 : 0.0 },
-
-          // NEW UNIFORMS
-          uUseOutsideLight: { value: params.useOutsideLight ? 1.0 : 0.0 },
-          uFractalGlowAccumulation: { value: params.fractalGlowAccumulation },
-          uPsyContrastBoost: { value: params.psyContrastBoost },
-          uPsyScaleCycle: { value: params.psyScaleCycle ? 1.0 : 0.0 },
-          uPsyScaleCycleSpeed: { value: params.psyScaleCycleSpeed },
-          uEffectivePsyScale: { value: params.psyScale }
+          uPsyGlowOn: { value: params.psyGlowOn ? 1.0 : 0.0 }
         }
       });
 
@@ -1969,9 +1853,10 @@
       colorFolder.add(params, "psySpinStrength", 0, 6).name("Psy Spin");
       colorFolder.add(params, "paletteCycle").name("Palette Cycle");
       colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
-      // Psy Scale Cycle controls in Color & Palette
+      // --- ADDED: Psy Scale Cycle controls ---
       colorFolder.add(params, "psyScaleCycle").name("Psy Scale Cycle");
       colorFolder.add(params, "psyScaleCycleSpeed", 0.0, 4.0).name("Scale Cycle Speed");
+      colorFolder.add(params, "psyScaleCycleAmount", 0.0, 10.0).name("Scale Cycle Amount");
 
       const psyShaderFolder = gui.addFolder("Psy Shader Mode");
       psyShaderFolder.add(params, "psyShaderMode", {
@@ -1986,10 +1871,6 @@
       psyShaderFolder.add(params, "psyGlowOn").name("Internal Glow On");
       psyShaderFolder.add(params, "psyInternalGlow", 0, 1.5).name("Psy Internal Glow");
       psyShaderFolder.add(params, "psyGlowThreshold", 0.3, 1.0).name("Glow Threshold");
-      // New psy shader controls
-      psyShaderFolder.add(params, "useOutsideLight").name("Outside Light");
-      psyShaderFolder.add(params, "fractalGlowAccumulation", 0, 3.0).name("Glow Accumulation");
-      psyShaderFolder.add(params, "psyContrastBoost", 0, 2.0).name("Contrast Boost");
 
       const gradingFolder = gui.addFolder("Color Grading");
       gradingFolder.add(params, "colorSaturation", 0, 2.5).name("Saturation");
@@ -2166,15 +2047,6 @@
         if (rotZController) rotZController.updateDisplay();
       }
 
-      // Psy Scale Cycle: animate psyScale via sine wave
-      let effectivePsyScale = params.psyScale;
-      if (params.psyScaleCycle) {
-        const scaleRange = params.psyScale * 0.5; // oscillate ±50% around base
-        effectivePsyScale = params.psyScale + Math.sin(elapsedTime * params.psyScaleCycleSpeed) * scaleRange;
-        effectivePsyScale = Math.max(0.1, effectivePsyScale);
-      }
-      material.uniforms.uEffectivePsyScale.value = effectivePsyScale;
-
       material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
       material.uniforms.uFractalRotation.value.set(
         params.uFractalRotationX,
@@ -2250,7 +2122,15 @@
       material.uniforms.uPsyColorC.value.set(params.psyColorC);
       material.uniforms.uPsyColorD.value.set(params.psyColorD);
       material.uniforms.uPsyMix.value = params.psyMix;
-      material.uniforms.uPsyScale.value = params.psyScale;
+
+      // --- ADDED: Psy Scale Cycle animation in JS, zero shader cost ---
+      if (params.psyScaleCycle) {
+        const animatedPsyScale = params.psyScale + Math.sin(elapsedTime * params.psyScaleCycleSpeed) * params.psyScaleCycleAmount;
+        material.uniforms.uPsyScale.value = Math.max(0.1, animatedPsyScale);
+      } else {
+        material.uniforms.uPsyScale.value = params.psyScale;
+      }
+
       material.uniforms.uPsyFlow.value = params.psyFlow;
       material.uniforms.uPsySpinStrength.value = params.psySpinStrength;
       material.uniforms.uPaletteCycle.value = params.paletteCycle ? 1.0 : 0.0;
@@ -2274,13 +2154,6 @@
       material.uniforms.uPsyInternalGlow.value = params.psyInternalGlow;
       material.uniforms.uPsyGlowThreshold.value = params.psyGlowThreshold;
       material.uniforms.uPsyGlowOn.value = params.psyGlowOn ? 1.0 : 0.0;
-
-      // NEW UNIFORMS update
-      material.uniforms.uUseOutsideLight.value = params.useOutsideLight ? 1.0 : 0.0;
-      material.uniforms.uFractalGlowAccumulation.value = params.fractalGlowAccumulation;
-      material.uniforms.uPsyContrastBoost.value = params.psyContrastBoost;
-      material.uniforms.uPsyScaleCycle.value = params.psyScaleCycle ? 1.0 : 0.0;
-      material.uniforms.uPsyScaleCycleSpeed.value = params.psyScaleCycleSpeed;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
