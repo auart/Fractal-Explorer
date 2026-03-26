@@ -1030,12 +1030,7 @@
       kaleidoscopeMode: false,
       kaleidoscopeSpeed: 1.0,
       musicMatch: false,
-      zoomValue: 2.2,
-
-      // --- ADDED: Psy Scale Cycle ---
-      psyScaleCycle: false,
-      psyScaleCycleSpeed: 0.5,
-      psyScaleCycleAmount: 2.0
+      zoomValue: 2.2
     };
 
     const PRESET_KEYS = Object.keys(params);
@@ -1853,10 +1848,6 @@
       colorFolder.add(params, "psySpinStrength", 0, 6).name("Psy Spin");
       colorFolder.add(params, "paletteCycle").name("Palette Cycle");
       colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
-      // --- ADDED: Psy Scale Cycle controls ---
-      colorFolder.add(params, "psyScaleCycle").name("Psy Scale Cycle");
-      colorFolder.add(params, "psyScaleCycleSpeed", 0.0, 4.0).name("Scale Cycle Speed");
-      colorFolder.add(params, "psyScaleCycleAmount", 0.0, 10.0).name("Scale Cycle Amount");
 
       const psyShaderFolder = gui.addFolder("Psy Shader Mode");
       psyShaderFolder.add(params, "psyShaderMode", {
@@ -2122,15 +2113,7 @@
       material.uniforms.uPsyColorC.value.set(params.psyColorC);
       material.uniforms.uPsyColorD.value.set(params.psyColorD);
       material.uniforms.uPsyMix.value = params.psyMix;
-
-      // --- ADDED: Psy Scale Cycle animation in JS, zero shader cost ---
-      if (params.psyScaleCycle) {
-        const animatedPsyScale = params.psyScale + Math.sin(elapsedTime * params.psyScaleCycleSpeed) * params.psyScaleCycleAmount;
-        material.uniforms.uPsyScale.value = Math.max(0.1, animatedPsyScale);
-      } else {
-        material.uniforms.uPsyScale.value = params.psyScale;
-      }
-
+      material.uniforms.uPsyScale.value = params.psyScale;
       material.uniforms.uPsyFlow.value = params.psyFlow;
       material.uniforms.uPsySpinStrength.value = params.psySpinStrength;
       material.uniforms.uPaletteCycle.value = params.paletteCycle ? 1.0 : 0.0;
