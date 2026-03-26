@@ -368,6 +368,7 @@
 
     uniform vec3 uFractalRotation;
 
+    // Legacy uniforms kept for preset compatibility — no longer drive UV
     uniform float uMirror;
     uniform float uMirrorQuad;
 
@@ -455,6 +456,177 @@
     uniform float uPsyInternalGlow;
     uniform float uPsyGlowThreshold;
     uniform float uPsyGlowOn;
+
+    // ── NEW: Symmetry pipeline uniforms ─────────────────────────────────────
+    // symmetryMode:
+    //   0 = none
+    //   1 = horizontal mirror
+    //   2 = vertical mirror
+    //   3 = dual mirror (x + y)
+    //   4 = quad mirror (tile+fold to positive quadrant)
+    //   5 = diagonal mirror (fold along y=x)
+    //   6 = radial (kaleidoscope)
+    //   7 = tiling
+    //   8 = polar (tunnel)
+    uniform float uSymmetryMode;
+    uniform float uRadialSegments;   // 3..16, used by radial mode
+
+    // Stacked transform toggles + amounts
+    uniform float uSymmetryStack;    // 1 = apply stack after base mode
+    uniform float uTwistOn;          // 1 = apply twist
+    uniform float uTwistAmount;      // signed, how much twist per unit radius
+    uniform float uFoldOn;           // 1 = apply fold
+    uniform float uFoldIterations;   // 1..5, fold passes
+    uniform float uTileOn;           // 1 = apply tiling
+    uniform float uTileAmount;       // tile repeat scale
+    uniform float uPolarOn;          // 1 = apply polar warp
+    uniform float uOffsetOn;         // 1 = apply offset jitter between slices
+    uniform float uOffsetAmount;     // strength of offset
+
+    // ── HELPERS ─────────────────────────────────────────────────────────────
+
+    // Rotate a 2-D vector by angle (radians)
+    vec2 rot2(vec2 v, float a) {
+      float c = cos(a), s = sin(a);
+      return vec2(v.x * c - v.y * s, v.x * s + v.y * c);
+    }
+
+    // ── SYMMETRY BUILDING BLOCKS ─────────────────────────────────────────────
+
+    // 1. Base mode: maps raw aspect-correct UV → symmetrised UV
+    vec2 applyBaseMode(vec2 uv) {
+      float mode = uSymmetryMode;
+
+      // 0 – none: return as-is
+      if (mode < 0.5) {
+        return uv;
+      }
+
+      // 1 – horizontal mirror: fold left/right
+      if (mode < 1.5) {
+        uv.x = abs(uv.x);
+        return uv;
+      }
+
+      // 2 – vertical mirror: fold top/bottom
+      if (mode < 2.5) {
+        uv.y = abs(uv.y);
+        return uv;
+      }
+
+      // 3 – dual mirror: fold both axes
+      if (mode < 3.5) {
+        uv = abs(uv);
+        return uv;
+      }
+
+      // 4 – quad mirror: tile to [0,1] then fold to positive quadrant
+      //     (replicates original mirrorQuad behaviour)
+      if (mode < 4.5) {
+        vec2 uv01 = (uv + 1.0) * 0.5;
+        uv01 = abs(fract(uv01) - 0.5) * 2.0;
+        return uv01 * 2.0 - 1.0;
+      }
+
+      // 5 – diagonal mirror: fold along y = x line
+      if (mode < 5.5) {
+        if (uv.y > uv.x) { float tmp = uv.x; uv.x = uv.y; uv.y = tmp; }
+        return uv;
+      }
+
+      // 6 – radial kaleidoscope: divide circle into N equal slices then fold
+      if (mode < 6.5) {
+        float n    = max(2.0, uRadialSegments);
+        float slice = 3.14159265 / n;          // half-angle of one slice
+        float angle = atan(uv.y, uv.x);
+        float radius= length(uv);
+        // Wrap angle into [0, 2*slice)
+        angle = mod(angle, 2.0 * slice);
+        // Fold second half back
+        if (angle > slice) angle = 2.0 * slice - angle;
+        return vec2(cos(angle), sin(angle)) * radius;
+      }
+
+      // 7 – tiling: wrap UV space, centre each tile
+      if (mode < 7.5) {
+        float s  = max(0.1, uTileAmount);
+        vec2 t   = uv * s;
+        t        = fract(t + 0.5) - 0.5;     // centre around 0
+        return t / s;
+      }
+
+      // 8 – polar / tunnel: map cartesian → polar then treat r,theta as u,v
+      if (mode < 8.5) {
+        float r = length(uv);
+        float a = atan(uv.y, uv.x) / 3.14159265; // normalise to [-1,1]
+        return vec2(a, r - 0.5);
+      }
+
+      return uv; // fallback
+    }
+
+    // 2. Twist: rotate UV by amount proportional to distance from centre
+    vec2 applyTwist(vec2 uv) {
+      float r = length(uv);
+      float a = r * uTwistAmount;
+      return rot2(uv, a);
+    }
+
+    // 3. Fold: repeatedly fold space across x and y axes (abs-fold)
+    vec2 applyFold(vec2 uv) {
+      int iters = int(clamp(uFoldIterations, 1.0, 5.0));
+      for (int i = 0; i < 5; i++) {
+        if (i >= iters) break;
+        uv = abs(uv) - 0.5;   // fold, then shift so folds don't perfectly overlap
+      }
+      return uv;
+    }
+
+    // 4. Additional tiling pass (used when stack is on and tileOn is set
+    //    independently of mode 7, allowing tiling ON TOP of another mode)
+    vec2 applyTile(vec2 uv) {
+      float s = max(0.1, uTileAmount);
+      return (fract(uv * s + 0.5) - 0.5) / s;
+    }
+
+    // 5. Polar warp: extra tunnel-like push that swirls UV in a circle
+    vec2 applyPolar(vec2 uv) {
+      float r = length(uv) + 0.0001;
+      float a = atan(uv.y, uv.x);
+      // Map to polar coords, distort, then back
+      float nr = fract(r * 1.5 + 0.5) / 1.5;
+      float na = a + 0.4 / r;
+      return vec2(cos(na), sin(na)) * nr;
+    }
+
+    // 6. Offset: nudge each radial sector very slightly to break perfect symmetry
+    vec2 applyOffset(vec2 uv) {
+      float a      = atan(uv.y, uv.x);
+      float sector = floor(a / (3.14159265 / 4.0)); // 8 sectors
+      // Deterministic per-sector tiny rotation so sectors don't align perfectly
+      float nudge  = sector * 0.73 + 1.37;
+      float off    = (fract(nudge) - 0.5) * uOffsetAmount;
+      return rot2(uv, off);
+    }
+
+    // ── MASTER PIPELINE ──────────────────────────────────────────────────────
+    vec2 applySymmetry(vec2 uv) {
+      // Step 1: base symmetry mode
+      uv = applyBaseMode(uv);
+
+      // Step 2: stacked transforms (only when stack toggle is on)
+      if (uSymmetryStack > 0.5) {
+        if (uTwistOn  > 0.5) uv = applyTwist(uv);
+        if (uFoldOn   > 0.5) uv = applyFold(uv);
+        if (uTileOn   > 0.5) uv = applyTile(uv);
+        if (uPolarOn  > 0.5) uv = applyPolar(uv);
+        if (uOffsetOn > 0.5) uv = applyOffset(uv);
+      }
+
+      return uv;
+    }
+
+    // ── UNCHANGED FRACTAL CODE ───────────────────────────────────────────────
 
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
@@ -673,22 +845,14 @@
     }
 
     void main() {
-      vec2 uv;
+      // ── Build aspect-correct base UV ────────────────────────────────────────
       vec2 baseUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
       baseUv.x *= iResolution.x / iResolution.y;
 
-      if (uMirrorQuad > 0.5) {
-        vec2 uv01 = (baseUv + 1.0) / 2.0;
-        uv01 = mod(uv01 * 2.0, 1.0);
-        uv01 = abs(uv01 - 0.5) * 2.0;
-        uv = uv01 * 2.0 - 1.0;
-      } else if (uMirror > 0.5) {
-        uv = baseUv;
-        uv.x = abs(uv.x);
-      } else {
-        uv = baseUv;
-      }
+      // ── Apply the full symmetry pipeline ────────────────────────────────────
+      vec2 uv = applySymmetry(baseUv);
 
+      // ── Ray setup (unchanged) ───────────────────────────────────────────────
       vec3 ro = uCamPos;
       vec3 rd = normalize(uv.x * uCamRight + uv.y * uCamUp + 1.5 * uCamForward);
 
@@ -937,6 +1101,7 @@
       rotateSpeedY: 1.0,
       rotateSpeedZ: 0.75,
 
+      // legacy kept for preset compat — no longer drive UV directly
       mirror: false,
       mirrorQuad: false,
 
@@ -1032,10 +1197,24 @@
       musicMatch: false,
       zoomValue: 2.2,
 
-      // --- ADDED: Psy Scale Cycle ---
+      // Psy Scale Cycle
       psyScaleCycle: false,
       psyScaleCycleSpeed: 0.5,
-      psyScaleCycleAmount: 2.0
+      psyScaleCycleAmount: 2.0,
+
+      // ── NEW: Symmetry pipeline ──────────────────────────────────────────────
+      symmetryMode: 0,          // 0-8, see shader comments
+      radialSegments: 6,        // 3-16
+      symmetryStack: false,     // enable stacked transforms
+      twistOn: false,
+      twistAmount: 1.5,
+      foldOn: false,
+      foldIterations: 2,
+      tileOn: false,
+      tileAmount: 2.0,
+      polarOn: false,
+      offsetOn: false,
+      offsetAmount: 0.25
     };
 
     const PRESET_KEYS = Object.keys(params);
@@ -1059,6 +1238,18 @@
       "Double Spiral": 15,
       Voronoi: 16,
       Marble: 17
+    };
+
+    const SYMMETRY_MODE_OPTIONS = {
+      "None": 0,
+      "Horizontal Mirror": 1,
+      "Vertical Mirror": 2,
+      "Dual Mirror": 3,
+      "Quad Mirror": 4,
+      "Diagonal Mirror": 5,
+      "Radial (Kaleidoscope)": 6,
+      "Tiling": 7,
+      "Polar (Tunnel)": 8
     };
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -1714,8 +1905,8 @@
 
           uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
 
-          uMirror: { value: params.mirror ? 1.0 : 0.0 },
-          uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
+          uMirror: { value: 0.0 },
+          uMirrorQuad: { value: 0.0 },
 
           uLightIntensity: { value: params.lightIntensity },
           uLightAzimuth: { value: params.lightAzimuth },
@@ -1799,7 +1990,21 @@
           uPsySaturation: { value: params.psySaturation },
           uPsyInternalGlow: { value: params.psyInternalGlow },
           uPsyGlowThreshold: { value: params.psyGlowThreshold },
-          uPsyGlowOn: { value: params.psyGlowOn ? 1.0 : 0.0 }
+          uPsyGlowOn: { value: params.psyGlowOn ? 1.0 : 0.0 },
+
+          // ── Symmetry pipeline uniforms ────────────────────────────────────
+          uSymmetryMode:    { value: params.symmetryMode },
+          uRadialSegments:  { value: params.radialSegments },
+          uSymmetryStack:   { value: params.symmetryStack ? 1.0 : 0.0 },
+          uTwistOn:         { value: params.twistOn ? 1.0 : 0.0 },
+          uTwistAmount:     { value: params.twistAmount },
+          uFoldOn:          { value: params.foldOn ? 1.0 : 0.0 },
+          uFoldIterations:  { value: params.foldIterations },
+          uTileOn:          { value: params.tileOn ? 1.0 : 0.0 },
+          uTileAmount:      { value: params.tileAmount },
+          uPolarOn:         { value: params.polarOn ? 1.0 : 0.0 },
+          uOffsetOn:        { value: params.offsetOn ? 1.0 : 0.0 },
+          uOffsetAmount:    { value: params.offsetAmount }
         }
       });
 
@@ -1833,6 +2038,26 @@
       motionFolder.add(params, "autoRotateZ").name("Auto Rotate Z");
       motionFolder.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
 
+      // ── Symmetry folder ──────────────────────────────────────────────────
+      const symFolder = gui.addFolder("Symmetry");
+      symFolder.add(params, "symmetryMode", SYMMETRY_MODE_OPTIONS).name("Symmetry Mode");
+      symFolder.add(params, "radialSegments", 3, 16, 1).name("Radial Segments");
+
+      symFolder.add(params, "symmetryStack").name("Enable Stack");
+
+      const stackFolder = symFolder.addFolder("Stacked Transforms");
+      stackFolder.add(params, "twistOn").name("Twist On");
+      stackFolder.add(params, "twistAmount", -6.0, 6.0).name("Twist Amount");
+      stackFolder.add(params, "foldOn").name("Fold On");
+      stackFolder.add(params, "foldIterations", 1, 5, 1).name("Fold Iterations");
+      stackFolder.add(params, "tileOn").name("Tile On");
+      stackFolder.add(params, "tileAmount", 0.5, 8.0).name("Tile Amount");
+      stackFolder.add(params, "polarOn").name("Polar Warp On");
+      stackFolder.add(params, "offsetOn").name("Offset On");
+      stackFolder.add(params, "offsetAmount", 0.0, 1.5).name("Offset Amount");
+
+      symFolder.open();
+
       const colorFolder = gui.addFolder("Color & Palette");
       colorFolder.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
       colorFolder.add(params, "psyStyle", { Old: 0, Hybrid: 1, New: 2 }).name("Psy Style");
@@ -1853,7 +2078,6 @@
       colorFolder.add(params, "psySpinStrength", 0, 6).name("Psy Spin");
       colorFolder.add(params, "paletteCycle").name("Palette Cycle");
       colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
-      // --- ADDED: Psy Scale Cycle controls ---
       colorFolder.add(params, "psyScaleCycle").name("Psy Scale Cycle");
       colorFolder.add(params, "psyScaleCycleSpeed", 0.0, 4.0).name("Scale Cycle Speed");
       colorFolder.add(params, "psyScaleCycleAmount", 0.0, 10.0).name("Scale Cycle Amount");
@@ -1945,8 +2169,8 @@
       rotXController = miscFolder.add(params, "uFractalRotationX", 0, Math.PI * 2).name("Rotation X");
       rotYController = miscFolder.add(params, "uFractalRotationY", 0, Math.PI * 2).name("Rotation Y");
       rotZController = miscFolder.add(params, "uFractalRotationZ", 0, Math.PI * 2).name("Rotation Z");
-      miscFolder.add(params, "mirror").name("Mirror Mode");
-      miscFolder.add(params, "mirrorQuad").name("Quad Mirror Mode");
+      miscFolder.add(params, "mirror").name("Mirror Mode (legacy)");
+      miscFolder.add(params, "mirrorQuad").name("Quad Mirror (legacy)");
 
       fractalFolder.open();
       colorFolder.open();
@@ -2123,7 +2347,7 @@
       material.uniforms.uPsyColorD.value.set(params.psyColorD);
       material.uniforms.uPsyMix.value = params.psyMix;
 
-      // --- ADDED: Psy Scale Cycle animation in JS, zero shader cost ---
+      // Psy Scale Cycle
       if (params.psyScaleCycle) {
         const animatedPsyScale = params.psyScale + Math.sin(elapsedTime * params.psyScaleCycleSpeed) * params.psyScaleCycleAmount;
         material.uniforms.uPsyScale.value = Math.max(0.1, animatedPsyScale);
@@ -2154,6 +2378,20 @@
       material.uniforms.uPsyInternalGlow.value = params.psyInternalGlow;
       material.uniforms.uPsyGlowThreshold.value = params.psyGlowThreshold;
       material.uniforms.uPsyGlowOn.value = params.psyGlowOn ? 1.0 : 0.0;
+
+      // ── Symmetry pipeline uniform updates ──────────────────────────────────
+      material.uniforms.uSymmetryMode.value   = params.symmetryMode;
+      material.uniforms.uRadialSegments.value = params.radialSegments;
+      material.uniforms.uSymmetryStack.value  = params.symmetryStack ? 1.0 : 0.0;
+      material.uniforms.uTwistOn.value        = params.twistOn  ? 1.0 : 0.0;
+      material.uniforms.uTwistAmount.value    = params.twistAmount;
+      material.uniforms.uFoldOn.value         = params.foldOn   ? 1.0 : 0.0;
+      material.uniforms.uFoldIterations.value = params.foldIterations;
+      material.uniforms.uTileOn.value         = params.tileOn   ? 1.0 : 0.0;
+      material.uniforms.uTileAmount.value     = params.tileAmount;
+      material.uniforms.uPolarOn.value        = params.polarOn  ? 1.0 : 0.0;
+      material.uniforms.uOffsetOn.value       = params.offsetOn ? 1.0 : 0.0;
+      material.uniforms.uOffsetAmount.value   = params.offsetAmount;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
