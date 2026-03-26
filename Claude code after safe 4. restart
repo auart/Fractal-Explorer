@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fractal Explorer, Psy Shader Mode Test</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: black;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      color: white;
+    }
+
+    #appShell {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      position: relative;
+      background: black;
+    }
+
+    #leftPanel {
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+      border-right: 1px solid rgba(255,255,255,0.12);
+      z-index: 20;
+    }
+
+    #rightPanel {
+      width: 340px;
+      min-width: 340px;
+      max-width: 340px;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+      border-left: 1px solid rgba(255,255,255,0.12);
+      z-index: 20;
+    }
+
+    #canvasContainer {
+      flex: 1;
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: black;
+    }
+
+    #previewFrame {
+      position: absolute;
+      background: black;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panelBox {
+      background: rgba(255,255,255,0.92);
+      color: #000;
+      padding: 10px;
+      border: 1px solid #000;
+      box-sizing: border-box;
+    }
+
+    .panelBox label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .rowGap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #leftPanel button,
+    #leftPanel select,
+    #leftPanel input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1px solid #000;
+    }
+
+    #leftPanel button {
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    #leftPanel button:disabled {
+      opacity: 0.7;
+      cursor: wait;
+    }
+
+    #startOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(4px);
+    }
+
+    #startCard {
+      width: min(92vw, 520px);
+      padding: 34px 28px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(0, 0, 0, 0.58);
+      color: white;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    #startCard h1 {
+      margin: 0 0 10px 0;
+      font-size: 38px;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      font-weight: 700;
+    }
+
+    #startCard p {
+      margin: 0 0 22px 0;
+      font-size: 15px;
+      line-height: 1.5;
+      color: rgba(255,255,255,0.78);
+    }
+
+    .startButtons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .startButtons button {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      cursor: pointer;
+      border: 1px solid white;
+      background: white;
+      color: black;
+      box-sizing: border-box;
+    }
+
+    .startButtons button.secondary {
+      background: transparent;
+      color: white;
+    }
+
+    #startStatus {
+      margin-top: 14px;
+      min-height: 20px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.72);
+    }
+
+    .dg.main {
+      width: 100% !important;
+    }
+
+    .dg {
+      color: #fff !important;
+    }
+
+    .dg .cr.number input[type=text] {
+      color: #000 !important;
+    }
+
+    #rightPanel .dg.main {
+      margin: 0 !important;
+    }
+
+    @media only screen and (max-width: 1100px) {
+      #leftPanel {
+        width: 210px;
+        min-width: 210px;
+        max-width: 210px;
+      }
+
+      #rightPanel {
+        width: 300px;
+        min-width: 300px;
+        max-width: 300px;
+      }
+    }
+
+    @media only screen and (max-width: 900px) {
+      #appShell {
+        flex-direction: column;
+      }
+
+      #leftPanel,
+      #rightPanel {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 28vh;
+        border: none;
+      }
+
+      #leftPanel {
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+      }
+
+      #rightPanel {
+        border-top: 1px solid rgba(255,255,255,0.12);
+      }
+
+      #canvasContainer {
+        height: 44vh;
+      }
+
+      #startCard h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="startOverlay">
+    <div id="startCard">
+      <h1>Fractal Explorer</h1>
+      <p>Choose how you want to start. You can use live microphone input for audio reactivity, or continue without it.</p>
+      <div class="startButtons">
+        <button id="enterWithMicBtn">Start with Microphone</button>
+        <button id="enterWithoutMicBtn" class="secondary">Start without Microphone</button>
+      </div>
+      <div id="startStatus"></div>
+    </div>
+  </div>
+
+  <div id="appShell">
+    <div id="leftPanel">
+      <div class="panelBox rowGap">
+        <label for="presetNameInput">Preset Name</label>
+        <input id="presetNameInput" type="text" placeholder="My preset" />
+
+        <button id="savePresetBtn">Save Preset</button>
+        <button id="overwritePresetBtn">Overwrite Selected</button>
+
+        <label for="presetSelect">Load Preset</label>
+        <select id="presetSelect">
+          <option value="">No saved presets</option>
+        </select>
+
+        <button id="loadPresetBtn">Load Selected</button>
+        <button id="deletePresetBtn">Delete Selected</button>
+        <button id="exportPresetBtn">Export Preset JSON</button>
+        <button id="importPresetBtn">Import Preset JSON</button>
+        <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;" />
+      </div>
+
+      <div class="panelBox rowGap">
+        <label for="exportFormatSelect">Export Format</label>
+        <select id="exportFormatSelect">
+          <option value="3840x2160" selected>Landscape 4K, 3840 x 2160</option>
+          <option value="2160x3840">Vertical 4K, 2160 x 3840</option>
+          <option value="1080x1920">Vertical HD, 1080 x 1920</option>
+          <option value="2160x2160">Square 4K, 2160 x 2160</option>
+        </select>
+
+        <label for="formatSelect">Video Format</label>
+        <select id="formatSelect">
+          <option value="webm-vp9">WebM VP9</option>
+          <option value="webm">WebM Basic</option>
+          <option value="mp4">MP4, if supported</option>
+        </select>
+
+        <label for="qualitySelect">Video Quality</label>
+        <select id="qualitySelect">
+          <option value="low">Low, 5 Mbps</option>
+          <option value="medium">Medium, 12 Mbps</option>
+          <option value="high" selected>High, 25 Mbps</option>
+          <option value="ultra">Ultra, 50 Mbps</option>
+        </select>
+
+        <label for="durationSelect">Clip Duration</label>
+        <select id="durationSelect">
+          <option value="5">5 sec</option>
+          <option value="10" selected>10 sec</option>
+          <option value="15">15 sec</option>
+          <option value="30">30 sec</option>
+        </select>
+      </div>
+
+      <button id="exportStillBtn">Export Still</button>
+      <button id="recordBtn">Record Clip</button>
+      <button id="fsToggleBtn">Enter Full Screen</button>
+    </div>
+
+    <div id="canvasContainer">
+      <div id="previewFrame"></div>
+    </div>
+
+    <div id="rightPanel">
+      <div id="gui"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    #ifdef GL_OES_standard_derivatives
+    #extension GL_OES_standard_derivatives : enable
+    #endif
+
+    precision mediump float;
+
+    uniform vec2 iResolution;
+    uniform float iTime;
+
+    uniform float uPower;
+    uniform float uBailout;
+    uniform int uIterations;
+    uniform float uSurfaceEpsilon;
+    uniform int uMaxSteps;
+    uniform float uMaxDistance;
+    uniform vec3 uColor;
+
+    uniform float uMusic;
+    uniform int uShape;
+
+    uniform vec3 uCamPos;
+    uniform vec3 uCamRight;
+    uniform vec3 uCamUp;
+    uniform vec3 uCamForward;
+
+    uniform vec3 uFractalRotation;
+
+    uniform float uMirror;
+    uniform float uMirrorQuad;
+
+    uniform float uLightIntensity;
+    uniform float uLightAzimuth;
+    uniform float uLightElevation;
+    uniform vec3 uLightColor;
+
+    uniform float uShadowStrength;
+    uniform vec3 uShadowTint;
+    uniform float uContrast;
+    uniform float uMidtoneLift;
+    uniform float uSpecularStrength;
+    uniform float uSpecularSize;
+
+    uniform float uColorSaturation;
+    uniform float uColorVibrance;
+    uniform float uPaletteContrast;
+    uniform float uColorIntensity;
+    uniform float uPreserveHighlightColor;
+
+    uniform float uRidgeAccent;
+    uniform float uCavityStrength;
+
+    uniform float uGlowOn;
+    uniform vec3 uGlowColorA;
+    uniform float uGlowAlphaA;
+    uniform vec3 uGlowColorB;
+    uniform float uGlowAlphaB;
+    uniform float uGlowStrength;
+    uniform float uGlowWidth;
+    uniform float uGlowEmission;
+    uniform float uGlowScroll;
+    uniform float uGlowScrollSpeed;
+    uniform float uGlowReverse;
+
+    uniform float uLineOn;
+    uniform vec3 uLineColorA;
+    uniform float uLineAlphaA;
+    uniform vec3 uLineColorB;
+    uniform float uLineAlphaB;
+    uniform float uLineStrength;
+    uniform float uLineWidth;
+    uniform float uLineSoftness;
+    uniform float uLineScroll;
+    uniform float uLineScrollSpeed;
+    uniform float uLineReverse;
+
+    uniform float uInnerGlowStrength;
+    uniform float uInnerGlowWidth;
+    uniform vec3 uInnerGlowColor;
+
+    uniform float uPaletteMode;
+    uniform float uRingScale;
+    uniform float uRingStrength;
+    uniform vec3 uWarmColor;
+    uniform vec3 uCoolColor;
+    uniform vec3 uPsyColorA;
+    uniform vec3 uPsyColorB;
+    uniform vec3 uPsyColorC;
+    uniform vec3 uPsyColorD;
+    uniform float uPsyMix;
+    uniform float uPsyScale;
+    uniform float uPsyFlow;
+    uniform float uPsySpinStrength;
+    uniform float uPaletteCycle;
+    uniform float uPaletteCycleSpeed;
+    uniform float uPsyStyle;
+
+    uniform float uPatternMode;
+    uniform float uPatternStrength;
+    uniform float uPatternScale;
+    uniform float uPatternSpeed;
+    uniform float uPatternBlend;
+
+    uniform float uColorBands;
+    uniform float uBandStrength;
+
+    uniform float uPsyShaderMode;
+    uniform float uPsyEmission;
+    uniform float uPsyDepthShade;
+
+    uniform float uPsyContrast;
+    uniform float uPsySaturation;
+    uniform float uPsyInternalGlow;
+    uniform float uPsyGlowThreshold;
+    uniform float uPsyGlowOn;
+
+    mat3 rotationMatrix(vec3 angles) {
+      float cx = cos(angles.x), sx = sin(angles.x);
+      float cy = cos(angles.y), sy = sin(angles.y);
+      float cz = cos(angles.z), sz = sin(angles.z);
+
+      mat3 rx = mat3(
+        1.0, 0.0, 0.0,
+        0.0, cx, -sx,
+        0.0, sx, cx
+      );
+
+      mat3 ry = mat3(
+        cy, 0.0, sy,
+        0.0, 1.0, 0.0,
+        -sy, 0.0, cy
+      );
+
+      mat3 rz = mat3(
+        cz, -sz, 0.0,
+        sz, cz, 0.0,
+        0.0, 0.0, 1.0
+      );
+
+      return rz * ry * rx;
+    }
+
+    float mandelbulb(vec3 pos) {
+      pos = rotationMatrix(uFractalRotation) * pos;
+      vec3 z = pos;
+      float dr = 1.0;
+      float r = 0.0;
+
+      for (int i = 0; i < 100; i++) {
+        if (i >= uIterations) break;
+        r = length(z);
+        if (r > uBailout) break;
+
+        if (uShape == 0) {
+          float theta = acos(z.z / max(r, 0.00001));
+          float phi = atan(z.y, z.x);
+          dr = pow(r, uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(r, uPower);
+          theta *= uPower;
+          phi *= uPower;
+          z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+        } else if (uShape == 1) {
+          float rCube = max(max(abs(z.x), abs(z.y)), abs(z.z));
+          dr = pow(max(rCube, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rCube, 0.00001), uPower);
+          z = sign(z) * zr;
+        } else if (uShape == 2) {
+          float rPyr = max((abs(z.x) + abs(z.y)), abs(z.z));
+          dr = pow(max(rPyr, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rPyr, 0.00001), uPower);
+          z = sign(z) * zr;
+        } else {
+          float rHexXY = length(vec2(z.x, z.y)) / cos(3.14159 / 6.0);
+          float rHex = max(rHexXY, abs(z.z));
+          dr = pow(max(rHex, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rHex, 0.00001), uPower);
+          z = sign(z) * zr;
+        }
+
+        z += pos;
+      }
+
+      return 0.5 * log(max(r, 0.00001)) * r / max(dr, 0.00001);
+    }
+
+    float calcShadow(vec3 ro, vec3 rd) {
+      float t = 0.01;
+      float shadow = 1.0;
+      for (int i = 0; i < 50; i++) {
+        float d = mandelbulb(ro + rd * t);
+        if (d < uSurfaceEpsilon) {
+          shadow = 0.0;
+          break;
+        }
+        t += d;
+        if (t > uMaxDistance) break;
+      }
+      return shadow;
+    }
+
+    float rayMarch(vec3 ro, vec3 rd) {
+      float t = 0.0;
+      for (int i = 0; i < 300; i++) {
+        if (i >= uMaxSteps) break;
+        vec3 pos = ro + rd * t;
+        float d = mandelbulb(pos);
+        if (d < uSurfaceEpsilon) return t;
+        t += d;
+        if (t > uMaxDistance) break;
+      }
+      return t;
+    }
+
+    vec3 calcNormal(vec3 pos) {
+      float eps = 0.001;
+      vec3 n;
+      n.x = mandelbulb(pos + vec3(eps, 0.0, 0.0)) - mandelbulb(pos - vec3(eps, 0.0, 0.0));
+      n.y = mandelbulb(pos + vec3(0.0, eps, 0.0)) - mandelbulb(pos - vec3(0.0, eps, 0.0));
+      n.z = mandelbulb(pos + vec3(0.0, 0.0, eps)) - mandelbulb(pos - vec3(0.0, 0.0, eps));
+      return normalize(n);
+    }
+
+    float luma(vec3 c) {
+      return dot(c, vec3(0.299, 0.587, 0.114));
+    }
+
+    vec3 applySaturationAndVibrance(vec3 c, float saturation, float vibrance) {
+      float lum = luma(c);
+      vec3 gray = vec3(lum);
+      c = mix(gray, c, saturation);
+
+      float mx = max(max(c.r, c.g), c.b);
+      float mn = min(min(c.r, c.g), c.b);
+      float sat = mx - mn;
+      float vibAmount = (1.0 - sat) * vibrance;
+      c = mix(vec3(luma(c)), c, 1.0 + vibAmount);
+      return c;
+    }
+
+    float quantizeBands(float v) {
+      if (uColorBands < 1.5) return v;
+      float bands = max(1.0, uColorBands);
+      float q = floor(v * bands) / bands;
+      float strength = clamp(uBandStrength, 0.0, 1.0);
+      return mix(v, q, strength);
+    }
+
+    vec3 psyPalette(float t) {
+      t = fract(t);
+      if (t < 0.333333) {
+        return mix(uPsyColorA, uPsyColorB, t / 0.333333);
+      } else if (t < 0.666666) {
+        return mix(uPsyColorB, uPsyColorC, (t - 0.333333) / 0.333333);
+      } else {
+        return mix(uPsyColorC, uPsyColorD, (t - 0.666666) / 0.333334);
+      }
+    }
+
+    float patternValue(vec3 pos, float cyclePhase) {
+      float x = pos.x;
+      float y = pos.y;
+      float z = pos.z;
+      float r = length(pos.xy);
+      float r3 = length(pos);
+      float a = atan(y, x);
+      float s = uPatternScale;
+      float t = cyclePhase * uPatternSpeed;
+
+      if (uPatternMode < 0.5) {
+        return 0.0;
+      } else if (uPatternMode < 1.5) {
+        return 0.5 + 0.5 * sin(y * s + t);
+      } else if (uPatternMode < 2.5) {
+        return 0.5 + 0.5 * sin(x * s + t);
+      } else if (uPatternMode < 3.5) {
+        return 0.5 + 0.5 * sin((x + y) * s + t);
+      } else if (uPatternMode < 4.5) {
+        return 0.5 + 0.5 * sin(y * s + sin(x * s * 0.75 + t) * 2.0 + t);
+      } else if (uPatternMode < 5.5) {
+        return 0.5 + 0.5 * sin(x * s + sin(y * s * 0.75 + t) * 2.0 + t);
+      } else if (uPatternMode < 6.5) {
+        float cx = sin(x * s + t);
+        float cy = sin(y * s + t);
+        return step(0.0, cx * cy);
+      } else if (uPatternMode < 7.5) {
+        float wx = x + sin(y * s * 0.65 + t) * 0.6;
+        float wy = y + sin(x * s * 0.65 - t) * 0.6;
+        float cx = sin(wx * s);
+        float cy = sin(wy * s);
+        return step(0.0, cx * cy);
+      } else if (uPatternMode < 8.5) {
+        float qx = x * 0.866025 + y * 0.5;
+        float qy = y;
+        float h1 = abs(fract(qx * s) - 0.5);
+        float h2 = abs(fract(qy * s) - 0.5);
+        float h3 = abs(fract((qx - qy * 0.5) * s) - 0.5);
+        return 1.0 - smoothstep(0.18, 0.24, min(min(h1, h2), h3));
+      } else if (uPatternMode < 9.5) {
+        return 0.5 + 0.5 * sin(r3 * s + t);
+      } else if (uPatternMode < 10.5) {
+        return 0.5 + 0.5 * sin((r3 + z * 0.4) * s + t);
+      } else if (uPatternMode < 11.5) {
+        float p1 = sin(x * s + t);
+        float p2 = sin(y * s * 1.2 - t * 0.8);
+        return 0.5 + 0.5 * (p1 * p2);
+      } else if (uPatternMode < 12.5) {
+        return 0.5 + 0.5 * sin(r * s - t);
+      } else if (uPatternMode < 13.5) {
+        return 0.5 + 0.5 * sin(a * s + t);
+      } else if (uPatternMode < 14.5) {
+        return 0.5 + 0.5 * sin(r * s + a * 3.0 - t);
+      } else if (uPatternMode < 15.5) {
+        return 0.5 + 0.5 * sin(r * s + a * 6.0 - t);
+      } else if (uPatternMode < 16.5) {
+        vec2 p = pos.xy * s;
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        float md = 10.0;
+        for (int yy = -1; yy <= 1; yy++) {
+          for (int xx = -1; xx <= 1; xx++) {
+            vec2 g = vec2(float(xx), float(yy));
+            vec2 o = 0.5 + 0.35 * sin(vec2(1.7, 2.9) * dot(i + g, vec2(7.1, 5.3)) + t);
+            vec2 r2 = g + o - f;
+            md = min(md, dot(r2, r2));
+          }
+        }
+        return 1.0 - smoothstep(0.0, 0.4, sqrt(md));
+      } else {
+        return 0.5 + 0.5 * sin((x + y + z) * s + sin((x - y) * s * 0.7 + t) * 2.0 + t);
+      }
+    }
+
+    void main() {
+      vec2 uv;
+      vec2 baseUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
+      baseUv.x *= iResolution.x / iResolution.y;
+
+      if (uMirrorQuad > 0.5) {
+        vec2 uv01 = (baseUv + 1.0) / 2.0;
+        uv01 = mod(uv01 * 2.0, 1.0);
+        uv01 = abs(uv01 - 0.5) * 2.0;
+        uv = uv01 * 2.0 - 1.0;
+      } else if (uMirror > 0.5) {
+        uv = baseUv;
+        uv.x = abs(uv.x);
+      } else {
+        uv = baseUv;
+      }
+
+      vec3 ro = uCamPos;
+      vec3 rd = normalize(uv.x * uCamRight + uv.y * uCamUp + 1.5 * uCamForward);
+
+      float tVal = rayMarch(ro, rd);
+      vec3 col = vec3(0.0);
+
+      if (tVal < uMaxDistance) {
+        vec3 pos = ro + rd * tVal;
+        vec3 normal = calcNormal(pos);
+
+        vec3 lightDir = normalize(vec3(
+          cos(uLightAzimuth) * cos(uLightElevation),
+          sin(uLightAzimuth) * cos(uLightElevation),
+          sin(uLightElevation)
+        ));
+
+        float diffuse = max(dot(normal, lightDir), 0.0);
+        float ambient = 0.14;
+
+        float shadow = calcShadow(pos + normal * uSurfaceEpsilon * 2.0, lightDir);
+        vec3 viewDir = normalize(ro - pos);
+        vec3 halfDir = normalize(lightDir + viewDir);
+
+        float specularSizeT = clamp((uSpecularSize - 0.1) / 2.9, 0.0, 1.0);
+        float specularExp = mix(96.0, 6.0, specularSizeT);
+        float spec = pow(max(dot(normal, halfDir), 0.0), specularExp);
+        vec3 specular = uLightColor * spec * uSpecularStrength * shadow;
+
+        float lightVal = ambient + (1.0 - ambient) * diffuse * shadow;
+        lightVal = mix(1.0, lightVal, uShadowStrength);
+        lightVal = pow(clamp(lightVal, 0.0, 1.0), max(0.05, uContrast));
+        lightVal = clamp(lightVal + (lightVal * (1.0 - lightVal)) * uMidtoneLift, 0.0, 1.0);
+
+        float rim = clamp(1.0 - abs(dot(normal, viewDir)), 0.0, 1.0);
+        float cyclePhase = uPaletteCycle > 0.5 ? iTime * uPaletteCycleSpeed : 0.0;
+        float pattern = patternValue(pos, cyclePhase);
+        pattern = quantizeBands(pattern);
+
+        vec3 baseCol;
+
+        if (uPaletteMode < 0.5) {
+          vec3 litBaseColor = uColor;
+          baseCol = mix(uShadowTint, litBaseColor, lightVal);
+        } else if (uPaletteMode < 1.5) {
+          float rings = 0.5 + 0.5 * sin(length(pos.xy) * uRingScale + pos.z * 1.5 + cyclePhase);
+          rings = smoothstep(0.18, 0.82, rings);
+          rings = quantizeBands(rings);
+
+          vec3 warm = mix(uShadowTint, uWarmColor, lightVal);
+          vec3 cool = uCoolColor * pow(rim, 2.0);
+          vec3 ringMix = mix(warm, cool, rings * uRingStrength);
+
+          float patternDrive = pattern * uPatternBlend * uPatternStrength;
+          ringMix = mix(ringMix, mix(uWarmColor, uCoolColor, pattern), patternDrive * 0.9);
+
+          baseCol = mix(uShadowTint, ringMix, clamp(lightVal + 0.18, 0.0, 1.0));
+        } else {
+          float radiusField = length(pos.xy) * uPsyScale;
+          float angleField = atan(pos.y, pos.x) * uPsySpinStrength;
+          float depthField = pos.z * 1.3;
+          float flowField = cyclePhase + iTime * uPsyFlow;
+          float ridgeField = rim * 5.0;
+
+          float band1;
+          float band2;
+          float band3;
+
+          if (uPsyStyle < 0.5) {
+            band1 = 0.5 + 0.5 * sin(radiusField * 0.8 + angleField * 0.75 + flowField * 0.7);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.45 + depthField * 0.7 + flowField * 0.5);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.42 - angleField * 0.35);
+          } else if (uPsyStyle < 1.5) {
+            band1 = 0.5 + 0.5 * sin(radiusField + angleField + depthField + flowField);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.65 - angleField * 0.75 + ridgeField + flowField * 0.7);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.55 + angleField * 1.2 - pos.z * 1.2 - flowField * 0.45);
+          } else {
+            band1 = 0.5 + 0.5 * sin(radiusField * 1.15 + angleField * 1.25 + depthField + flowField * 1.2);
+            band2 = 0.5 + 0.5 * sin((pos.x - pos.y) * uPsyScale * 0.9 - angleField * 1.1 + ridgeField * 1.2 + flowField);
+            band3 = 0.5 + 0.5 * sin(length(pos) * uPsyScale * 0.72 + angleField * 1.6 - pos.z * 1.8 - flowField * 0.7);
+          }
+
+          band1 = quantizeBands(band1);
+          band2 = quantizeBands(band2);
+          band3 = quantizeBands(band3);
+
+          float patternDrive = pattern * uPatternBlend * uPatternStrength;
+          float paletteT = fract(
+            band1 * 0.30 +
+            band2 * 0.26 +
+            band3 * 0.20 +
+            rim * uPsyMix * 0.16 +
+            lightVal * 0.10 +
+            patternDrive * 0.55
+          );
+
+          paletteT = pow(clamp(paletteT, 0.0, 1.0), max(0.1, uPaletteContrast));
+          paletteT = quantizeBands(paletteT);
+
+          vec3 psycho = psyPalette(paletteT);
+          vec3 psycho2 = psyPalette(quantizeBands(fract(paletteT + 0.22)));
+          vec3 psycho3 = psyPalette(quantizeBands(fract(paletteT + 0.47)));
+
+          vec3 layeredPsy = mix(psycho, psycho2, band2 * 0.65);
+          layeredPsy = mix(layeredPsy, psycho3, band3 * 0.5);
+
+          float rings = quantizeBands(0.5 + 0.5 * sin(length(pos.xy) * uRingScale + angleField * 0.6 + cyclePhase));
+          vec3 warmLift = mix(vec3(0.0), uWarmColor, rings * 0.24 * uRingStrength);
+          vec3 ridgeCool = uCoolColor * pow(rim, 1.8) * 0.35;
+
+          layeredPsy *= mix(0.7, 1.3, lightVal);
+          layeredPsy += warmLift + ridgeCool;
+
+          vec3 patternColor = mix(uPsyColorA, uPsyColorD, pattern);
+          layeredPsy = mix(layeredPsy, patternColor, patternDrive * 0.75);
+
+          baseCol = mix(uShadowTint, layeredPsy, clamp(lightVal + 0.22, 0.0, 1.0));
+        }
+
+        float ridge = pow(rim, 2.2);
+        float cavity = pow(1.0 - diffuse, 2.0) * (1.0 - shadow);
+        baseCol += uLightColor * ridge * uRidgeAccent * 0.35;
+        baseCol -= vec3(cavity * uCavityStrength * 0.35);
+
+        baseCol *= uColorIntensity;
+        baseCol = applySaturationAndVibrance(baseCol, uColorSaturation, uColorVibrance);
+
+        vec3 shadedColor;
+        bool isPsy = (uPaletteMode > 1.5);
+
+        if (isPsy && uPsyShaderMode > 0.5) {
+          vec3 psy = max(baseCol, vec3(0.0));
+
+          float depthShade = mix(1.0, 0.35 + 0.65 * lightVal, clamp(uPsyDepthShade, 0.0, 1.0));
+          psy *= depthShade;
+
+          psy = pow(max(psy, vec3(0.0)), vec3(1.0 / max(0.001, uPsyContrast)));
+
+          float psyLum = dot(psy, vec3(0.299, 0.587, 0.114));
+          psy = mix(vec3(psyLum), psy, uPsySaturation);
+
+          float glowMask = smoothstep(uPsyGlowThreshold, 1.0, max(max(psy.r, psy.g), psy.b));
+          vec3 psyInternalGlow = psy * glowMask * uPsyInternalGlow * uPsyGlowOn;
+
+          vec3 emissiveCol = psy * uPsyEmission + psyInternalGlow;
+
+          if (uPsyShaderMode < 1.5) {
+            shadedColor = emissiveCol;
+          } else {
+            vec3 hybridLit = emissiveCol * mix(0.55, 1.0, lightVal);
+            shadedColor = mix(emissiveCol, hybridLit, clamp(uPsyDepthShade, 0.0, 1.0));
+          }
+
+          specular = vec3(0.0);
+        } else {
+          if (uPreserveHighlightColor > 0.5) {
+            vec3 lit = mix(vec3(0.25), uLightColor, lightVal);
+            shadedColor = baseCol * lit;
+          } else {
+            shadedColor = mix(baseCol * 0.35, baseCol, lightVal);
+            shadedColor += uLightColor * spec * 0.25;
+          }
+        }
+
+        float glowWidthExp = mix(3.5, 0.35, clamp(uGlowWidth / 4.0, 0.0, 1.0));
+        float rimPow = pow(rim, glowWidthExp);
+        float glowAA = fwidth(rimPow) * 1.75 + 0.0005;
+        float glowMask = smoothstep(0.02 - glowAA, 0.02 + glowAA, rimPow)
+                       * (1.0 - smoothstep(0.65 - glowAA, 0.65 + glowAA, rimPow));
+
+        float glowCoord = rim;
+        if (uGlowScroll > 0.5) {
+          float dir = mix(1.0, -1.0, step(0.5, uGlowReverse));
+          glowCoord = fract(rim + iTime * uGlowScrollSpeed * dir);
+        }
+
+        vec3 glowGradColor = mix(uGlowColorA, uGlowColorB, glowCoord);
+        float glowGradAlpha = mix(uGlowAlphaA, uGlowAlphaB, glowCoord);
+        vec3 glowLayer = glowGradColor * glowMask * glowGradAlpha * uGlowStrength * uGlowOn;
+        glowLayer *= (1.0 + uGlowEmission);
+
+        float lineWidthExp = mix(7.5, 1.2, clamp(uLineWidth / 4.0, 0.0, 1.0));
+        float lineRim = pow(rim, lineWidthExp);
+        float lineAA = fwidth(lineRim) * (0.5 + uLineSoftness * 2.0) + 0.0003;
+        float lineCenter = 0.18;
+        float lineMask = smoothstep(lineCenter - lineAA, lineCenter, lineRim) - smoothstep(lineCenter, lineCenter + lineAA, lineRim);
+        lineMask = clamp(lineMask * 8.0, 0.0, 1.0);
+
+        float lineCoord = rim;
+        if (uLineScroll > 0.5) {
+          float dir = mix(1.0, -1.0, step(0.5, uLineReverse));
+          lineCoord = fract(rim + iTime * uLineScrollSpeed * dir);
+        }
+
+        vec3 lineGradColor = mix(uLineColorA, uLineColorB, lineCoord);
+        float lineGradAlpha = mix(uLineAlphaA, uLineAlphaB, lineCoord);
+        float lineMixAmt = lineMask * lineGradAlpha * uLineStrength * uLineOn;
+
+        float innerExp = mix(6.0, 1.0, clamp(uInnerGlowWidth / 4.0, 0.0, 1.0));
+        float innerPow = pow(rim, innerExp);
+        float innerAA = fwidth(innerPow) * 2.0 + 0.0005;
+        float innerMask = smoothstep(0.0, innerAA + 0.0001, innerPow)
+                        * (1.0 - smoothstep(0.82 - innerAA, 0.82 + innerAA, innerPow));
+        vec3 innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
+
+        col = shadedColor + specular + glowLayer + innerGlow;
+        col = mix(col, lineGradColor, clamp(lineMixAmt, 0.0, 1.0));
+      }
+
+      col *= uLightIntensity;
+      gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+    }
+  </script>
+
+  <script>
+    let navCamera, orthoCamera, scene, renderer, material, quad, clock;
+    let gui;
+
+    const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
+    const FIXED_PREVIEW_ASPECT = 16 / 9;
+
+    let params = {
+      flySpeed: 0.05,
+      uPower: 8.0,
+      uBailout: 2.0,
+      uIterations: 12,
+      uSurfaceEpsilon: 0.001,
+      uMaxSteps: 150,
+      uMaxDistance: 200.0,
+      uColor: "#FFD700",
+      uFractalRotationX: 0.0,
+      uFractalRotationY: 0.0,
+      uFractalRotationZ: 0.0,
+      uShape: 0,
+      musicReact: true,
+      micSensitivity: 1.0,
+
+      powerAnimation: false,
+      powerAnimationSpeed: 1.0,
+      powerMin: 2.0,
+      powerMax: 100.0,
+
+      autoRotateX: false,
+      autoRotateY: false,
+      autoRotateZ: false,
+      rotateSpeedX: 0.5,
+      rotateSpeedY: 1.0,
+      rotateSpeedZ: 0.75,
+
+      mirror: false,
+      mirrorQuad: false,
+
+      lightIntensity: 1.0,
+      lightAzimuth: 0.0,
+      lightElevation: 0.6,
+      lightColor: "#ffffff",
+
+      shadowStrength: 1.0,
+      shadowTint: "#000000",
+      contrast: 1.0,
+      midtoneLift: 0.55,
+      specularStrength: 0.65,
+      specularSize: 0.95,
+
+      colorSaturation: 1.2,
+      colorVibrance: 0.6,
+      paletteContrast: 1.2,
+      colorIntensity: 1.0,
+      preserveHighlightColor: true,
+
+      ridgeAccent: 0.35,
+      cavityStrength: 0.2,
+
+      glowOn: true,
+      glowColorA: "#ff8c3a",
+      glowAlphaA: 1.0,
+      glowColorB: "#ffb65f",
+      glowAlphaB: 0.0,
+      glowStrength: 0.55,
+      glowWidth: 1.25,
+      glowEmission: 0.35,
+      glowScroll: false,
+      glowScrollSpeed: 0.3,
+      glowReverse: false,
+
+      lineOn: true,
+      lineColorA: "#000000",
+      lineAlphaA: 0.85,
+      lineColorB: "#000000",
+      lineAlphaB: 0.85,
+      lineStrength: 0.85,
+      lineWidth: 0.65,
+      lineSoftness: 0.35,
+      lineScroll: false,
+      lineScrollSpeed: 0.3,
+      lineReverse: false,
+
+      innerGlowStrength: 0.12,
+      innerGlowWidth: 1.25,
+      innerGlowColor: "#66fff4",
+
+      paletteMode: 2,
+      ringScale: 6.0,
+      ringStrength: 0.6,
+      warmColor: "#ff8c3a",
+      coolColor: "#2fe1d6",
+
+      psyColorA: "#18d8d8",
+      psyColorB: "#a6ff3c",
+      psyColorC: "#ff9a1f",
+      psyColorD: "#ff4d7a",
+      psyMix: 0.85,
+      psyScale: 8.0,
+      psyFlow: 0.7,
+      psySpinStrength: 2.3,
+      paletteCycle: true,
+      paletteCycleSpeed: 0.5,
+      psyStyle: 0,
+
+      patternMode: 0,
+      patternStrength: 0.7,
+      patternScale: 8.0,
+      patternSpeed: 1.0,
+      patternBlend: 0.75,
+
+      colorBands: 8.0,
+      bandStrength: 1.0,
+
+      psyShaderMode: 0,
+      psyEmission: 1.2,
+      psyDepthShade: 0.65,
+      psyContrast: 1.3,
+      psySaturation: 1.1,
+      psyInternalGlow: 0.2,
+      psyGlowThreshold: 0.7,
+      psyGlowOn: true,
+
+      trippyMode: false,
+      trippySpeed: 1.0,
+      kaleidoscopeMode: false,
+      kaleidoscopeSpeed: 1.0,
+      musicMatch: false,
+      zoomValue: 2.2,
+
+      // --- ADDED: Psy Scale Cycle ---
+      psyScaleCycle: false,
+      psyScaleCycleSpeed: 0.5,
+      psyScaleCycleAmount: 2.0
+    };
+
+    const PRESET_KEYS = Object.keys(params);
+
+    const PATTERN_OPTIONS = {
+      Off: 0,
+      "Horizontal Lines": 1,
+      "Vertical Lines": 2,
+      "Diagonal Lines": 3,
+      "Wavy Horizontal": 4,
+      "Wavy Vertical": 5,
+      Checkerboard: 6,
+      "Checker Warp": 7,
+      "Hex Grid": 8,
+      Contour: 9,
+      Topographic: 10,
+      Interference: 11,
+      Ripple: 12,
+      Pinwheel: 13,
+      Spiral: 14,
+      "Double Spiral": 15,
+      Voronoi: 16,
+      Marble: 17
+    };
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) params.zoomValue = 3.8;
+
+    let lastBeatTime = 0;
+    let bpm = 120;
+    let micEnabled = false;
+
+    let rotXController, rotYController, rotZController;
+    let lightAzimuthController, lightElevationController;
+    let keys = {};
+
+    const startOverlay = document.getElementById("startOverlay");
+    const enterWithMicBtn = document.getElementById("enterWithMicBtn");
+    const enterWithoutMicBtn = document.getElementById("enterWithoutMicBtn");
+    const startStatus = document.getElementById("startStatus");
+
+    const presetNameInput = document.getElementById("presetNameInput");
+    const presetSelect = document.getElementById("presetSelect");
+    const savePresetBtn = document.getElementById("savePresetBtn");
+    const overwritePresetBtn = document.getElementById("overwritePresetBtn");
+    const loadPresetBtn = document.getElementById("loadPresetBtn");
+    const deletePresetBtn = document.getElementById("deletePresetBtn");
+    const exportPresetBtn = document.getElementById("exportPresetBtn");
+    const importPresetBtn = document.getElementById("importPresetBtn");
+    const importPresetInput = document.getElementById("importPresetInput");
+
+    const fsToggleBtn = document.getElementById("fsToggleBtn");
+    const exportStillBtn = document.getElementById("exportStillBtn");
+    const recordBtn = document.getElementById("recordBtn");
+
+    const exportFormatSelect = document.getElementById("exportFormatSelect");
+    const formatSelect = document.getElementById("formatSelect");
+    const qualitySelect = document.getElementById("qualitySelect");
+    const durationSelect = document.getElementById("durationSelect");
+
+    function getCurrentPresetData() {
+      const data = {};
+      PRESET_KEYS.forEach((key) => { data[key] = params[key]; });
+      return data;
+    }
+
+    function applyPresetData(data) {
+      PRESET_KEYS.forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(data, key)) params[key] = data[key];
+      });
+      refreshGuiDisplays();
+    }
+
+    function refreshGuiDisplays() {
+      if (gui && gui.__controllers) gui.__controllers.forEach((c) => c.updateDisplay());
+      if (gui && gui.__folders) {
+        Object.values(gui.__folders).forEach((folder) => {
+          folder.__controllers.forEach((c) => c.updateDisplay());
+        });
+      }
+      if (rotXController) rotXController.updateDisplay();
+      if (rotYController) rotYController.updateDisplay();
+      if (rotZController) rotZController.updateDisplay();
+      if (lightAzimuthController) lightAzimuthController.updateDisplay();
+      if (lightElevationController) lightElevationController.updateDisplay();
+    }
+
+    function loadPresetsFromStorage() {
+      try {
+        const raw = localStorage.getItem(PRESET_STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch (err) {
+        console.error("Failed to read presets:", err);
+        return {};
+      }
+    }
+
+    function savePresetsToStorage(presets) {
+      localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+    }
+
+    function refreshPresetSelect() {
+      const presets = loadPresetsFromStorage();
+      const names = Object.keys(presets).sort((a, b) => a.localeCompare(b));
+
+      presetSelect.innerHTML = "";
+      if (names.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "No saved presets";
+        presetSelect.appendChild(opt);
+        return;
+      }
+
+      names.forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        presetSelect.appendChild(opt);
+      });
+    }
+
+    function savePresetByName(name, overwrite = false) {
+      const trimmed = name.trim();
+      if (!trimmed) {
+        alert("Enter a preset name first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      if (!overwrite && presets[trimmed]) {
+        alert("A preset with that name already exists. Use Overwrite Selected or a new name.");
+        return;
+      }
+
+      presets[trimmed] = {
+        name: trimmed,
+        savedAt: new Date().toISOString(),
+        values: getCurrentPresetData()
+      };
+
+      savePresetsToStorage(presets);
+      refreshPresetSelect();
+      presetSelect.value = trimmed;
+    }
+
+    function loadSelectedPreset() {
+      const selected = presetSelect.value;
+      if (!selected) {
+        alert("Select a preset first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      if (!presets[selected]) {
+        alert("Preset not found.");
+        refreshPresetSelect();
+        return;
+      }
+
+      applyPresetData(presets[selected].values);
+      presetNameInput.value = selected;
+    }
+
+    function deleteSelectedPreset() {
+      const selected = presetSelect.value;
+      if (!selected) {
+        alert("Select a preset first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      if (!presets[selected]) return;
+
+      delete presets[selected];
+      savePresetsToStorage(presets);
+      refreshPresetSelect();
+      presetNameInput.value = "";
+    }
+
+    function exportSelectedPreset() {
+      const selected = presetSelect.value || presetNameInput.value.trim();
+      if (!selected) {
+        alert("Select or enter a preset name first.");
+        return;
+      }
+
+      const presets = loadPresetsFromStorage();
+      const preset = presets[selected];
+      if (!preset) {
+        alert("Save the preset first before exporting it.");
+        return;
+      }
+
+      const blob = new Blob([JSON.stringify(preset, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${selected}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importPresetFromObject(obj) {
+      if (!obj || typeof obj !== "object" || !obj.values) {
+        alert("Invalid preset file.");
+        return;
+      }
+
+      const baseName = obj.name && typeof obj.name === "string" ? obj.name.trim() : "Imported Preset";
+      let finalName = baseName || "Imported Preset";
+
+      const presets = loadPresetsFromStorage();
+      if (presets[finalName]) {
+        let i = 2;
+        while (presets[`${finalName} ${i}`]) i++;
+        finalName = `${finalName} ${i}`;
+      }
+
+      presets[finalName] = {
+        name: finalName,
+        savedAt: new Date().toISOString(),
+        values: obj.values
+      };
+
+      savePresetsToStorage(presets);
+      refreshPresetSelect();
+      presetSelect.value = finalName;
+      presetNameInput.value = finalName;
+    }
+
+    savePresetBtn.addEventListener("click", () => savePresetByName(presetNameInput.value, false));
+    overwritePresetBtn.addEventListener("click", () => {
+      const selected = presetSelect.value || presetNameInput.value.trim();
+      if (!selected) {
+        alert("Select or enter a preset name to overwrite.");
+        return;
+      }
+      savePresetByName(selected, true);
+    });
+    loadPresetBtn.addEventListener("click", loadSelectedPreset);
+    deletePresetBtn.addEventListener("click", deleteSelectedPreset);
+    exportPresetBtn.addEventListener("click", exportSelectedPreset);
+    importPresetBtn.addEventListener("click", () => importPresetInput.click());
+
+    importPresetInput.addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const obj = JSON.parse(text);
+        importPresetFromObject(obj);
+      } catch (err) {
+        console.error(err);
+        alert("Could not import preset JSON.");
+      }
+
+      importPresetInput.value = "";
+    });
+
+    function parseExportDimensions() {
+      const [w, h] = exportFormatSelect.value.split("x").map(Number);
+      return { width: w, height: h };
+    }
+
+    window.addEventListener("keydown", (e) => { keys[e.key] = true; });
+    window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+
+    function onMouseDown(e) {
+      isDragging = true;
+      prevMouse.x = e.clientX;
+      prevMouse.y = e.clientY;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+    }
+
+    function onMouseMove(e) {
+      if (isDragging) {
+        let deltaX = e.clientX - prevMouse.x;
+        let deltaY = e.clientY - prevMouse.y;
+
+        params.uFractalRotationY += deltaX * 0.005;
+        params.uFractalRotationX += deltaY * 0.005;
+
+        if (rotXController) rotXController.updateDisplay();
+        if (rotYController) rotYController.updateDisplay();
+        if (rotZController) rotZController.updateDisplay();
+
+        prevMouse.x = e.clientX;
+        prevMouse.y = e.clientY;
+      }
+    }
+
+    let isPinching = false;
+    let lastPinchDist = 0;
+    const zoomFactor = 0.005;
+
+    function onTouchStart(e) {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        prevMouse.x = e.touches[0].clientX;
+        prevMouse.y = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        isPinching = true;
+        lastPinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }
+
+    function onTouchMove(e) {
+      if (isPinching && e.touches.length === 2) {
+        let currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+
+        let delta = currentDist - lastPinchDist;
+        params.zoomValue += delta * zoomFactor;
+        params.zoomValue = Math.max(0, Math.min(4, params.zoomValue));
+        lastPinchDist = currentDist;
+      } else if (isDragging && e.touches.length === 1) {
+        let deltaX = e.touches[0].clientX - prevMouse.x;
+        let deltaY = e.touches[0].clientY - prevMouse.y;
+
+        params.uFractalRotationY += deltaX * 0.005;
+        params.uFractalRotationX += deltaY * 0.005;
+
+        if (rotXController) rotXController.updateDisplay();
+        if (rotYController) rotYController.updateDisplay();
+        if (rotZController) rotZController.updateDisplay();
+
+        prevMouse.x = e.touches[0].clientX;
+        prevMouse.y = e.touches[0].clientY;
+      }
+
+      e.preventDefault();
+    }
+
+    function onTouchEnd(e) {
+      if (e.touches.length < 2) isPinching = false;
+      if (e.touches.length === 0) isDragging = false;
+    }
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    async function enableMicrophone() {
+      if (audioCtx.state === "suspended") await audioCtx.resume();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      });
+
+      const micSource = audioCtx.createMediaStreamSource(stream);
+      micSource.connect(analyser);
+      micEnabled = true;
+    }
+
+    function closeStartOverlay() {
+      startOverlay.style.display = "none";
+      refreshPresetSelect();
+    }
+
+    enterWithMicBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      enterWithMicBtn.disabled = true;
+      enterWithoutMicBtn.disabled = true;
+      startStatus.textContent = "Requesting microphone access...";
+
+      try {
+        await enableMicrophone();
+        startStatus.textContent = "";
+        closeStartOverlay();
+      } catch (err) {
+        console.error("Microphone access denied:", err);
+        micEnabled = false;
+        startStatus.textContent = "Microphone access failed. You can start without microphone.";
+        enterWithMicBtn.disabled = false;
+        enterWithoutMicBtn.disabled = false;
+      }
+    });
+
+    enterWithoutMicBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      try {
+        if (audioCtx.state === "suspended") await audioCtx.resume();
+      } catch (err) {
+        console.error(err);
+      }
+
+      micEnabled = false;
+      closeStartOverlay();
+    });
+
+    fsToggleBtn.addEventListener("click", () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          document.documentElement.webkitRequestFullscreen();
+        }
+        fsToggleBtn.textContent = "Exit Full Screen";
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+        fsToggleBtn.textContent = "Enter Full Screen";
+      }
+    });
+
+    exportStillBtn.addEventListener("click", async () => {
+      const { width, height } = parseExportDimensions();
+      await exportStill(width, height);
+    });
+
+    function getBitrateFromQuality(quality) {
+      switch (quality) {
+        case "low": return 5000000;
+        case "medium": return 12000000;
+        case "high": return 25000000;
+        case "ultra": return 50000000;
+        default: return 25000000;
+      }
+    }
+
+    function getMimeTypeFromFormat(format) {
+      if (format === "webm-vp9") {
+        if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
+        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
+      }
+      if (format === "webm") {
+        if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
+      }
+      if (format === "mp4") {
+        if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) return "video/mp4;codecs=avc1";
+        if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
+      }
+      if (MediaRecorder.isTypeSupported("video/webm;codecs=vp9")) return "video/webm;codecs=vp9";
+      if (MediaRecorder.isTypeSupported("video/webm")) return "video/webm";
+      return "";
+    }
+
+    function getFileExtensionFromMimeType(mimeType) {
+      if (mimeType.includes("mp4")) return "mp4";
+      return "webm";
+    }
+
+    async function exportStill(width, height) {
+      const originalSize = new THREE.Vector2();
+      renderer.getSize(originalSize);
+
+      const originalPixelRatio = renderer.getPixelRatio();
+      const originalResolution = material.uniforms.iResolution.value.clone();
+
+      try {
+        renderer.setPixelRatio(1);
+        renderer.setSize(width, height, false);
+        material.uniforms.iResolution.value.set(width, height);
+
+        renderer.render(scene, orthoCamera);
+
+        renderer.domElement.toBlob((blob) => {
+          if (!blob) {
+            alert("Export failed.");
+            return;
+          }
+
+          const link = document.createElement("a");
+          const url = URL.createObjectURL(blob);
+          link.href = url;
+          link.download = `fractal-${width}x${height}.png`;
+          link.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      } finally {
+        renderer.setPixelRatio(originalPixelRatio);
+        resizeRendererToPreviewFrame();
+        material.uniforms.iResolution.value.copy(originalResolution);
+        renderer.render(scene, orthoCamera);
+      }
+    }
+
+    recordBtn.addEventListener("click", async () => {
+      const durationMs = parseInt(durationSelect.value, 10) * 1000;
+      const bitrate = getBitrateFromQuality(qualitySelect.value);
+      const mimeType = getMimeTypeFromFormat(formatSelect.value);
+      const { width, height } = parseExportDimensions();
+
+      if (!mimeType) {
+        alert("This browser does not support the selected recording format.");
+        return;
+      }
+
+      await recordCanvasVideo({
+        durationMs,
+        videoBitsPerSecond: bitrate,
+        mimeType,
+        width,
+        height
+      });
+    });
+
+    async function recordCanvasVideo({ durationMs = 10000, videoBitsPerSecond = 25000000, mimeType = "video/webm;codecs=vp9", width, height }) {
+      const originalSize = new THREE.Vector2();
+      renderer.getSize(originalSize);
+
+      const originalPixelRatio = renderer.getPixelRatio();
+      const originalResolution = material.uniforms.iResolution.value.clone();
+
+      try {
+        renderer.setPixelRatio(1);
+        renderer.setSize(width, height, false);
+        material.uniforms.iResolution.value.set(width, height);
+
+        renderer.render(scene, orthoCamera);
+
+        const canvas = renderer.domElement;
+        const stream = canvas.captureStream(60);
+
+        let recorder;
+        try {
+          recorder = new MediaRecorder(stream, {
+            mimeType,
+            videoBitsPerSecond
+          });
+        } catch (err) {
+          console.error("MediaRecorder setup failed:", err);
+          alert("Recording failed to start with that format/settings.");
+          return;
+        }
+
+        const chunks = [];
+        const fileExt = getFileExtensionFromMimeType(mimeType);
+
+        recorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) chunks.push(event.data);
+        };
+
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: mimeType });
+          const url = URL.createObjectURL(blob);
+
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `fractal-clip-${width}x${height}.${fileExt}`;
+          link.click();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          renderer.setPixelRatio(originalPixelRatio);
+          resizeRendererToPreviewFrame();
+          material.uniforms.iResolution.value.copy(originalResolution);
+          renderer.render(scene, orthoCamera);
+        };
+
+        recorder.start();
+        recordBtn.disabled = true;
+        recordBtn.textContent = "Recording...";
+
+        setTimeout(() => {
+          recorder.stop();
+          recordBtn.disabled = false;
+          recordBtn.textContent = "Record Clip";
+        }, durationMs);
+      } catch (err) {
+        console.error(err);
+        renderer.setPixelRatio(originalPixelRatio);
+        resizeRendererToPreviewFrame();
+        material.uniforms.iResolution.value.copy(originalResolution);
+        renderer.render(scene, orthoCamera);
+      }
+    }
+
+    function layoutPreviewFrame() {
+      const container = document.getElementById("canvasContainer");
+      const frame = document.getElementById("previewFrame");
+
+      const cw = Math.max(1, container.clientWidth);
+      const ch = Math.max(1, container.clientHeight);
+      const containerAspect = cw / ch;
+
+      let fw, fh;
+      if (containerAspect > FIXED_PREVIEW_ASPECT) {
+        fh = ch;
+        fw = fh * FIXED_PREVIEW_ASPECT;
+      } else {
+        fw = cw;
+        fh = fw / FIXED_PREVIEW_ASPECT;
+      }
+
+      frame.style.width = `${fw}px`;
+      frame.style.height = `${fh}px`;
+      frame.style.left = `${(cw - fw) * 0.5}px`;
+      frame.style.top = `${(ch - fh) * 0.5}px`;
+    }
+
+    function resizeRendererToPreviewFrame() {
+      const frame = document.getElementById("previewFrame");
+      const width = Math.max(1, frame.clientWidth);
+      const height = Math.max(1, frame.clientHeight);
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(width, height, false);
+      material.uniforms.iResolution.value.set(width * pixelRatio, height * pixelRatio);
+    }
+
+    function init() {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true
+      });
+
+      document.getElementById("previewFrame").appendChild(renderer.domElement);
+
+      navCamera = new THREE.PerspectiveCamera(75, FIXED_PREVIEW_ASPECT, 0.1, 1000);
+
+      if (isMobile) {
+        navCamera.position.set(0, 0, 3.8);
+        params.zoomValue = 3.8;
+      } else {
+        navCamera.position.set(0, 0, 2.2);
+        params.zoomValue = 2.2;
+      }
+
+      orthoCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      scene = new THREE.Scene();
+
+      const geometry = new THREE.PlaneGeometry(2, 2);
+      const fs = document.getElementById("fragmentShader").textContent;
+
+      material = new THREE.ShaderMaterial({
+        fragmentShader: fs,
+        uniforms: {
+          iResolution: { value: new THREE.Vector2(1, 1) },
+          iTime: { value: 0 },
+
+          uPower: { value: params.uPower },
+          uBailout: { value: params.uBailout },
+          uIterations: { value: params.uIterations },
+          uSurfaceEpsilon: { value: params.uSurfaceEpsilon },
+          uMaxSteps: { value: params.uMaxSteps },
+          uMaxDistance: { value: params.uMaxDistance },
+          uColor: { value: new THREE.Color(params.uColor) },
+
+          uMusic: { value: 0.0 },
+          uShape: { value: params.uShape },
+
+          uCamPos: { value: new THREE.Vector3() },
+          uCamRight: { value: new THREE.Vector3() },
+          uCamUp: { value: new THREE.Vector3() },
+          uCamForward: { value: new THREE.Vector3() },
+
+          uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
+
+          uMirror: { value: params.mirror ? 1.0 : 0.0 },
+          uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
+
+          uLightIntensity: { value: params.lightIntensity },
+          uLightAzimuth: { value: params.lightAzimuth },
+          uLightElevation: { value: params.lightElevation },
+          uLightColor: { value: new THREE.Color(params.lightColor) },
+
+          uShadowStrength: { value: params.shadowStrength },
+          uShadowTint: { value: new THREE.Color(params.shadowTint) },
+          uContrast: { value: params.contrast },
+          uMidtoneLift: { value: params.midtoneLift },
+          uSpecularStrength: { value: params.specularStrength },
+          uSpecularSize: { value: params.specularSize },
+
+          uColorSaturation: { value: params.colorSaturation },
+          uColorVibrance: { value: params.colorVibrance },
+          uPaletteContrast: { value: params.paletteContrast },
+          uColorIntensity: { value: params.colorIntensity },
+          uPreserveHighlightColor: { value: params.preserveHighlightColor ? 1.0 : 0.0 },
+
+          uRidgeAccent: { value: params.ridgeAccent },
+          uCavityStrength: { value: params.cavityStrength },
+
+          uGlowOn: { value: params.glowOn ? 1.0 : 0.0 },
+          uGlowColorA: { value: new THREE.Color(params.glowColorA) },
+          uGlowAlphaA: { value: params.glowAlphaA },
+          uGlowColorB: { value: new THREE.Color(params.glowColorB) },
+          uGlowAlphaB: { value: params.glowAlphaB },
+          uGlowStrength: { value: params.glowStrength },
+          uGlowWidth: { value: params.glowWidth },
+          uGlowEmission: { value: params.glowEmission },
+          uGlowScroll: { value: params.glowScroll ? 1.0 : 0.0 },
+          uGlowScrollSpeed: { value: params.glowScrollSpeed },
+          uGlowReverse: { value: params.glowReverse ? 1.0 : 0.0 },
+
+          uLineOn: { value: params.lineOn ? 1.0 : 0.0 },
+          uLineColorA: { value: new THREE.Color(params.lineColorA) },
+          uLineAlphaA: { value: params.lineAlphaA },
+          uLineColorB: { value: new THREE.Color(params.lineColorB) },
+          uLineAlphaB: { value: params.lineAlphaB },
+          uLineStrength: { value: params.lineStrength },
+          uLineWidth: { value: params.lineWidth },
+          uLineSoftness: { value: params.lineSoftness },
+          uLineScroll: { value: params.lineScroll ? 1.0 : 0.0 },
+          uLineScrollSpeed: { value: params.lineScrollSpeed },
+          uLineReverse: { value: params.lineReverse ? 1.0 : 0.0 },
+
+          uInnerGlowStrength: { value: params.innerGlowStrength },
+          uInnerGlowWidth: { value: params.innerGlowWidth },
+          uInnerGlowColor: { value: new THREE.Color(params.innerGlowColor) },
+
+          uPaletteMode: { value: params.paletteMode },
+          uRingScale: { value: params.ringScale },
+          uRingStrength: { value: params.ringStrength },
+          uWarmColor: { value: new THREE.Color(params.warmColor) },
+          uCoolColor: { value: new THREE.Color(params.coolColor) },
+          uPsyColorA: { value: new THREE.Color(params.psyColorA) },
+          uPsyColorB: { value: new THREE.Color(params.psyColorB) },
+          uPsyColorC: { value: new THREE.Color(params.psyColorC) },
+          uPsyColorD: { value: new THREE.Color(params.psyColorD) },
+          uPsyMix: { value: params.psyMix },
+          uPsyScale: { value: params.psyScale },
+          uPsyFlow: { value: params.psyFlow },
+          uPsySpinStrength: { value: params.psySpinStrength },
+          uPaletteCycle: { value: params.paletteCycle ? 1.0 : 0.0 },
+          uPaletteCycleSpeed: { value: params.paletteCycleSpeed },
+          uPsyStyle: { value: params.psyStyle },
+
+          uPatternMode: { value: params.patternMode },
+          uPatternStrength: { value: params.patternStrength },
+          uPatternScale: { value: params.patternScale },
+          uPatternSpeed: { value: params.patternSpeed },
+          uPatternBlend: { value: params.patternBlend },
+
+          uColorBands: { value: params.colorBands },
+          uBandStrength: { value: params.bandStrength },
+
+          uPsyShaderMode: { value: params.psyShaderMode },
+          uPsyEmission: { value: params.psyEmission },
+          uPsyDepthShade: { value: params.psyDepthShade },
+          uPsyContrast: { value: params.psyContrast },
+          uPsySaturation: { value: params.psySaturation },
+          uPsyInternalGlow: { value: params.psyInternalGlow },
+          uPsyGlowThreshold: { value: params.psyGlowThreshold },
+          uPsyGlowOn: { value: params.psyGlowOn ? 1.0 : 0.0 }
+        }
+      });
+
+      quad = new THREE.Mesh(geometry, material);
+      scene.add(quad);
+
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
+
+      gui = new dat.GUI({ autoPlace: false, width: 320 });
+      document.getElementById("gui").appendChild(gui.domElement);
+
+      const fractalFolder = gui.addFolder("Fractal Settings");
+      fractalFolder.add(params, "uPower", 2.0, 100.0).name("Base Fractal Power");
+      fractalFolder.add(params, "uBailout", 1.5, 4.0).name("Bailout");
+      fractalFolder.add(params, "uIterations", 3, 20, 1).name("Iterations");
+      fractalFolder.add(params, "uSurfaceEpsilon", 0.0001, 0.01).name("Surface Epsilon");
+      fractalFolder.add(params, "uMaxSteps", 50, 300, 1).name("Max Steps");
+      fractalFolder.add(params, "uMaxDistance", 50, 400).name("Max Distance");
+      fractalFolder.add(params, "uShape", { Mandelbulb: 0, Cube: 1, Pyramid: 2, Hexagon: 3 }).name("Base Shape");
+
+      const motionFolder = gui.addFolder("Motion");
+      motionFolder.add(params, "powerAnimation").name("Power Animation");
+      motionFolder.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
+      motionFolder.add(params, "powerMin", 2, 100).name("Power Min").listen();
+      motionFolder.add(params, "powerMax", 2, 100).name("Power Max").listen();
+      motionFolder.add(params, "autoRotateX").name("Auto Rotate X");
+      motionFolder.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
+      motionFolder.add(params, "autoRotateY").name("Auto Rotate Y");
+      motionFolder.add(params, "rotateSpeedY", -2, 2).name("Rotate Speed Y");
+      motionFolder.add(params, "autoRotateZ").name("Auto Rotate Z");
+      motionFolder.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
+
+      const colorFolder = gui.addFolder("Color & Palette");
+      colorFolder.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
+      colorFolder.add(params, "psyStyle", { Old: 0, Hybrid: 1, New: 2 }).name("Psy Style");
+      colorFolder.addColor(params, "uColor").name("Base Color");
+      colorFolder.add(params, "trippyMode").name("Trippy Mode");
+      colorFolder.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
+      colorFolder.add(params, "ringScale", 0.5, 20).name("Ring Scale");
+      colorFolder.add(params, "ringStrength", 0, 1).name("Ring Strength");
+      colorFolder.addColor(params, "warmColor").name("Warm Color");
+      colorFolder.addColor(params, "coolColor").name("Cool Color");
+      colorFolder.addColor(params, "psyColorA").name("Psy Color A");
+      colorFolder.addColor(params, "psyColorB").name("Psy Color B");
+      colorFolder.addColor(params, "psyColorC").name("Psy Color C");
+      colorFolder.addColor(params, "psyColorD").name("Psy Color D");
+      colorFolder.add(params, "psyMix", 0, 1.5).name("Psy Mix");
+      colorFolder.add(params, "psyScale", 0.5, 20).name("Psy Scale");
+      colorFolder.add(params, "psyFlow", 0, 4).name("Psy Flow");
+      colorFolder.add(params, "psySpinStrength", 0, 6).name("Psy Spin");
+      colorFolder.add(params, "paletteCycle").name("Palette Cycle");
+      colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
+      // --- ADDED: Psy Scale Cycle controls ---
+      colorFolder.add(params, "psyScaleCycle").name("Psy Scale Cycle");
+      colorFolder.add(params, "psyScaleCycleSpeed", 0.0, 4.0).name("Scale Cycle Speed");
+      colorFolder.add(params, "psyScaleCycleAmount", 0.0, 10.0).name("Scale Cycle Amount");
+
+      const psyShaderFolder = gui.addFolder("Psy Shader Mode");
+      psyShaderFolder.add(params, "psyShaderMode", {
+        Lit: 0,
+        Emissive: 1,
+        Hybrid: 2
+      }).name("Shader Mode");
+      psyShaderFolder.add(params, "psyEmission", 0, 3).name("Psy Emission");
+      psyShaderFolder.add(params, "psyDepthShade", 0, 1).name("Psy Depth Shade");
+      psyShaderFolder.add(params, "psyContrast", 0.5, 2.5).name("Psy Contrast");
+      psyShaderFolder.add(params, "psySaturation", 0.5, 2.0).name("Psy Saturation");
+      psyShaderFolder.add(params, "psyGlowOn").name("Internal Glow On");
+      psyShaderFolder.add(params, "psyInternalGlow", 0, 1.5).name("Psy Internal Glow");
+      psyShaderFolder.add(params, "psyGlowThreshold", 0.3, 1.0).name("Glow Threshold");
+
+      const gradingFolder = gui.addFolder("Color Grading");
+      gradingFolder.add(params, "colorSaturation", 0, 2.5).name("Saturation");
+      gradingFolder.add(params, "colorVibrance", 0, 2.5).name("Vibrance");
+      gradingFolder.add(params, "paletteContrast", 0.5, 2.5).name("Palette Contrast");
+      gradingFolder.add(params, "colorIntensity", 0.25, 2.5).name("Color Intensity");
+      gradingFolder.add(params, "preserveHighlightColor").name("Preserve Highlights");
+      gradingFolder.add(params, "colorBands", 0, 20).step(1).name("Color Bands");
+      gradingFolder.add(params, "bandStrength", 0, 1).name("Band Strength");
+
+      const patternFolder = gui.addFolder("Patterns");
+      patternFolder.add(params, "patternMode", PATTERN_OPTIONS).name("Pattern Mode");
+      patternFolder.add(params, "patternStrength", 0, 2).name("Pattern Strength");
+      patternFolder.add(params, "patternScale", 0.5, 20).name("Pattern Scale");
+      patternFolder.add(params, "patternSpeed", 0, 5).name("Pattern Speed");
+      patternFolder.add(params, "patternBlend", 0, 1.5).name("Pattern Blend");
+
+      const lightingFolder = gui.addFolder("Lighting");
+      lightingFolder.add(params, "lightIntensity", 0, 2).name("Light Intensity");
+      lightAzimuthController = lightingFolder.add(params, "lightAzimuth", -Math.PI, Math.PI).name("Light Azimuth").listen();
+      lightElevationController = lightingFolder.add(params, "lightElevation", -1.57, 1.57).name("Light Elevation").listen();
+      lightingFolder.addColor(params, "lightColor").name("Light Color");
+      lightingFolder.add(params, "shadowStrength", 0, 1.5).name("Shadow Strength");
+      lightingFolder.addColor(params, "shadowTint").name("Shadow Tint");
+      lightingFolder.add(params, "contrast", 0.3, 2.5).name("Contrast");
+      lightingFolder.add(params, "midtoneLift", 0, 2).name("Midtone Lift");
+      lightingFolder.add(params, "specularStrength", 0, 2.5).name("Specular");
+      lightingFolder.add(params, "specularSize", 0.1, 3).name("Specular Size");
+      lightingFolder.add(params, "ridgeAccent", 0, 2).name("Ridge Accent");
+      lightingFolder.add(params, "cavityStrength", 0, 2).name("Cavity");
+      lightingFolder.add(params, "kaleidoscopeMode").name("Kaleidoscope Mode");
+      lightingFolder.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
+
+      const glowFolder = gui.addFolder("Edge Glow");
+      glowFolder.add(params, "glowOn").name("Glow On");
+      glowFolder.addColor(params, "glowColorA").name("Glow Color A");
+      glowFolder.add(params, "glowAlphaA", 0, 1).name("Glow Alpha A");
+      glowFolder.addColor(params, "glowColorB").name("Glow Color B");
+      glowFolder.add(params, "glowAlphaB", 0, 1).name("Glow Alpha B");
+      glowFolder.add(params, "glowStrength", 0, 2).name("Glow Strength");
+      glowFolder.add(params, "glowWidth", 0.15, 4).name("Glow Width");
+      glowFolder.add(params, "glowEmission", 0, 3).name("Glow Emission");
+      glowFolder.add(params, "glowScroll").name("Glow Scroll");
+      glowFolder.add(params, "glowScrollSpeed", 0, 3).name("Glow Scroll Speed");
+      glowFolder.add(params, "glowReverse").name("Glow Reverse");
+
+      const lineFolder = gui.addFolder("Edge Line");
+      lineFolder.add(params, "lineOn").name("Line On");
+      lineFolder.addColor(params, "lineColorA").name("Line Color A");
+      lineFolder.add(params, "lineAlphaA", 0, 1).name("Line Alpha A");
+      lineFolder.addColor(params, "lineColorB").name("Line Color B");
+      lineFolder.add(params, "lineAlphaB", 0, 1).name("Line Alpha B");
+      lineFolder.add(params, "lineStrength", 0, 2).name("Line Strength");
+      lineFolder.add(params, "lineWidth", 0.1, 4).name("Line Width");
+      lineFolder.add(params, "lineSoftness", 0, 1).name("Line Softness");
+      lineFolder.add(params, "lineScroll").name("Line Scroll");
+      lineFolder.add(params, "lineScrollSpeed", 0, 3).name("Line Scroll Speed");
+      lineFolder.add(params, "lineReverse").name("Line Reverse");
+
+      const innerGlowFolder = gui.addFolder("Inner Glow");
+      innerGlowFolder.add(params, "innerGlowStrength", 0, 2).name("Inner Glow Strength");
+      innerGlowFolder.add(params, "innerGlowWidth", 0.1, 4).name("Inner Glow Width");
+      innerGlowFolder.addColor(params, "innerGlowColor").name("Inner Glow Color");
+
+      const audioFolder = gui.addFolder("Audio Settings");
+      audioFolder.add(params, "musicReact").name("Mic Reactive");
+      audioFolder.add(params, "micSensitivity", 0, 5).name("Mic Sensitivity");
+      audioFolder.add(params, "musicMatch").name("Music Match");
+
+      const miscFolder = gui.addFolder("Misc");
+      miscFolder.add(params, "zoomValue", 0, 4).name("Zoom");
+      rotXController = miscFolder.add(params, "uFractalRotationX", 0, Math.PI * 2).name("Rotation X");
+      rotYController = miscFolder.add(params, "uFractalRotationY", 0, Math.PI * 2).name("Rotation Y");
+      rotZController = miscFolder.add(params, "uFractalRotationZ", 0, Math.PI * 2).name("Rotation Z");
+      miscFolder.add(params, "mirror").name("Mirror Mode");
+      miscFolder.add(params, "mirrorQuad").name("Quad Mirror Mode");
+
+      fractalFolder.open();
+      colorFolder.open();
+      psyShaderFolder.open();
+      gradingFolder.open();
+      patternFolder.open();
+      lightingFolder.open();
+      glowFolder.close();
+      lineFolder.close();
+      innerGlowFolder.close();
+      audioFolder.close();
+      miscFolder.close();
+
+      window.addEventListener("resize", onWindowResize, false);
+      renderer.domElement.addEventListener("mousedown", onMouseDown, false);
+      renderer.domElement.addEventListener("mouseup", onMouseUp, false);
+      renderer.domElement.addEventListener("mousemove", onMouseMove, false);
+      renderer.domElement.addEventListener("touchstart", onTouchStart, false);
+      renderer.domElement.addEventListener("touchmove", onTouchMove, false);
+      renderer.domElement.addEventListener("touchend", onTouchEnd, false);
+
+      clock = new THREE.Clock();
+    }
+
+    function onWindowResize() {
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const deltaTime = clock.getDelta();
+      const elapsedTime = clock.elapsedTime;
+
+      material.uniforms.iTime.value = elapsedTime;
+      navCamera.position.z = params.zoomValue;
+
+      let sensitiveAvg = 0;
+
+      if (params.musicReact && micEnabled) {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
+        let avg = sum / bufferLength / 255.0;
+        sensitiveAvg = avg * params.micSensitivity;
+      }
+
+      if (params.trippyMode) {
+        const effectiveTrippySpeed = (params.trippySpeed / 10.0) * 1.0;
+        const hue = (elapsedTime * effectiveTrippySpeed) % 1.0;
+        const newColor = new THREE.Color().setHSL(hue, 0.7, 0.5);
+        material.uniforms.uColor.value.copy(newColor);
+      } else {
+        material.uniforms.uColor.value.set(params.uColor);
+      }
+
+      if (params.kaleidoscopeMode) {
+        params.lightAzimuth += deltaTime * params.kaleidoscopeSpeed;
+        params.lightAzimuth = ((params.lightAzimuth + Math.PI) % (Math.PI * 2.0)) - Math.PI;
+        if (lightAzimuthController) lightAzimuthController.updateDisplay();
+      }
+
+      if (params.powerAnimation) {
+        let effectivePowerSpeed = params.powerAnimationSpeed;
+
+        if (params.musicMatch && micEnabled) {
+          const threshold = 0.4;
+          if (sensitiveAvg > threshold && (elapsedTime - lastBeatTime > 0.3)) {
+            const beatInterval = elapsedTime - lastBeatTime;
+            lastBeatTime = elapsedTime;
+            bpm = 60.0 / beatInterval;
+          }
+          effectivePowerSpeed = (bpm / 120.0) * params.powerAnimationSpeed;
+        }
+
+        const range = params.powerMax - params.powerMin;
+        if (range <= 0.0001) {
+          material.uniforms.uPower.value = params.powerMin;
+        } else {
+          const x = (elapsedTime * effectivePowerSpeed) % (2.0 * range);
+          const newPower = (x < range)
+            ? (params.powerMin + x)
+            : (params.powerMin + (2.0 * range - x));
+          material.uniforms.uPower.value = newPower;
+        }
+      } else {
+        material.uniforms.uPower.value = params.uPower;
+      }
+
+      if (!isDragging) {
+        if (params.autoRotateX) params.uFractalRotationX += deltaTime * params.rotateSpeedX;
+        if (params.autoRotateY) params.uFractalRotationY += deltaTime * params.rotateSpeedY;
+        if (params.autoRotateZ) params.uFractalRotationZ += deltaTime * params.rotateSpeedZ;
+
+        if (rotXController) rotXController.updateDisplay();
+        if (rotYController) rotYController.updateDisplay();
+        if (rotZController) rotZController.updateDisplay();
+      }
+
+      material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
+      material.uniforms.uFractalRotation.value.set(
+        params.uFractalRotationX,
+        params.uFractalRotationY,
+        params.uFractalRotationZ
+      );
+
+      material.uniforms.uBailout.value = params.uBailout;
+      material.uniforms.uIterations.value = params.uIterations;
+      material.uniforms.uSurfaceEpsilon.value = params.uSurfaceEpsilon;
+      material.uniforms.uMaxSteps.value = params.uMaxSteps;
+      material.uniforms.uMaxDistance.value = params.uMaxDistance;
+      material.uniforms.uShape.value = params.uShape;
+      material.uniforms.uMirror.value = params.mirror ? 1.0 : 0.0;
+      material.uniforms.uMirrorQuad.value = params.mirrorQuad ? 1.0 : 0.0;
+
+      material.uniforms.uLightIntensity.value = params.lightIntensity;
+      material.uniforms.uLightAzimuth.value = params.lightAzimuth;
+      material.uniforms.uLightElevation.value = params.lightElevation;
+      material.uniforms.uLightColor.value.set(params.lightColor);
+
+      material.uniforms.uShadowStrength.value = params.shadowStrength;
+      material.uniforms.uShadowTint.value.set(params.shadowTint);
+      material.uniforms.uContrast.value = params.contrast;
+      material.uniforms.uMidtoneLift.value = params.midtoneLift;
+      material.uniforms.uSpecularStrength.value = params.specularStrength;
+      material.uniforms.uSpecularSize.value = params.specularSize;
+
+      material.uniforms.uColorSaturation.value = params.colorSaturation;
+      material.uniforms.uColorVibrance.value = params.colorVibrance;
+      material.uniforms.uPaletteContrast.value = params.paletteContrast;
+      material.uniforms.uColorIntensity.value = params.colorIntensity;
+      material.uniforms.uPreserveHighlightColor.value = params.preserveHighlightColor ? 1.0 : 0.0;
+
+      material.uniforms.uRidgeAccent.value = params.ridgeAccent;
+      material.uniforms.uCavityStrength.value = params.cavityStrength;
+
+      material.uniforms.uGlowOn.value = params.glowOn ? 1.0 : 0.0;
+      material.uniforms.uGlowColorA.value.set(params.glowColorA);
+      material.uniforms.uGlowAlphaA.value = params.glowAlphaA;
+      material.uniforms.uGlowColorB.value.set(params.glowColorB);
+      material.uniforms.uGlowAlphaB.value = params.glowAlphaB;
+      material.uniforms.uGlowStrength.value = params.glowStrength;
+      material.uniforms.uGlowWidth.value = params.glowWidth;
+      material.uniforms.uGlowEmission.value = params.glowEmission;
+      material.uniforms.uGlowScroll.value = params.glowScroll ? 1.0 : 0.0;
+      material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
+      material.uniforms.uGlowReverse.value = params.glowReverse ? 1.0 : 0.0;
+
+      material.uniforms.uLineOn.value = params.lineOn ? 1.0 : 0.0;
+      material.uniforms.uLineColorA.value.set(params.lineColorA);
+      material.uniforms.uLineAlphaA.value = params.lineAlphaA;
+      material.uniforms.uLineColorB.value.set(params.lineColorB);
+      material.uniforms.uLineAlphaB.value = params.lineAlphaB;
+      material.uniforms.uLineStrength.value = params.lineStrength;
+      material.uniforms.uLineWidth.value = params.lineWidth;
+      material.uniforms.uLineSoftness.value = params.lineSoftness;
+      material.uniforms.uLineScroll.value = params.lineScroll ? 1.0 : 0.0;
+      material.uniforms.uLineScrollSpeed.value = params.lineScrollSpeed;
+      material.uniforms.uLineReverse.value = params.lineReverse ? 1.0 : 0.0;
+
+      material.uniforms.uInnerGlowStrength.value = params.innerGlowStrength;
+      material.uniforms.uInnerGlowWidth.value = params.innerGlowWidth;
+      material.uniforms.uInnerGlowColor.value.set(params.innerGlowColor);
+
+      material.uniforms.uPaletteMode.value = params.paletteMode;
+      material.uniforms.uRingScale.value = params.ringScale;
+      material.uniforms.uRingStrength.value = params.ringStrength;
+      material.uniforms.uWarmColor.value.set(params.warmColor);
+      material.uniforms.uCoolColor.value.set(params.coolColor);
+      material.uniforms.uPsyColorA.value.set(params.psyColorA);
+      material.uniforms.uPsyColorB.value.set(params.psyColorB);
+      material.uniforms.uPsyColorC.value.set(params.psyColorC);
+      material.uniforms.uPsyColorD.value.set(params.psyColorD);
+      material.uniforms.uPsyMix.value = params.psyMix;
+
+      // --- ADDED: Psy Scale Cycle animation in JS, zero shader cost ---
+      if (params.psyScaleCycle) {
+        const animatedPsyScale = params.psyScale + Math.sin(elapsedTime * params.psyScaleCycleSpeed) * params.psyScaleCycleAmount;
+        material.uniforms.uPsyScale.value = Math.max(0.1, animatedPsyScale);
+      } else {
+        material.uniforms.uPsyScale.value = params.psyScale;
+      }
+
+      material.uniforms.uPsyFlow.value = params.psyFlow;
+      material.uniforms.uPsySpinStrength.value = params.psySpinStrength;
+      material.uniforms.uPaletteCycle.value = params.paletteCycle ? 1.0 : 0.0;
+      material.uniforms.uPaletteCycleSpeed.value = params.paletteCycleSpeed;
+      material.uniforms.uPsyStyle.value = params.psyStyle;
+
+      material.uniforms.uPatternMode.value = params.patternMode;
+      material.uniforms.uPatternStrength.value = params.patternStrength;
+      material.uniforms.uPatternScale.value = params.patternScale;
+      material.uniforms.uPatternSpeed.value = params.patternSpeed;
+      material.uniforms.uPatternBlend.value = params.patternBlend;
+
+      material.uniforms.uColorBands.value = params.colorBands;
+      material.uniforms.uBandStrength.value = params.bandStrength;
+
+      material.uniforms.uPsyShaderMode.value = params.psyShaderMode;
+      material.uniforms.uPsyEmission.value = params.psyEmission;
+      material.uniforms.uPsyDepthShade.value = params.psyDepthShade;
+      material.uniforms.uPsyContrast.value = params.psyContrast;
+      material.uniforms.uPsySaturation.value = params.psySaturation;
+      material.uniforms.uPsyInternalGlow.value = params.psyInternalGlow;
+      material.uniforms.uPsyGlowThreshold.value = params.psyGlowThreshold;
+      material.uniforms.uPsyGlowOn.value = params.psyGlowOn ? 1.0 : 0.0;
+
+      material.uniforms.uCamPos.value.copy(navCamera.position);
+
+      const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(navCamera.quaternion).normalize();
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(navCamera.quaternion).normalize();
+      const up = new THREE.Vector3(0, 1, 0).applyQuaternion(navCamera.quaternion).normalize();
+
+      material.uniforms.uCamForward.value.copy(forward);
+      material.uniforms.uCamRight.value.copy(right);
+      material.uniforms.uCamUp.value.copy(up);
+
+      if (keys["ArrowUp"] || keys["w"]) navCamera.translateZ(-params.flySpeed);
+      if (keys["ArrowDown"] || keys["s"]) navCamera.translateZ(params.flySpeed);
+      if (keys["ArrowLeft"] || keys["a"]) navCamera.translateX(-params.flySpeed);
+      if (keys["ArrowRight"] || keys["d"]) navCamera.translateX(params.flySpeed);
+      if (keys["q"]) navCamera.translateY(params.flySpeed);
+      if (keys["e"]) navCamera.translateY(-params.flySpeed);
+
+      renderer.render(scene, orthoCamera);
+    }
+
+    refreshPresetSelect();
+    init();
+    animate();
+  </script>
+</body>
+</html>
