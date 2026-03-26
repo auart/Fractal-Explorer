@@ -437,10 +437,6 @@
     uniform float uPaletteCycleSpeed;
     uniform float uPsyStyle;
 
-    uniform float uPsyShaderMode;
-    uniform float uPsyEmission;
-    uniform float uPsyDepthShade;
-
     uniform float uPatternMode;
     uniform float uPatternStrength;
     uniform float uPatternScale;
@@ -449,6 +445,16 @@
 
     uniform float uColorBands;
     uniform float uBandStrength;
+
+    uniform float uPsyShaderMode;
+    uniform float uPsyEmission;
+    uniform float uPsyDepthShade;
+
+    uniform float uPsyContrast;
+    uniform float uPsySaturation;
+    uniform float uPsyInternalGlow;
+    uniform float uPsyGlowThreshold;
+    uniform float uPsyGlowOn;
 
     mat3 rotationMatrix(vec3 angles) {
       float cx = cos(angles.x), sx = sin(angles.x);
@@ -488,32 +494,28 @@
         if (r > uBailout) break;
 
         if (uShape == 0) {
-          float rr = max(r, 0.00001);
-          float theta = acos(clamp(z.z / rr, -1.0, 1.0));
+          float theta = acos(z.z / max(r, 0.00001));
           float phi = atan(z.y, z.x);
-          dr = pow(rr, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(rr, uPower);
+          dr = pow(r, uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(r, uPower);
           theta *= uPower;
           phi *= uPower;
           z = zr * vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
         } else if (uShape == 1) {
           float rCube = max(max(abs(z.x), abs(z.y)), abs(z.z));
-          float rr = max(rCube, 0.00001);
-          dr = pow(rr, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(rr, uPower);
+          dr = pow(max(rCube, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rCube, 0.00001), uPower);
           z = sign(z) * zr;
         } else if (uShape == 2) {
           float rPyr = max((abs(z.x) + abs(z.y)), abs(z.z));
-          float rr = max(rPyr, 0.00001);
-          dr = pow(rr, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(rr, uPower);
+          dr = pow(max(rPyr, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rPyr, 0.00001), uPower);
           z = sign(z) * zr;
         } else {
           float rHexXY = length(vec2(z.x, z.y)) / cos(3.14159 / 6.0);
           float rHex = max(rHexXY, abs(z.z));
-          float rr = max(rHex, 0.00001);
-          dr = pow(rr, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(rr, uPower);
+          dr = pow(max(rHex, 0.00001), uPower - 1.0) * uPower * dr + 1.0;
+          float zr = pow(max(rHex, 0.00001), uPower);
           z = sign(z) * zr;
         }
 
@@ -565,26 +567,24 @@
     }
 
     vec3 applySaturationAndVibrance(vec3 c, float saturation, float vibrance) {
-      c = clamp(c, 0.0, 1.0);
-
       float lum = luma(c);
       vec3 gray = vec3(lum);
       c = mix(gray, c, saturation);
 
-      float maxC = max(max(c.r, c.g), c.b);
-      float minC = min(min(c.r, c.g), c.b);
-      float sat = maxC - minC;
-      float boost = (1.0 - sat) * vibrance;
-      c = mix(c, mix(vec3(luma(c)), c, 1.0 + boost), clamp(vibrance, 0.0, 2.0));
-
-      return clamp(c, 0.0, 1.0);
+      float mx = max(max(c.r, c.g), c.b);
+      float mn = min(min(c.r, c.g), c.b);
+      float sat = mx - mn;
+      float vibAmount = (1.0 - sat) * vibrance;
+      c = mix(vec3(luma(c)), c, 1.0 + vibAmount);
+      return c;
     }
 
     float quantizeBands(float v) {
       if (uColorBands < 1.5) return v;
       float bands = max(1.0, uColorBands);
       float q = floor(v * bands) / bands;
-      return mix(v, q, clamp(uBandStrength, 0.0, 1.0));
+      float strength = clamp(uBandStrength, 0.0, 1.0);
+      return mix(v, q, strength);
     }
 
     vec3 psyPalette(float t) {
@@ -707,6 +707,7 @@
 
         float diffuse = max(dot(normal, lightDir), 0.0);
         float ambient = 0.14;
+
         float shadow = calcShadow(pos + normal * uSurfaceEpsilon * 2.0, lightDir);
         vec3 viewDir = normalize(ro - pos);
         vec3 halfDir = normalize(lightDir + viewDir);
@@ -803,18 +804,45 @@
           vec3 patternColor = mix(uPsyColorA, uPsyColorD, pattern);
           layeredPsy = mix(layeredPsy, patternColor, patternDrive * 0.75);
 
-          baseCol = layeredPsy;
+          baseCol = mix(uShadowTint, layeredPsy, clamp(lightVal + 0.22, 0.0, 1.0));
         }
 
-        baseCol += uLightColor * pow(rim, 2.2) * uRidgeAccent * 0.35;
-        baseCol -= vec3(pow(1.0 - diffuse, 2.0) * (1.0 - shadow) * uCavityStrength * 0.35);
+        float ridge = pow(rim, 2.2);
+        float cavity = pow(1.0 - diffuse, 2.0) * (1.0 - shadow);
+        baseCol += uLightColor * ridge * uRidgeAccent * 0.35;
+        baseCol -= vec3(cavity * uCavityStrength * 0.35);
 
         baseCol *= uColorIntensity;
         baseCol = applySaturationAndVibrance(baseCol, uColorSaturation, uColorVibrance);
 
-        vec3 litColor;
-        {
-          vec3 shadedColor;
+        vec3 shadedColor;
+        bool isPsy = (uPaletteMode > 1.5);
+
+        if (isPsy && uPsyShaderMode > 0.5) {
+          vec3 psy = max(baseCol, vec3(0.0));
+
+          float depthShade = mix(1.0, 0.35 + 0.65 * lightVal, clamp(uPsyDepthShade, 0.0, 1.0));
+          psy *= depthShade;
+
+          psy = pow(max(psy, vec3(0.0)), vec3(1.0 / max(0.001, uPsyContrast)));
+
+          float psyLum = dot(psy, vec3(0.299, 0.587, 0.114));
+          psy = mix(vec3(psyLum), psy, uPsySaturation);
+
+          float glowMask = smoothstep(uPsyGlowThreshold, 1.0, max(max(psy.r, psy.g), psy.b));
+          vec3 psyInternalGlow = psy * glowMask * uPsyInternalGlow * uPsyGlowOn;
+
+          vec3 emissiveCol = psy * uPsyEmission + psyInternalGlow;
+
+          if (uPsyShaderMode < 1.5) {
+            shadedColor = emissiveCol;
+          } else {
+            vec3 hybridLit = emissiveCol * mix(0.55, 1.0, lightVal);
+            shadedColor = mix(emissiveCol, hybridLit, clamp(uPsyDepthShade, 0.0, 1.0));
+          }
+
+          specular = vec3(0.0);
+        } else {
           if (uPreserveHighlightColor > 0.5) {
             vec3 lit = mix(vec3(0.25), uLightColor, lightVal);
             shadedColor = baseCol * lit;
@@ -822,7 +850,6 @@
             shadedColor = mix(baseCol * 0.35, baseCol, lightVal);
             shadedColor += uLightColor * spec * 0.25;
           }
-          litColor = shadedColor + specular;
         }
 
         float glowWidthExp = mix(3.5, 0.35, clamp(uGlowWidth / 4.0, 0.0, 1.0));
@@ -866,23 +893,7 @@
                         * (1.0 - smoothstep(0.82 - innerAA, 0.82 + innerAA, innerPow));
         vec3 innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
 
-        if (uPaletteMode >= 1.5) {
-          vec3 emissiveColor = baseCol * uPsyEmission;
-          float depthShade = mix(1.0, 0.35 + 0.65 * lightVal, clamp(uPsyDepthShade, 0.0, 1.0));
-          emissiveColor *= depthShade;
-
-          if (uPsyShaderMode < 0.5) {
-            col = litColor + glowLayer + innerGlow;
-          } else if (uPsyShaderMode < 1.5) {
-            col = emissiveColor + glowLayer + innerGlow;
-          } else {
-            vec3 hybridLit = emissiveColor * mix(1.0, lightVal, 0.35);
-            col = mix(hybridLit, litColor, 0.25) + glowLayer + innerGlow;
-          }
-        } else {
-          col = litColor + glowLayer + innerGlow;
-        }
-
+        col = shadedColor + specular + glowLayer + innerGlow;
         col = mix(col, lineGradColor, clamp(lineMixAmt, 0.0, 1.0));
       }
 
@@ -933,6 +944,7 @@
       lightAzimuth: 0.0,
       lightElevation: 0.6,
       lightColor: "#ffffff",
+
       shadowStrength: 1.0,
       shadowTint: "#000000",
       contrast: 1.0,
@@ -940,9 +952,9 @@
       specularStrength: 0.65,
       specularSize: 0.95,
 
-      colorSaturation: 1.0,
-      colorVibrance: 0.5,
-      paletteContrast: 1.0,
+      colorSaturation: 1.2,
+      colorVibrance: 0.6,
+      paletteContrast: 1.2,
       colorIntensity: 1.0,
       preserveHighlightColor: true,
 
@@ -982,6 +994,7 @@
       ringStrength: 0.6,
       warmColor: "#ff8c3a",
       coolColor: "#2fe1d6",
+
       psyColorA: "#18d8d8",
       psyColorB: "#a6ff3c",
       psyColorC: "#ff9a1f",
@@ -994,10 +1007,6 @@
       paletteCycleSpeed: 0.5,
       psyStyle: 0,
 
-      psyShaderMode: 0,
-      psyEmission: 1.0,
-      psyDepthShade: 0.6,
-
       patternMode: 0,
       patternStrength: 0.7,
       patternScale: 8.0,
@@ -1006,6 +1015,15 @@
 
       colorBands: 8.0,
       bandStrength: 1.0,
+
+      psyShaderMode: 0,
+      psyEmission: 1.2,
+      psyDepthShade: 0.65,
+      psyContrast: 1.3,
+      psySaturation: 1.1,
+      psyInternalGlow: 0.2,
+      psyGlowThreshold: 0.7,
+      psyGlowOn: true,
 
       trippyMode: false,
       trippySpeed: 1.0,
@@ -1036,12 +1054,6 @@
       "Double Spiral": 15,
       Voronoi: 16,
       Marble: 17
-    };
-
-    const PSY_SHADER_MODE_OPTIONS = {
-      "Surface Lit": 0,
-      Emissive: 1,
-      Hybrid: 2
     };
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -1287,18 +1299,8 @@
       return { width: w, height: h };
     }
 
-    window.addEventListener("keydown", (e) => {
-      keys[e.key] = true;
-      if (e.key.toLowerCase() === "l") {
-        if (params.psyShaderMode === 0) params.psyShaderMode = 1;
-        else params.psyShaderMode = 0;
-        refreshGuiDisplays();
-      }
-    });
-
-    window.addEventListener("keyup", (e) => {
-      keys[e.key] = false;
-    });
+    window.addEventListener("keydown", (e) => { keys[e.key] = true; });
+    window.addEventListener("keyup", (e) => { keys[e.key] = false; });
 
     let isDragging = false;
     let prevMouse = { x: 0, y: 0 };
@@ -1706,6 +1708,7 @@
           uCamForward: { value: new THREE.Vector3() },
 
           uFractalRotation: { value: new THREE.Vector3(0, 0, 0) },
+
           uMirror: { value: params.mirror ? 1.0 : 0.0 },
           uMirrorQuad: { value: params.mirrorQuad ? 1.0 : 0.0 },
 
@@ -1775,10 +1778,6 @@
           uPaletteCycleSpeed: { value: params.paletteCycleSpeed },
           uPsyStyle: { value: params.psyStyle },
 
-          uPsyShaderMode: { value: params.psyShaderMode },
-          uPsyEmission: { value: params.psyEmission },
-          uPsyDepthShade: { value: params.psyDepthShade },
-
           uPatternMode: { value: params.patternMode },
           uPatternStrength: { value: params.patternStrength },
           uPatternScale: { value: params.patternScale },
@@ -1786,7 +1785,16 @@
           uPatternBlend: { value: params.patternBlend },
 
           uColorBands: { value: params.colorBands },
-          uBandStrength: { value: params.bandStrength }
+          uBandStrength: { value: params.bandStrength },
+
+          uPsyShaderMode: { value: params.psyShaderMode },
+          uPsyEmission: { value: params.psyEmission },
+          uPsyDepthShade: { value: params.psyDepthShade },
+          uPsyContrast: { value: params.psyContrast },
+          uPsySaturation: { value: params.psySaturation },
+          uPsyInternalGlow: { value: params.psyInternalGlow },
+          uPsyGlowThreshold: { value: params.psyGlowThreshold },
+          uPsyGlowOn: { value: params.psyGlowOn ? 1.0 : 0.0 }
         }
       });
 
@@ -1823,9 +1831,6 @@
       const colorFolder = gui.addFolder("Color & Palette");
       colorFolder.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
       colorFolder.add(params, "psyStyle", { Old: 0, Hybrid: 1, New: 2 }).name("Psy Style");
-      colorFolder.add(params, "psyShaderMode", PSY_SHADER_MODE_OPTIONS).name("Psy Shader Mode");
-      colorFolder.add(params, "psyEmission", 0.1, 3.0).name("Psy Emission");
-      colorFolder.add(params, "psyDepthShade", 0.0, 1.0).name("Psy Depth Shade");
       colorFolder.addColor(params, "uColor").name("Base Color");
       colorFolder.add(params, "trippyMode").name("Trippy Mode");
       colorFolder.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
@@ -1844,11 +1849,25 @@
       colorFolder.add(params, "paletteCycle").name("Palette Cycle");
       colorFolder.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
 
+      const psyShaderFolder = gui.addFolder("Psy Shader Mode");
+      psyShaderFolder.add(params, "psyShaderMode", {
+        Lit: 0,
+        Emissive: 1,
+        Hybrid: 2
+      }).name("Shader Mode");
+      psyShaderFolder.add(params, "psyEmission", 0, 3).name("Psy Emission");
+      psyShaderFolder.add(params, "psyDepthShade", 0, 1).name("Psy Depth Shade");
+      psyShaderFolder.add(params, "psyContrast", 0.5, 2.5).name("Psy Contrast");
+      psyShaderFolder.add(params, "psySaturation", 0.5, 2.0).name("Psy Saturation");
+      psyShaderFolder.add(params, "psyGlowOn").name("Internal Glow On");
+      psyShaderFolder.add(params, "psyInternalGlow", 0, 1.5).name("Psy Internal Glow");
+      psyShaderFolder.add(params, "psyGlowThreshold", 0.3, 1.0).name("Glow Threshold");
+
       const gradingFolder = gui.addFolder("Color Grading");
-      gradingFolder.add(params, "colorSaturation", 0, 2.0).name("Saturation");
-      gradingFolder.add(params, "colorVibrance", 0, 1.5).name("Vibrance");
-      gradingFolder.add(params, "paletteContrast", 0.5, 2.0).name("Palette Contrast");
-      gradingFolder.add(params, "colorIntensity", 0.25, 2.0).name("Color Intensity");
+      gradingFolder.add(params, "colorSaturation", 0, 2.5).name("Saturation");
+      gradingFolder.add(params, "colorVibrance", 0, 2.5).name("Vibrance");
+      gradingFolder.add(params, "paletteContrast", 0.5, 2.5).name("Palette Contrast");
+      gradingFolder.add(params, "colorIntensity", 0.25, 2.5).name("Color Intensity");
       gradingFolder.add(params, "preserveHighlightColor").name("Preserve Highlights");
       gradingFolder.add(params, "colorBands", 0, 20).step(1).name("Color Bands");
       gradingFolder.add(params, "bandStrength", 0, 1).name("Band Strength");
@@ -1922,8 +1941,9 @@
 
       fractalFolder.open();
       colorFolder.open();
+      psyShaderFolder.open();
       gradingFolder.open();
-      patternFolder.close();
+      patternFolder.open();
       lightingFolder.open();
       glowFolder.close();
       lineFolder.close();
@@ -2038,6 +2058,7 @@
       material.uniforms.uLightAzimuth.value = params.lightAzimuth;
       material.uniforms.uLightElevation.value = params.lightElevation;
       material.uniforms.uLightColor.value.set(params.lightColor);
+
       material.uniforms.uShadowStrength.value = params.shadowStrength;
       material.uniforms.uShadowTint.value.set(params.shadowTint);
       material.uniforms.uContrast.value = params.contrast;
@@ -2099,10 +2120,6 @@
       material.uniforms.uPaletteCycleSpeed.value = params.paletteCycleSpeed;
       material.uniforms.uPsyStyle.value = params.psyStyle;
 
-      material.uniforms.uPsyShaderMode.value = params.psyShaderMode;
-      material.uniforms.uPsyEmission.value = params.psyEmission;
-      material.uniforms.uPsyDepthShade.value = params.psyDepthShade;
-
       material.uniforms.uPatternMode.value = params.patternMode;
       material.uniforms.uPatternStrength.value = params.patternStrength;
       material.uniforms.uPatternScale.value = params.patternScale;
@@ -2111,6 +2128,15 @@
 
       material.uniforms.uColorBands.value = params.colorBands;
       material.uniforms.uBandStrength.value = params.bandStrength;
+
+      material.uniforms.uPsyShaderMode.value = params.psyShaderMode;
+      material.uniforms.uPsyEmission.value = params.psyEmission;
+      material.uniforms.uPsyDepthShade.value = params.psyDepthShade;
+      material.uniforms.uPsyContrast.value = params.psyContrast;
+      material.uniforms.uPsySaturation.value = params.psySaturation;
+      material.uniforms.uPsyInternalGlow.value = params.psyInternalGlow;
+      material.uniforms.uPsyGlowThreshold.value = params.psyGlowThreshold;
+      material.uniforms.uPsyGlowOn.value = params.psyGlowOn ? 1.0 : 0.0;
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
