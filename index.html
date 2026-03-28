@@ -78,6 +78,21 @@
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
+    #fpsDisplay {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 30;
+      padding: 6px 8px;
+      font-size: 12px;
+      line-height: 1;
+      background: rgba(0, 0, 0, 0.68);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      pointer-events: none;
+      display: none;
+    }
+
     canvas {
       display: block;
       width: 100%;
@@ -137,6 +152,18 @@
       background: #c00;
       color: #fff;
       border-color: #c00;
+    }
+
+    #leftPanel button.secondaryDark {
+      background: #111;
+      color: #fff;
+      border-color: #444;
+    }
+
+    #leftPanel button.secondaryDark.active {
+      background: #0f5;
+      color: #000;
+      border-color: #0f5;
     }
 
     #startOverlay {
@@ -303,6 +330,17 @@
       </div>
 
       <div class="panelBox rowGap">
+        <label for="previewQualitySelect">Preview Quality</label>
+        <select id="previewQualitySelect">
+          <option value="1">High, 100%</option>
+          <option value="0.75" selected>Medium, 75%</option>
+          <option value="0.5">Low, 50%</option>
+        </select>
+
+        <button id="toggleFpsBtn" class="secondaryDark">Show FPS</button>
+      </div>
+
+      <div class="panelBox rowGap">
         <label for="exportFormatSelect">Export Format</label>
         <select id="exportFormatSelect">
           <option value="1280x720">Landscape HD, 1280 x 720</option>
@@ -345,6 +383,7 @@
 
     <div id="canvasContainer">
       <div id="previewFrame"></div>
+      <div id="fpsDisplay">FPS 0</div>
     </div>
 
     <div id="rightPanel">
@@ -494,9 +533,7 @@
     vec2 applyBaseMode(vec2 uv) {
       float m = uSymmetryMode;
 
-      if (m < 0.5) {
-        return uv;
-      }
+      if (m < 0.5) return uv;
 
       if (m < 1.5) {
         uv.x = abs(uv.x);
@@ -597,21 +634,11 @@
       uv = applyBaseMode(uv);
 
       if (uSymmetryStack > 0.5) {
-        if (uTwistOn > 0.5) {
-          uv = applyTwist(uv);
-        }
-        if (uFoldOn > 0.5) {
-          uv = applyFold(uv);
-        }
-        if (uTileOn > 0.5) {
-          uv = applyTile(uv);
-        }
-        if (uPolarOn > 0.5) {
-          uv = applyPolar(uv);
-        }
-        if (uOffsetOn > 0.5) {
-          uv = applyOffset(uv);
-        }
+        if (uTwistOn > 0.5) uv = applyTwist(uv);
+        if (uFoldOn > 0.5) uv = applyFold(uv);
+        if (uTileOn > 0.5) uv = applyTile(uv);
+        if (uPolarOn > 0.5) uv = applyPolar(uv);
+        if (uOffsetOn > 0.5) uv = applyOffset(uv);
       }
 
       return uv;
@@ -873,7 +900,7 @@
         vec3 halfDir = normalize(lightDir + viewDir);
 
         float specularExp = mix(96.0, 6.0, clamp((uSpecularSize - 0.1) / 2.9, 0.0, 1.0));
-        float spec = pow(max(dot(normal, halfDir), 0.0), specularExp);
+        float spec = (uSpecularStrength > 0.001) ? pow(max(dot(normal, halfDir), 0.0), specularExp) : 0.0;
         vec3 specular = uLightColor * spec * uSpecularStrength * shadow;
 
         float lightVal = 0.14 + 0.86 * diffuse * shadow;
@@ -993,53 +1020,67 @@
           }
         }
 
-        float glowWidthExp = mix(3.5, 0.35, clamp(uGlowWidth / 4.0, 0.0, 1.0));
-        float rimPow = pow(rim, glowWidthExp);
-        float glowAA = fwidth(rimPow) * 1.75 + 0.0005;
-        float glowMask = smoothstep(0.02 - glowAA, 0.02 + glowAA, rimPow) *
-                         (1.0 - smoothstep(0.65 - glowAA, 0.65 + glowAA, rimPow));
+        vec3 glowLayer = vec3(0.0);
+        if (uGlowOn > 0.5 && uGlowStrength > 0.001) {
+          float glowWidthExp = mix(3.5, 0.35, clamp(uGlowWidth / 4.0, 0.0, 1.0));
+          float rimPow = pow(rim, glowWidthExp);
+          float glowAA = fwidth(rimPow) * 1.75 + 0.0005;
+          float glowMask = smoothstep(0.02 - glowAA, 0.02 + glowAA, rimPow) *
+                           (1.0 - smoothstep(0.65 - glowAA, 0.65 + glowAA, rimPow));
 
-        float glowCoord = rim;
-        if (uGlowScroll > 0.5) {
-          float dir = mix(1.0, -1.0, step(0.5, uGlowReverse));
-          glowCoord = fract(rim + iTime * uGlowScrollSpeed * dir);
+          float glowCoord = rim;
+          if (uGlowScroll > 0.5) {
+            float dir = mix(1.0, -1.0, step(0.5, uGlowReverse));
+            glowCoord = fract(rim + iTime * uGlowScrollSpeed * dir);
+          }
+
+          glowLayer = mix(uGlowColorA, uGlowColorB, glowCoord) *
+                      glowMask *
+                      mix(uGlowAlphaA, uGlowAlphaB, glowCoord) *
+                      uGlowStrength *
+                      uGlowOn *
+                      (1.0 + uGlowEmission);
         }
 
-        vec3 glowLayer = mix(uGlowColorA, uGlowColorB, glowCoord) *
-                         glowMask *
-                         mix(uGlowAlphaA, uGlowAlphaB, glowCoord) *
-                         uGlowStrength *
-                         uGlowOn *
-                         (1.0 + uGlowEmission);
+        vec3 lineColor = vec3(0.0);
+        float lineMixAmt = 0.0;
+        if (uLineOn > 0.5 && uLineStrength > 0.001) {
+          float lineWidthExp = mix(7.5, 1.2, clamp(uLineWidth / 4.0, 0.0, 1.0));
+          float lineRim = pow(rim, lineWidthExp);
+          float lineAA = fwidth(lineRim) * (0.5 + uLineSoftness * 2.0) + 0.0003;
+          float lineCenter = 0.18;
+          float lineMask = smoothstep(lineCenter - lineAA, lineCenter, lineRim) -
+                           smoothstep(lineCenter, lineCenter + lineAA, lineRim);
+          lineMask = clamp(lineMask * 8.0, 0.0, 1.0);
 
-        float lineWidthExp = mix(7.5, 1.2, clamp(uLineWidth / 4.0, 0.0, 1.0));
-        float lineRim = pow(rim, lineWidthExp);
-        float lineAA = fwidth(lineRim) * (0.5 + uLineSoftness * 2.0) + 0.0003;
-        float lineCenter = 0.18;
-        float lineMask = smoothstep(lineCenter - lineAA, lineCenter, lineRim) -
-                         smoothstep(lineCenter, lineCenter + lineAA, lineRim);
-        lineMask = clamp(lineMask * 8.0, 0.0, 1.0);
+          float lineCoord = rim;
+          if (uLineScroll > 0.5) {
+            float dir = mix(1.0, -1.0, step(0.5, uLineReverse));
+            lineCoord = fract(rim + iTime * uLineScrollSpeed * dir);
+          }
 
-        float lineCoord = rim;
-        if (uLineScroll > 0.5) {
-          float dir = mix(1.0, -1.0, step(0.5, uLineReverse));
-          lineCoord = fract(rim + iTime * uLineScrollSpeed * dir);
+          lineMixAmt = lineMask *
+                       mix(uLineAlphaA, uLineAlphaB, lineCoord) *
+                       uLineStrength *
+                       uLineOn;
+
+          lineColor = mix(uLineColorA, uLineColorB, lineCoord);
         }
 
-        float lineMixAmt = lineMask *
-                           mix(uLineAlphaA, uLineAlphaB, lineCoord) *
-                           uLineStrength *
-                           uLineOn;
-
-        float innerExp = mix(6.0, 1.0, clamp(uInnerGlowWidth / 4.0, 0.0, 1.0));
-        float innerPow = pow(rim, innerExp);
-        float innerAA = fwidth(innerPow) * 2.0 + 0.0005;
-        float innerMask = smoothstep(0.0, innerAA + 0.0001, innerPow) *
-                          (1.0 - smoothstep(0.82 - innerAA, 0.82 + innerAA, innerPow));
-        vec3 innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
+        vec3 innerGlow = vec3(0.0);
+        if (uInnerGlowStrength > 0.001) {
+          float innerExp = mix(6.0, 1.0, clamp(uInnerGlowWidth / 4.0, 0.0, 1.0));
+          float innerPow = pow(rim, innerExp);
+          float innerAA = fwidth(innerPow) * 2.0 + 0.0005;
+          float innerMask = smoothstep(0.0, innerAA + 0.0001, innerPow) *
+                            (1.0 - smoothstep(0.82 - innerAA, 0.82 + innerAA, innerPow));
+          innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
+        }
 
         col = shadedColor + specular + glowLayer + innerGlow;
-        col = mix(col, mix(uLineColorA, uLineColorB, lineCoord), clamp(lineMixAmt, 0.0, 1.0));
+        if (lineMixAmt > 0.0) {
+          col = mix(col, lineColor, clamp(lineMixAmt, 0.0, 1.0));
+        }
       }
 
       col *= uLightIntensity;
@@ -1061,6 +1102,10 @@
     let frozenTime = 0.0;
     let isFrozen = false;
     let animationTime = 0.0;
+
+    let fpsAccum = 0;
+    let fpsFrames = 0;
+    let fpsValue = 0;
 
     let params = {
       flySpeed: 0.05,
@@ -1205,7 +1250,10 @@
       breathingSpeed: 0.4,
       breathingAmount: 0.08,
 
-      freezeAnimation: false
+      freezeAnimation: false,
+
+      previewQuality: 0.75,
+      showFps: false
     };
 
     const PRESET_KEYS = Object.keys(params);
@@ -1247,6 +1295,7 @@
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobile) {
       params.zoomValue = 3.8;
+      params.previewQuality = 0.5;
     }
 
     let lastBeatTime = 0;
@@ -1276,6 +1325,9 @@
     const exportStillBtn = document.getElementById("exportStillBtn");
     const recordBtn = document.getElementById("recordBtn");
     const freezeBtn = document.getElementById("freezeBtn");
+    const previewQualitySelect = document.getElementById("previewQualitySelect");
+    const toggleFpsBtn = document.getElementById("toggleFpsBtn");
+    const fpsDisplay = document.getElementById("fpsDisplay");
 
     const exportFormatSelect = document.getElementById("exportFormatSelect");
     const formatSelect = document.getElementById("formatSelect");
@@ -1288,6 +1340,10 @@
 
     function safeBailout(v) {
       return Math.max(0.01, v);
+    }
+
+    function clampPreviewQuality(v) {
+      return Math.max(0.25, Math.min(1.0, v));
     }
 
     function getCurrentPresetData() {
@@ -1308,6 +1364,13 @@
       }
     }
 
+    function updatePreviewUiFromParams() {
+      previewQualitySelect.value = String(params.previewQuality);
+      fpsDisplay.style.display = params.showFps ? "block" : "none";
+      toggleFpsBtn.textContent = params.showFps ? "Hide FPS" : "Show FPS";
+      toggleFpsBtn.classList.toggle("active", params.showFps);
+    }
+
     function applyPresetData(data) {
       PRESET_KEYS.forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(data, key)) {
@@ -1317,6 +1380,7 @@
 
       params.zoomValue = clampZoom(params.zoomValue);
       params.uBailout = safeBailout(params.uBailout);
+      params.previewQuality = clampPreviewQuality(parseFloat(params.previewQuality));
 
       isFrozen = !!params.freezeAnimation;
       if (isFrozen) {
@@ -1324,6 +1388,8 @@
       }
 
       updateFreezeBtn();
+      updatePreviewUiFromParams();
+      resizeRendererToPreviewFrame();
       refreshGuiDisplays();
     }
 
@@ -1525,6 +1591,16 @@
       }
 
       importPresetInput.value = "";
+    });
+
+    previewQualitySelect.addEventListener("change", () => {
+      params.previewQuality = clampPreviewQuality(parseFloat(previewQualitySelect.value));
+      resizeRendererToPreviewFrame();
+    });
+
+    toggleFpsBtn.addEventListener("click", () => {
+      params.showFps = !params.showFps;
+      updatePreviewUiFromParams();
     });
 
     function parseExportDimensions() {
@@ -1863,14 +1939,20 @@
     }
 
     function resizeRendererToPreviewFrame() {
-      const frame = document.getElementById("previewFrame");
-      const width = Math.max(1, frame.clientWidth);
-      const height = Math.max(1, frame.clientHeight);
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      if (!renderer || !material) return;
 
-      renderer.setPixelRatio(pixelRatio);
-      renderer.setSize(width, height, false);
-      material.uniforms.iResolution.value.set(width * pixelRatio, height * pixelRatio);
+      const frame = document.getElementById("previewFrame");
+      const cssWidth = Math.max(1, frame.clientWidth);
+      const cssHeight = Math.max(1, frame.clientHeight);
+      const basePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const scaledPixelRatio = basePixelRatio * clampPreviewQuality(params.previewQuality);
+
+      const renderWidth = Math.max(1, Math.round(cssWidth * scaledPixelRatio));
+      const renderHeight = Math.max(1, Math.round(cssHeight * scaledPixelRatio));
+
+      renderer.setPixelRatio(1);
+      renderer.setSize(renderWidth, renderHeight, false);
+      material.uniforms.iResolution.value.set(renderWidth, renderHeight);
     }
 
     function init() {
@@ -2210,6 +2292,7 @@
 
       clock = new THREE.Clock();
       updateFreezeBtn();
+      updatePreviewUiFromParams();
     }
 
     const _fwd = new THREE.Vector3();
@@ -2220,7 +2303,15 @@
       requestAnimationFrame(animate);
 
       const rawDelta = clock.getDelta();
-      const rawElapsed = clock.elapsedTime;
+
+      fpsAccum += rawDelta;
+      fpsFrames += 1;
+      if (fpsAccum >= 0.25) {
+        fpsValue = fpsFrames / fpsAccum;
+        fpsDisplay.textContent = `FPS ${fpsValue.toFixed(1)}`;
+        fpsAccum = 0;
+        fpsFrames = 0;
+      }
 
       if (!isFrozen) {
         animationTime += rawDelta;
