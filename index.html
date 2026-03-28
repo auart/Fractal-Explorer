@@ -21,6 +21,17 @@
       color: white;
     }
 
+    body.panelsHidden #leftPanel,
+    body.panelsHidden #rightPanel {
+      display: none !important;
+    }
+
+    body.panelsHidden #canvasContainer {
+      flex: 1 1 100%;
+      width: 100%;
+      height: 100%;
+    }
+
     #appShell {
       width: 100vw;
       height: 100vh;
@@ -91,6 +102,31 @@
       border: 1px solid rgba(255, 255, 255, 0.18);
       pointer-events: none;
       display: none;
+    }
+
+    #transportDisplay {
+      font-size: 12px;
+      color: #111;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid #000;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      line-height: 1.35;
+    }
+
+    #playlistList {
+      width: 100%;
+      min-height: 120px;
+      box-sizing: border-box;
+      border: 1px solid #000;
+      font-size: 13px;
+      padding: 4px;
+    }
+
+    .twoCol {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
     }
 
     canvas {
@@ -232,6 +268,53 @@
       color: rgba(255, 255, 255, 0.72);
     }
 
+    #keyboardHelpOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 200;
+    }
+
+    #keyboardHelpPopup {
+      width: min(92vw, 420px);
+      background: rgba(0, 0, 0, 0.86);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-sizing: border-box;
+      padding: 18px 18px 16px 18px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    #keyboardHelpPopup h2 {
+      margin: 0 0 12px 0;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    #keyboardHelpPopup ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    #keyboardHelpCloseBtn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: auto;
+      min-width: 34px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      cursor: pointer;
+    }
+
     .dg.main {
       width: 100% !important;
     }
@@ -289,6 +372,10 @@
         height: 44vh;
       }
 
+      body.panelsHidden #canvasContainer {
+        height: 100vh;
+      }
+
       #startCard h1 {
         font-size: 32px;
       }
@@ -305,6 +392,23 @@
         <button id="enterWithoutMicBtn" class="secondary">Start without Microphone</button>
       </div>
       <div id="startStatus"></div>
+    </div>
+  </div>
+
+  <div id="keyboardHelpOverlay" aria-hidden="true">
+    <div id="keyboardHelpPopup">
+      <button id="keyboardHelpCloseBtn" type="button">×</button>
+      <h2>Keyboard Help</h2>
+      <ul>
+        <li>Space = toggle UI panels</li>
+        <li>J = rewind</li>
+        <li>K = play/pause</li>
+        <li>L = fast forward</li>
+        <li>W / A / S / D = move camera</li>
+        <li>Q / E = move camera up/down</li>
+        <li>Mouse drag = rotate fractal</li>
+        <li>Pinch = zoom on touch devices</li>
+      </ul>
     </div>
   </div>
 
@@ -330,14 +434,75 @@
       </div>
 
       <div class="panelBox rowGap">
+        <label>Transport</label>
+        <div id="transportDisplay">Time 0.00s<br>State Play, 1.00x</div>
+        <div class="twoCol">
+          <button id="rewindBtn" type="button">Rewind</button>
+          <button id="playPauseBtn" type="button">Pause</button>
+        </div>
+        <div class="twoCol">
+          <button id="stepBackBtn" type="button">Step Back</button>
+          <button id="stepForwardBtn" type="button">Step Forward</button>
+        </div>
+        <button id="fastForwardBtn" type="button">Fast Forward</button>
+        <label for="playbackSpeedSelect">Playback Speed</label>
+        <select id="playbackSpeedSelect">
+          <option value="0.25">0.25x</option>
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="1.5">1.5x</option>
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+        </select>
+      </div>
+
+      <div class="panelBox rowGap">
         <label for="previewQualitySelect">Preview Quality</label>
         <select id="previewQualitySelect">
-          <option value="1">High, 100%</option>
-          <option value="0.75" selected>Medium, 75%</option>
+          <option value="1">Ultra, 100%</option>
+          <option value="0.85">High, 85%</option>
+          <option value="0.7" selected>Medium, 70%</option>
           <option value="0.5">Low, 50%</option>
+          <option value="0.35">Mobile, 35%</option>
         </select>
 
         <button id="toggleFpsBtn" class="secondaryDark">Show FPS</button>
+      </div>
+
+      <div class="panelBox rowGap">
+        <label for="playlistPresetSelect">Playlist Preset Source</label>
+        <select id="playlistPresetSelect">
+          <option value="">No saved presets</option>
+        </select>
+
+        <button id="playlistAddBtn" type="button">Add Selected Preset to Playlist</button>
+
+        <label for="playlistList">Preset Playlist</label>
+        <select id="playlistList" size="7"></select>
+
+        <div class="twoCol">
+          <button id="playlistRemoveBtn" type="button">Remove</button>
+          <button id="playlistClearBtn" type="button">Clear</button>
+        </div>
+
+        <div class="twoCol">
+          <button id="playlistUpBtn" type="button">Move Up</button>
+          <button id="playlistDownBtn" type="button">Move Down</button>
+        </div>
+
+        <label for="playlistIntervalInput">Switch Interval, Seconds</label>
+        <input id="playlistIntervalInput" type="number" min="1" max="600" step="0.5" value="8" />
+
+        <label for="playlistTransitionSelect">Transition</label>
+        <select id="playlistTransitionSelect">
+          <option value="cut" selected>Hard Cut</option>
+          <option value="fade">Fade</option>
+        </select>
+
+        <label for="playlistFadeDurationInput">Fade Duration, Seconds</label>
+        <input id="playlistFadeDurationInput" type="number" min="0.1" max="10" step="0.1" value="1.25" />
+
+        <button id="playlistAutoplayBtn" type="button" class="secondaryDark">Playlist Autoplay Off</button>
       </div>
 
       <div class="panelBox rowGap">
@@ -378,6 +543,7 @@
       <button id="freezeBtn" class="freezeBtn">⏸ Freeze Animation</button>
       <button id="exportStillBtn">Export Still</button>
       <button id="recordBtn">Record Clip</button>
+      <button id="keyboardHelpBtn">Keyboard Help</button>
       <button id="fsToggleBtn">Enter Full Screen</button>
     </div>
 
@@ -1093,19 +1259,34 @@
     let gui;
 
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
+    const PLAYLIST_STORAGE_KEY = "fractalExplorerPlaylistV1";
     const FIXED_PREVIEW_ASPECT = 16 / 9;
     const FIXED_MAX_STEPS = 50;
     const FIXED_MAX_DISTANCE = 50.0;
     const MIN_ZOOM = 1.0;
     const MAX_ZOOM = 6.0;
+    const STEP_TIME = 1 / 60;
 
-    let frozenTime = 0.0;
-    let isFrozen = false;
-    let animationTime = 0.0;
+    let timelineTime = 0.0;
+    let transportPlaying = true;
+    let transportBaseSpeed = 1.0;
+    let transportShuttle = 0;
+    let isBusyExport = false;
 
     let fpsAccum = 0;
     let fpsFrames = 0;
     let fpsValue = 0;
+
+    let playlistState = {
+      activeIndex: 0,
+      lastSwitchTime: 0,
+      fadeStartTime: 0,
+      isFading: false,
+      fadeFromName: "",
+      fadeToName: "",
+      fadeFromValues: null,
+      fadeToValues: null
+    };
 
     let params = {
       flySpeed: 0.05,
@@ -1243,6 +1424,16 @@
       offsetOn: false,
       offsetAmount: 0.25,
 
+      twistAnimate: false,
+      twistAnimSpeed: 1.0,
+      twistAnimAmount: 1.0,
+      tileAnimate: false,
+      tileAnimSpeed: 1.0,
+      tileAnimAmount: 1.0,
+      offsetAnimate: false,
+      offsetAnimSpeed: 1.0,
+      offsetAnimAmount: 0.25,
+
       cameraRotateOn: false,
       cameraRotateSpeed: 0.25,
 
@@ -1252,8 +1443,14 @@
 
       freezeAnimation: false,
 
-      previewQuality: 0.75,
-      showFps: false
+      previewQuality: 0.7,
+      showFps: false,
+
+      playlist: [],
+      playlistInterval: 8,
+      playlistTransition: "cut",
+      playlistFadeDuration: 1.25,
+      playlistAutoplay: false
     };
 
     const PRESET_KEYS = Object.keys(params);
@@ -1295,7 +1492,7 @@
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobile) {
       params.zoomValue = 3.8;
-      params.previewQuality = 0.5;
+      params.previewQuality = 0.35;
     }
 
     let lastBeatTime = 0;
@@ -1329,6 +1526,30 @@
     const toggleFpsBtn = document.getElementById("toggleFpsBtn");
     const fpsDisplay = document.getElementById("fpsDisplay");
 
+    const transportDisplay = document.getElementById("transportDisplay");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const rewindBtn = document.getElementById("rewindBtn");
+    const fastForwardBtn = document.getElementById("fastForwardBtn");
+    const stepBackBtn = document.getElementById("stepBackBtn");
+    const stepForwardBtn = document.getElementById("stepForwardBtn");
+    const playbackSpeedSelect = document.getElementById("playbackSpeedSelect");
+
+    const playlistPresetSelect = document.getElementById("playlistPresetSelect");
+    const playlistList = document.getElementById("playlistList");
+    const playlistAddBtn = document.getElementById("playlistAddBtn");
+    const playlistRemoveBtn = document.getElementById("playlistRemoveBtn");
+    const playlistClearBtn = document.getElementById("playlistClearBtn");
+    const playlistUpBtn = document.getElementById("playlistUpBtn");
+    const playlistDownBtn = document.getElementById("playlistDownBtn");
+    const playlistIntervalInput = document.getElementById("playlistIntervalInput");
+    const playlistTransitionSelect = document.getElementById("playlistTransitionSelect");
+    const playlistFadeDurationInput = document.getElementById("playlistFadeDurationInput");
+    const playlistAutoplayBtn = document.getElementById("playlistAutoplayBtn");
+
+    const keyboardHelpBtn = document.getElementById("keyboardHelpBtn");
+    const keyboardHelpOverlay = document.getElementById("keyboardHelpOverlay");
+    const keyboardHelpCloseBtn = document.getElementById("keyboardHelpCloseBtn");
+
     const exportFormatSelect = document.getElementById("exportFormatSelect");
     const formatSelect = document.getElementById("formatSelect");
     const qualitySelect = document.getElementById("qualitySelect");
@@ -1343,19 +1564,99 @@
     }
 
     function clampPreviewQuality(v) {
-      return Math.max(0.25, Math.min(1.0, v));
+      return Math.max(0.35, Math.min(1.0, v));
+    }
+
+    function clampPlaylistInterval(v) {
+      return Math.max(1, Math.min(600, Number(v) || 8));
+    }
+
+    function clampFadeDuration(v) {
+      return Math.max(0.1, Math.min(10, Number(v) || 1.25));
+    }
+
+    function isEditableTarget(target) {
+      if (!target) return false;
+      const tag = (target.tagName || "").toLowerCase();
+      return (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        target.isContentEditable
+      );
+    }
+
+    function isTypingContext() {
+      return isEditableTarget(document.activeElement);
+    }
+
+    function getEffectivePlaybackRate() {
+      if (!transportPlaying) return 0;
+      if (transportShuttle === -1) return -Math.abs(transportBaseSpeed);
+      if (transportShuttle === 1) return Math.abs(transportBaseSpeed);
+      return Math.abs(transportBaseSpeed);
+    }
+
+    function updateTransportDisplay() {
+      const rate = getEffectivePlaybackRate();
+      let state = "Pause";
+      if (rate > 0) state = transportShuttle === 1 ? "Fast Forward" : "Play";
+      if (rate < 0) state = "Rewind";
+      transportDisplay.innerHTML = `Time ${timelineTime.toFixed(2)}s<br>State ${state}, ${rate.toFixed(2)}x`;
+      playPauseBtn.textContent = transportPlaying ? "Pause" : "Play";
+    }
+
+    function setTransportPlaying(v) {
+      transportPlaying = !!v;
+      params.freezeAnimation = !transportPlaying;
+      updateFreezeBtn();
+      updateTransportDisplay();
+    }
+
+    function stepTimeline(amount) {
+      timelineTime = Math.max(0, timelineTime + amount);
+      playlistState.lastSwitchTime = timelineTime;
+      playlistState.fadeStartTime = timelineTime;
+      playlistState.isFading = false;
+      updateTransportDisplay();
+    }
+
+    function togglePanels() {
+      document.body.classList.toggle("panelsHidden");
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
+    }
+
+    function openKeyboardHelp() {
+      keyboardHelpOverlay.style.display = "flex";
+      keyboardHelpOverlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closeKeyboardHelp() {
+      keyboardHelpOverlay.style.display = "none";
+      keyboardHelpOverlay.setAttribute("aria-hidden", "true");
     }
 
     function getCurrentPresetData() {
       const data = {};
       PRESET_KEYS.forEach((key) => {
-        data[key] = params[key];
+        data[key] = Array.isArray(params[key]) ? params[key].slice() : params[key];
+      });
+      return data;
+    }
+
+    function getBlendablePresetData(values) {
+      const data = {};
+      PRESET_KEYS.forEach((key) => {
+        data[key] = Object.prototype.hasOwnProperty.call(values, key)
+          ? (Array.isArray(values[key]) ? values[key].slice() : values[key])
+          : (Array.isArray(params[key]) ? params[key].slice() : params[key]);
       });
       return data;
     }
 
     function updateFreezeBtn() {
-      if (isFrozen) {
+      if (!transportPlaying) {
         freezeBtn.textContent = "▶ Resume Animation";
         freezeBtn.classList.add("active");
       } else {
@@ -1369,25 +1670,32 @@
       fpsDisplay.style.display = params.showFps ? "block" : "none";
       toggleFpsBtn.textContent = params.showFps ? "Hide FPS" : "Show FPS";
       toggleFpsBtn.classList.toggle("active", params.showFps);
+      playbackSpeedSelect.value = String(params.playbackSpeed || transportBaseSpeed);
+      playlistIntervalInput.value = params.playlistInterval;
+      playlistTransitionSelect.value = params.playlistTransition;
+      playlistFadeDurationInput.value = params.playlistFadeDuration;
+      updatePlaylistAutoplayBtn();
+      updateTransportDisplay();
     }
 
     function applyPresetData(data) {
       PRESET_KEYS.forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(data, key)) {
-          params[key] = data[key];
+          params[key] = Array.isArray(data[key]) ? data[key].slice() : data[key];
         }
       });
 
       params.zoomValue = clampZoom(params.zoomValue);
       params.uBailout = safeBailout(params.uBailout);
       params.previewQuality = clampPreviewQuality(parseFloat(params.previewQuality));
+      params.playlistInterval = clampPlaylistInterval(params.playlistInterval);
+      params.playlistFadeDuration = clampFadeDuration(params.playlistFadeDuration);
+      if (!Array.isArray(params.playlist)) params.playlist = [];
 
-      isFrozen = !!params.freezeAnimation;
-      if (isFrozen) {
-        frozenTime = animationTime;
-      }
-
-      updateFreezeBtn();
+      transportBaseSpeed = Math.max(0.01, Number(params.playbackSpeed || transportBaseSpeed || 1));
+      setTransportPlaying(!params.freezeAnimation);
+      refreshPlaylistUi();
+      savePlaylistState();
       updatePreviewUiFromParams();
       resizeRendererToPreviewFrame();
       refreshGuiDisplays();
@@ -1433,12 +1741,18 @@
       const names = Object.keys(presets).sort((a, b) => a.localeCompare(b));
 
       presetSelect.innerHTML = "";
+      playlistPresetSelect.innerHTML = "";
 
       if (!names.length) {
         const opt = document.createElement("option");
         opt.value = "";
         opt.textContent = "No saved presets";
         presetSelect.appendChild(opt);
+
+        const opt2 = document.createElement("option");
+        opt2.value = "";
+        opt2.textContent = "No saved presets";
+        playlistPresetSelect.appendChild(opt2);
         return;
       }
 
@@ -1447,6 +1761,11 @@
         opt.value = name;
         opt.textContent = name;
         presetSelect.appendChild(opt);
+
+        const opt2 = document.createElement("option");
+        opt2.value = name;
+        opt2.textContent = name;
+        playlistPresetSelect.appendChild(opt2);
       });
     }
 
@@ -1465,6 +1784,7 @@
         return;
       }
 
+      params.playbackSpeed = transportBaseSpeed;
       presets[trimmed] = {
         name: trimmed,
         savedAt: new Date().toISOString(),
@@ -1474,6 +1794,7 @@
       savePresetsToStorage(presets);
       refreshPresetSelect();
       presetSelect.value = trimmed;
+      playlistPresetSelect.value = trimmed;
     }
 
     function loadSelectedPreset() {
@@ -1507,7 +1828,10 @@
       const presets = loadPresetsFromStorage();
       delete presets[selected];
       savePresetsToStorage(presets);
+      params.playlist = params.playlist.filter((name) => name !== selected);
+      savePlaylistState();
       refreshPresetSelect();
+      refreshPlaylistUi();
       presetNameInput.value = "";
     }
 
@@ -1559,7 +1883,241 @@
       savePresetsToStorage(presets);
       refreshPresetSelect();
       presetSelect.value = finalName;
+      playlistPresetSelect.value = finalName;
       presetNameInput.value = finalName;
+    }
+
+    function savePlaylistState() {
+      const data = {
+        playlist: params.playlist.slice(),
+        playlistInterval: params.playlistInterval,
+        playlistTransition: params.playlistTransition,
+        playlistFadeDuration: params.playlistFadeDuration,
+        playlistAutoplay: params.playlistAutoplay
+      };
+      localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadPlaylistState() {
+      try {
+        const raw = localStorage.getItem(PLAYLIST_STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw) || {};
+        params.playlist = Array.isArray(data.playlist) ? data.playlist.slice() : [];
+        params.playlistInterval = clampPlaylistInterval(data.playlistInterval);
+        params.playlistTransition = data.playlistTransition === "fade" ? "fade" : "cut";
+        params.playlistFadeDuration = clampFadeDuration(data.playlistFadeDuration);
+        params.playlistAutoplay = !!data.playlistAutoplay;
+      } catch (err) {}
+    }
+
+    function refreshPlaylistUi() {
+      playlistList.innerHTML = "";
+      if (!params.playlist.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Playlist empty";
+        playlistList.appendChild(opt);
+        playlistList.disabled = true;
+      } else {
+        playlistList.disabled = false;
+        params.playlist.forEach((name, i) => {
+          const opt = document.createElement("option");
+          opt.value = String(i);
+          opt.textContent = `${i + 1}. ${name}`;
+          playlistList.appendChild(opt);
+        });
+        if (playlistState.activeIndex >= 0 && playlistState.activeIndex < params.playlist.length) {
+          playlistList.value = String(playlistState.activeIndex);
+        }
+      }
+
+      playlistIntervalInput.value = params.playlistInterval;
+      playlistTransitionSelect.value = params.playlistTransition;
+      playlistFadeDurationInput.value = params.playlistFadeDuration;
+      updatePlaylistAutoplayBtn();
+    }
+
+    function updatePlaylistAutoplayBtn() {
+      playlistAutoplayBtn.textContent = params.playlistAutoplay ? "Playlist Autoplay On" : "Playlist Autoplay Off";
+      playlistAutoplayBtn.classList.toggle("active", params.playlistAutoplay);
+    }
+
+    function addSelectedPresetToPlaylist() {
+      const name = playlistPresetSelect.value || presetSelect.value;
+      if (!name) {
+        alert("Select a saved preset first.");
+        return;
+      }
+      params.playlist.push(name);
+      playlistState.activeIndex = params.playlist.length - 1;
+      savePlaylistState();
+      refreshPlaylistUi();
+    }
+
+    function removeSelectedPlaylistItem() {
+      if (!params.playlist.length || playlistList.disabled) return;
+      const idx = Number(playlistList.value);
+      if (!Number.isFinite(idx) || idx < 0 || idx >= params.playlist.length) return;
+      params.playlist.splice(idx, 1);
+      playlistState.activeIndex = Math.max(0, Math.min(playlistState.activeIndex, params.playlist.length - 1));
+      savePlaylistState();
+      refreshPlaylistUi();
+    }
+
+    function clearPlaylist() {
+      params.playlist = [];
+      params.playlistAutoplay = false;
+      playlistState.activeIndex = 0;
+      playlistState.isFading = false;
+      savePlaylistState();
+      refreshPlaylistUi();
+    }
+
+    function movePlaylistItem(dir) {
+      if (!params.playlist.length || playlistList.disabled) return;
+      const idx = Number(playlistList.value);
+      if (!Number.isFinite(idx)) return;
+      const target = idx + dir;
+      if (target < 0 || target >= params.playlist.length) return;
+      const tmp = params.playlist[idx];
+      params.playlist[idx] = params.playlist[target];
+      params.playlist[target] = tmp;
+      playlistState.activeIndex = target;
+      savePlaylistState();
+      refreshPlaylistUi();
+      playlistList.value = String(target);
+    }
+
+    function setPlaylistAutoplay(v) {
+      params.playlistAutoplay = !!v;
+      playlistState.lastSwitchTime = timelineTime;
+      playlistState.fadeStartTime = timelineTime;
+      playlistState.isFading = false;
+      savePlaylistState();
+      updatePlaylistAutoplayBtn();
+    }
+
+    function loadPresetValuesByName(name) {
+      const presets = loadPresetsFromStorage();
+      const entry = presets[name];
+      return entry && entry.values ? getBlendablePresetData(entry.values) : null;
+    }
+
+    function applyPresetDataInstantFromPlaylist(name) {
+      const values = loadPresetValuesByName(name);
+      if (!values) return false;
+      applyPresetData(values);
+      presetNameInput.value = name;
+      playlistState.lastSwitchTime = timelineTime;
+      playlistState.fadeStartTime = timelineTime;
+      playlistState.isFading = false;
+      return true;
+    }
+
+    function blendColor(hexA, hexB, mixAmt) {
+      const a = new THREE.Color(hexA);
+      const b = new THREE.Color(hexB);
+      a.lerp(b, mixAmt);
+      return `#${a.getHexString()}`;
+    }
+
+    function blendPresetValues(a, b, mixAmt) {
+      const out = {};
+      PRESET_KEYS.forEach((key) => {
+        const av = a[key];
+        const bv = b[key];
+
+        if (typeof av === "number" && typeof bv === "number") {
+          out[key] = av + (bv - av) * mixAmt;
+        } else if (typeof av === "boolean" && typeof bv === "boolean") {
+          out[key] = mixAmt < 0.5 ? av : bv;
+        } else if (typeof av === "string" && typeof bv === "string" && av[0] === "#" && bv[0] === "#") {
+          out[key] = blendColor(av, bv, mixAmt);
+        } else if (Array.isArray(av) && Array.isArray(bv)) {
+          out[key] = mixAmt < 0.5 ? av.slice() : bv.slice();
+        } else {
+          out[key] = mixAmt < 0.5 ? av : bv;
+        }
+      });
+      return out;
+    }
+
+    function handlePlaylistAutomation() {
+      if (!params.playlistAutoplay || params.playlist.length < 2 || isBusyExport) return;
+
+      if (playlistState.activeIndex >= params.playlist.length) {
+        playlistState.activeIndex = 0;
+      }
+
+      const transition = params.playlistTransition;
+      const interval = clampPlaylistInterval(params.playlistInterval);
+      const fadeDuration = Math.min(clampFadeDuration(params.playlistFadeDuration), Math.max(0.1, interval - 0.05));
+      const timeSinceSwitch = timelineTime - playlistState.lastSwitchTime;
+
+      if (transition === "cut") {
+        if (timeSinceSwitch >= interval) {
+          const nextIndex = (playlistState.activeIndex + 1) % params.playlist.length;
+          playlistState.activeIndex = nextIndex;
+          applyPresetDataInstantFromPlaylist(params.playlist[nextIndex]);
+          refreshPlaylistUi();
+        }
+        return;
+      }
+
+      if (!playlistState.isFading && timeSinceSwitch >= Math.max(0.05, interval - fadeDuration)) {
+        const nextIndex = (playlistState.activeIndex + 1) % params.playlist.length;
+        const fromName = params.playlist[playlistState.activeIndex];
+        const toName = params.playlist[nextIndex];
+        const fromValues = loadPresetValuesByName(fromName);
+        const toValues = loadPresetValuesByName(toName);
+
+        if (fromValues && toValues) {
+          playlistState.isFading = true;
+          playlistState.fadeStartTime = timelineTime;
+          playlistState.fadeFromName = fromName;
+          playlistState.fadeToName = toName;
+          playlistState.fadeFromValues = fromValues;
+          playlistState.fadeToValues = toValues;
+        } else {
+          playlistState.activeIndex = nextIndex;
+          applyPresetDataInstantFromPlaylist(toName);
+          refreshPlaylistUi();
+        }
+      }
+
+      if (playlistState.isFading && playlistState.fadeFromValues && playlistState.fadeToValues) {
+        const mixAmt = Math.min(1, Math.max(0, (timelineTime - playlistState.fadeStartTime) / fadeDuration));
+        const blended = blendPresetValues(playlistState.fadeFromValues, playlistState.fadeToValues, mixAmt);
+        const keepPlaylist = params.playlist.slice();
+        const keepAutoplay = params.playlistAutoplay;
+        const keepInterval = params.playlistInterval;
+        const keepTransition = params.playlistTransition;
+        const keepFade = params.playlistFadeDuration;
+        const keepPlaybackSpeed = transportBaseSpeed;
+
+        PRESET_KEYS.forEach((key) => {
+          params[key] = Array.isArray(blended[key]) ? blended[key].slice() : blended[key];
+        });
+
+        params.playlist = keepPlaylist;
+        params.playlistAutoplay = keepAutoplay;
+        params.playlistInterval = keepInterval;
+        params.playlistTransition = keepTransition;
+        params.playlistFadeDuration = keepFade;
+        transportBaseSpeed = keepPlaybackSpeed;
+        params.playbackSpeed = keepPlaybackSpeed;
+        params.freezeAnimation = !transportPlaying;
+
+        if (mixAmt >= 1) {
+          playlistState.isFading = false;
+          playlistState.activeIndex = (playlistState.activeIndex + 1) % params.playlist.length;
+          presetNameInput.value = params.playlist[playlistState.activeIndex];
+          playlistState.lastSwitchTime = timelineTime;
+          refreshPlaylistUi();
+          refreshGuiDisplays();
+        }
+      }
     }
 
     savePresetBtn.addEventListener("click", () => savePresetByName(presetNameInput.value, false));
@@ -1603,17 +2161,153 @@
       updatePreviewUiFromParams();
     });
 
+    playPauseBtn.addEventListener("click", () => {
+      setTransportPlaying(!transportPlaying);
+    });
+
+    rewindBtn.addEventListener("mousedown", () => {
+      transportShuttle = -1;
+      setTransportPlaying(true);
+      updateTransportDisplay();
+    });
+
+    rewindBtn.addEventListener("mouseup", () => {
+      transportShuttle = 0;
+      updateTransportDisplay();
+    });
+
+    rewindBtn.addEventListener("mouseleave", () => {
+      transportShuttle = 0;
+      updateTransportDisplay();
+    });
+
+    fastForwardBtn.addEventListener("mousedown", () => {
+      transportShuttle = 1;
+      setTransportPlaying(true);
+      updateTransportDisplay();
+    });
+
+    fastForwardBtn.addEventListener("mouseup", () => {
+      transportShuttle = 0;
+      updateTransportDisplay();
+    });
+
+    fastForwardBtn.addEventListener("mouseleave", () => {
+      transportShuttle = 0;
+      updateTransportDisplay();
+    });
+
+    stepBackBtn.addEventListener("click", () => {
+      stepTimeline(-STEP_TIME);
+    });
+
+    stepForwardBtn.addEventListener("click", () => {
+      stepTimeline(STEP_TIME);
+    });
+
+    playbackSpeedSelect.addEventListener("change", () => {
+      transportBaseSpeed = Math.max(0.01, Number(playbackSpeedSelect.value) || 1);
+      params.playbackSpeed = transportBaseSpeed;
+      updateTransportDisplay();
+    });
+
+    playlistAddBtn.addEventListener("click", addSelectedPresetToPlaylist);
+    playlistRemoveBtn.addEventListener("click", removeSelectedPlaylistItem);
+    playlistClearBtn.addEventListener("click", clearPlaylist);
+    playlistUpBtn.addEventListener("click", () => movePlaylistItem(-1));
+    playlistDownBtn.addEventListener("click", () => movePlaylistItem(1));
+    playlistAutoplayBtn.addEventListener("click", () => setPlaylistAutoplay(!params.playlistAutoplay));
+
+    playlistIntervalInput.addEventListener("change", () => {
+      params.playlistInterval = clampPlaylistInterval(playlistIntervalInput.value);
+      playlistState.lastSwitchTime = timelineTime;
+      savePlaylistState();
+      refreshPlaylistUi();
+    });
+
+    playlistTransitionSelect.addEventListener("change", () => {
+      params.playlistTransition = playlistTransitionSelect.value === "fade" ? "fade" : "cut";
+      playlistState.isFading = false;
+      savePlaylistState();
+      refreshPlaylistUi();
+    });
+
+    playlistFadeDurationInput.addEventListener("change", () => {
+      params.playlistFadeDuration = clampFadeDuration(playlistFadeDurationInput.value);
+      savePlaylistState();
+      refreshPlaylistUi();
+    });
+
+    keyboardHelpBtn.addEventListener("click", openKeyboardHelp);
+    keyboardHelpCloseBtn.addEventListener("click", closeKeyboardHelp);
+    keyboardHelpOverlay.addEventListener("click", (e) => {
+      if (e.target === keyboardHelpOverlay) closeKeyboardHelp();
+    });
+
     function parseExportDimensions() {
       const [w, h] = exportFormatSelect.value.split("x").map(Number);
       return { width: w, height: h };
     }
 
     window.addEventListener("keydown", (e) => {
-      keys[e.key] = true;
+      const key = e.key;
+      keys[key] = true;
+
+      if (isTypingContext()) return;
+
+      if (keyboardHelpOverlay.style.display === "flex" && key === "Escape") {
+        e.preventDefault();
+        closeKeyboardHelp();
+        return;
+      }
+
+      if (key === " ") {
+        e.preventDefault();
+        togglePanels();
+        return;
+      }
+
+      if (key === "k" || key === "K") {
+        e.preventDefault();
+        setTransportPlaying(!transportPlaying);
+        return;
+      }
+
+      if (key === "j" || key === "J") {
+        e.preventDefault();
+        transportShuttle = -1;
+        setTransportPlaying(true);
+        updateTransportDisplay();
+        return;
+      }
+
+      if (key === "l" || key === "L") {
+        e.preventDefault();
+        transportShuttle = 1;
+        setTransportPlaying(true);
+        updateTransportDisplay();
+        return;
+      }
+
+      if (key === ",") {
+        e.preventDefault();
+        stepTimeline(-STEP_TIME);
+        return;
+      }
+
+      if (key === ".") {
+        e.preventDefault();
+        stepTimeline(STEP_TIME);
+      }
     });
 
     window.addEventListener("keyup", (e) => {
       keys[e.key] = false;
+
+      if (e.key === "j" || e.key === "J" || e.key === "l" || e.key === "L") {
+        transportShuttle = 0;
+        updateTransportDisplay();
+      }
     });
 
     let isDragging = false;
@@ -1706,6 +2400,7 @@
     function closeStartOverlay() {
       startOverlay.style.display = "none";
       refreshPresetSelect();
+      refreshPlaylistUi();
     }
 
     enterWithMicBtn.addEventListener("click", async (e) => {
@@ -1757,14 +2452,7 @@
     });
 
     freezeBtn.addEventListener("click", () => {
-      isFrozen = !isFrozen;
-      params.freezeAnimation = isFrozen;
-
-      if (isFrozen) {
-        frozenTime = animationTime;
-      }
-
-      updateFreezeBtn();
+      setTransportPlaying(!transportPlaying);
     });
 
     exportStillBtn.addEventListener("click", async () => {
@@ -1809,23 +2497,57 @@
       material.uniforms.iResolution.value.set(width, height);
     }
 
-    function restorePreviewResolution(originalPixelRatio, originalResolution) {
-      renderer.setPixelRatio(originalPixelRatio);
+    function resizeRendererToPreviewFrame() {
+      if (!renderer || !material || isBusyExport) return;
+
+      const frame = document.getElementById("previewFrame");
+      const cssWidth = Math.max(1, frame.clientWidth);
+      const cssHeight = Math.max(1, frame.clientHeight);
+      const basePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const scaledPixelRatio = basePixelRatio * clampPreviewQuality(params.previewQuality);
+
+      const renderWidth = Math.max(1, Math.round(cssWidth * scaledPixelRatio));
+      const renderHeight = Math.max(1, Math.round(cssHeight * scaledPixelRatio));
+
+      renderer.setPixelRatio(1);
+      renderer.setSize(renderWidth, renderHeight, false);
+      material.uniforms.iResolution.value.set(renderWidth, renderHeight);
+    }
+
+    function restorePreviewResolution() {
       resizeRendererToPreviewFrame();
-      material.uniforms.iResolution.value.copy(originalResolution);
+    }
+
+    function beginOfflineRender(width, height) {
+      isBusyExport = true;
+      recordBtn.disabled = true;
+      exportStillBtn.disabled = true;
+      freezeBtn.disabled = true;
+      setRenderResolution(width, height);
+    }
+
+    function endOfflineRender() {
+      isBusyExport = false;
+      recordBtn.disabled = false;
+      exportStillBtn.disabled = false;
+      freezeBtn.disabled = false;
+      restorePreviewResolution();
+      updateTransportDisplay();
+    }
+
+    function waitFrame() {
+      return new Promise((resolve) => requestAnimationFrame(resolve));
     }
 
     async function exportStill(width, height) {
-      const originalPixelRatio = renderer.getPixelRatio();
-      const originalResolution = material.uniforms.iResolution.value.clone();
-
-      setRenderResolution(width, height);
-      renderer.render(scene, orthoCamera);
+      beginOfflineRender(width, height);
+      renderFrameAtTime(timelineTime, 0, true);
+      await waitFrame();
 
       renderer.domElement.toBlob((blob) => {
         if (!blob) {
           alert("Export failed.");
-          restorePreviewResolution(originalPixelRatio, originalResolution);
+          endOfflineRender();
           return;
         }
 
@@ -1835,8 +2557,7 @@
         a.download = `fractal-${width}x${height}.png`;
         a.click();
         URL.revokeObjectURL(url);
-
-        restorePreviewResolution(originalPixelRatio, originalResolution);
+        endOfflineRender();
       }, "image/png");
     }
 
@@ -1861,10 +2582,7 @@
     });
 
     async function recordVideo({ durationMs = 10000, videoBitsPerSecond = 25e6, mimeType, width, height }) {
-      const originalPixelRatio = renderer.getPixelRatio();
-      const originalResolution = material.uniforms.iResolution.value.clone();
-
-      setRenderResolution(width, height);
+      beginOfflineRender(width, height);
 
       let recorder;
       const stream = renderer.domElement.captureStream(60);
@@ -1876,12 +2594,15 @@
         });
       } catch (err) {
         alert("Recording failed to start.");
-        restorePreviewResolution(originalPixelRatio, originalResolution);
+        endOfflineRender();
         return;
       }
 
       const chunks = [];
       const ext = getExt(mimeType);
+      const exportStartTime = timelineTime;
+      const fps = 60;
+      const totalFrames = Math.max(1, Math.round((durationMs / 1000) * fps));
 
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
@@ -1889,29 +2610,34 @@
         }
       };
 
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-
-        a.href = url;
-        a.download = `fractal-clip-${width}x${height}.${ext}`;
-        a.click();
-
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-        restorePreviewResolution(originalPixelRatio, originalResolution);
-        recordBtn.disabled = false;
-        recordBtn.textContent = "Record Clip";
-      };
+      const stopPromise = new Promise((resolve) => {
+        recorder.onstop = resolve;
+      });
 
       recorder.start();
-      recordBtn.disabled = true;
       recordBtn.textContent = "Recording...";
 
-      setTimeout(() => {
-        recorder.stop();
-      }, durationMs);
+      for (let i = 0; i < totalFrames; i++) {
+        const t = exportStartTime + i / fps;
+        renderFrameAtTime(t, 1 / fps, true);
+        await waitFrame();
+      }
+
+      recorder.stop();
+      await stopPromise;
+
+      const blob = new Blob(chunks, { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = `fractal-clip-${width}x${height}.${ext}`;
+      a.click();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      endOfflineRender();
+      recordBtn.textContent = "Record Clip";
     }
 
     function layoutPreviewFrame() {
@@ -1936,23 +2662,6 @@
       frame.style.height = `${fh}px`;
       frame.style.left = `${(cw - fw) * 0.5}px`;
       frame.style.top = `${(ch - fh) * 0.5}px`;
-    }
-
-    function resizeRendererToPreviewFrame() {
-      if (!renderer || !material) return;
-
-      const frame = document.getElementById("previewFrame");
-      const cssWidth = Math.max(1, frame.clientWidth);
-      const cssHeight = Math.max(1, frame.clientHeight);
-      const basePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      const scaledPixelRatio = basePixelRatio * clampPreviewQuality(params.previewQuality);
-
-      const renderWidth = Math.max(1, Math.round(cssWidth * scaledPixelRatio));
-      const renderHeight = Math.max(1, Math.round(cssHeight * scaledPixelRatio));
-
-      renderer.setPixelRatio(1);
-      renderer.setSize(renderWidth, renderHeight, false);
-      material.uniforms.iResolution.value.set(renderWidth, renderHeight);
     }
 
     function init() {
@@ -2148,13 +2857,22 @@
       const stackF = symF.addFolder("Stacked Transforms");
       stackF.add(params, "twistOn").name("Twist On");
       stackF.add(params, "twistAmount", -6, 6).name("Twist Amount");
+      stackF.add(params, "twistAnimate").name("Twist Animate");
+      stackF.add(params, "twistAnimSpeed", 0, 5).name("Twist Anim Speed");
+      stackF.add(params, "twistAnimAmount", 0, 6).name("Twist Anim Amount");
       stackF.add(params, "foldOn").name("Fold On");
       stackF.add(params, "foldIterations", 1, 5, 1).name("Fold Iterations");
       stackF.add(params, "tileOn").name("Tile On");
       stackF.add(params, "tileAmount", 0.5, 8).name("Tile Amount");
+      stackF.add(params, "tileAnimate").name("Tile Animate");
+      stackF.add(params, "tileAnimSpeed", 0, 5).name("Tile Anim Speed");
+      stackF.add(params, "tileAnimAmount", 0, 6).name("Tile Anim Amount");
       stackF.add(params, "polarOn").name("Polar Warp On");
       stackF.add(params, "offsetOn").name("Offset On");
       stackF.add(params, "offsetAmount", 0, 1.5).name("Offset Amount");
+      stackF.add(params, "offsetAnimate").name("Offset Animate");
+      stackF.add(params, "offsetAnimSpeed", 0, 5).name("Offset Anim Speed");
+      stackF.add(params, "offsetAnimAmount", 0, 1.5).name("Offset Anim Amount");
       symF.open();
 
       const colorF = gui.addFolder("Color & Palette");
@@ -2285,46 +3003,26 @@
 
       renderer.domElement.addEventListener("mousedown", onMouseDown);
       renderer.domElement.addEventListener("mouseup", onMouseUp);
+      renderer.domElement.addEventListener("mouseleave", onMouseUp);
       renderer.domElement.addEventListener("mousemove", onMouseMove);
       renderer.domElement.addEventListener("touchstart", onTouchStart, { passive: false });
       renderer.domElement.addEventListener("touchmove", onTouchMove, { passive: false });
       renderer.domElement.addEventListener("touchend", onTouchEnd);
 
       clock = new THREE.Clock();
+      loadPlaylistState();
+      transportBaseSpeed = 1.0;
+      params.playbackSpeed = transportBaseSpeed;
       updateFreezeBtn();
       updatePreviewUiFromParams();
+      refreshPlaylistUi();
     }
 
     const _fwd = new THREE.Vector3();
     const _rgt = new THREE.Vector3();
     const _up = new THREE.Vector3();
 
-    function animate() {
-      requestAnimationFrame(animate);
-
-      const rawDelta = clock.getDelta();
-
-      fpsAccum += rawDelta;
-      fpsFrames += 1;
-      if (fpsAccum >= 0.25) {
-        fpsValue = fpsFrames / fpsAccum;
-        fpsDisplay.textContent = `FPS ${fpsValue.toFixed(1)}`;
-        fpsAccum = 0;
-        fpsFrames = 0;
-      }
-
-      if (!isFrozen) {
-        animationTime += rawDelta;
-      } else {
-        animationTime = frozenTime;
-      }
-
-      const dt = isFrozen ? 0.0 : rawDelta;
-      const t = isFrozen ? frozenTime : animationTime;
-
-      params.zoomValue = clampZoom(params.zoomValue);
-      params.uBailout = safeBailout(params.uBailout);
-
+    function getAudioReactiveAverage() {
       let sensitiveAvg = 0;
 
       if (params.musicReact && micEnabled) {
@@ -2335,6 +3033,17 @@
         }
         sensitiveAvg = (sum / bufferLength / 255.0) * params.micSensitivity;
       }
+
+      return sensitiveAvg;
+    }
+
+    function renderFrameAtTime(t, dt, forceRender = false) {
+      params.zoomValue = clampZoom(params.zoomValue);
+      params.uBailout = safeBailout(params.uBailout);
+
+      const sensitiveAvg = getAudioReactiveAverage();
+
+      handlePlaylistAutomation();
 
       if (params.trippyMode) {
         const hue = (t * (params.trippySpeed / 10.0)) % 1.0;
@@ -2404,6 +3113,18 @@
       } else {
         material.uniforms.uPsyScale.value = params.psyScale;
       }
+
+      const animatedTwistAmount = params.twistAnimate
+        ? params.twistAmount + Math.sin(t * params.twistAnimSpeed) * params.twistAnimAmount
+        : params.twistAmount;
+
+      const animatedTileAmount = params.tileAnimate
+        ? Math.max(0.1, params.tileAmount + Math.sin(t * params.tileAnimSpeed) * params.tileAnimAmount)
+        : params.tileAmount;
+
+      const animatedOffsetAmount = params.offsetAnimate
+        ? Math.max(0.0, params.offsetAmount + Math.sin(t * params.offsetAnimSpeed) * params.offsetAnimAmount)
+        : params.offsetAmount;
 
       material.uniforms.iTime.value = t;
       material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
@@ -2506,16 +3227,28 @@
       material.uniforms.uRadialSegments.value = params.radialSegments;
       material.uniforms.uSymmetryStack.value = params.symmetryStack ? 1.0 : 0.0;
       material.uniforms.uTwistOn.value = params.twistOn ? 1.0 : 0.0;
-      material.uniforms.uTwistAmount.value = params.twistAmount;
+      material.uniforms.uTwistAmount.value = animatedTwistAmount;
       material.uniforms.uFoldOn.value = params.foldOn ? 1.0 : 0.0;
       material.uniforms.uFoldIterations.value = params.foldIterations;
       material.uniforms.uTileOn.value = params.tileOn ? 1.0 : 0.0;
-      material.uniforms.uTileAmount.value = params.tileAmount;
+      material.uniforms.uTileAmount.value = animatedTileAmount;
       material.uniforms.uPolarOn.value = params.polarOn ? 1.0 : 0.0;
       material.uniforms.uOffsetOn.value = params.offsetOn ? 1.0 : 0.0;
-      material.uniforms.uOffsetAmount.value = params.offsetAmount;
+      material.uniforms.uOffsetAmount.value = animatedOffsetAmount;
 
       material.uniforms.uScreenRotateAngle.value = screenRotateAngle;
+
+      if (!isBusyExport && !params.breathingOn) {
+        if ((keys["ArrowUp"] || keys["w"] || keys["W"]) && !isTypingContext()) navCamera.translateZ(-params.flySpeed);
+        if ((keys["ArrowDown"] || keys["s"] || keys["S"]) && !isTypingContext()) navCamera.translateZ(params.flySpeed);
+        if ((keys["ArrowLeft"] || keys["a"] || keys["A"]) && !isTypingContext()) navCamera.translateX(-params.flySpeed);
+        if ((keys["ArrowRight"] || keys["d"] || keys["D"]) && !isTypingContext()) navCamera.translateX(params.flySpeed);
+        if ((keys["q"] || keys["Q"]) && !isTypingContext()) navCamera.translateY(params.flySpeed);
+        if ((keys["e"] || keys["E"]) && !isTypingContext()) navCamera.translateY(-params.flySpeed);
+
+        navCamera.position.z = Math.max(MIN_ZOOM, navCamera.position.z);
+        params.zoomValue = clampZoom(navCamera.position.z);
+      }
 
       material.uniforms.uCamPos.value.copy(navCamera.position);
 
@@ -2527,24 +3260,43 @@
       material.uniforms.uCamRight.value.copy(_rgt);
       material.uniforms.uCamUp.value.copy(_up);
 
-      if (keys["ArrowUp"] || keys["w"]) navCamera.translateZ(-params.flySpeed);
-      if (keys["ArrowDown"] || keys["s"]) navCamera.translateZ(params.flySpeed);
-      if (keys["ArrowLeft"] || keys["a"]) navCamera.translateX(-params.flySpeed);
-      if (keys["ArrowRight"] || keys["d"]) navCamera.translateX(params.flySpeed);
-      if (keys["q"]) navCamera.translateY(params.flySpeed);
-      if (keys["e"]) navCamera.translateY(-params.flySpeed);
+      if (!isBusyExport || forceRender) {
+        renderer.render(scene, orthoCamera);
+      }
+    }
 
-      navCamera.position.z = Math.max(MIN_ZOOM, navCamera.position.z);
+    function animate() {
+      requestAnimationFrame(animate);
 
-      if (!params.breathingOn) {
-        params.zoomValue = clampZoom(navCamera.position.z);
+      const rawDelta = clock.getDelta();
+
+      fpsAccum += rawDelta;
+      fpsFrames += 1;
+      if (fpsAccum >= 0.25) {
+        fpsValue = fpsFrames / fpsAccum;
+        fpsDisplay.textContent = `FPS ${fpsValue.toFixed(1)}`;
+        fpsAccum = 0;
+        fpsFrames = 0;
       }
 
-      renderer.render(scene, orthoCamera);
+      if (isBusyExport) {
+        return;
+      }
+
+      const playbackRate = getEffectivePlaybackRate();
+      const dtTimeline = rawDelta * playbackRate;
+
+      if (dtTimeline !== 0) {
+        timelineTime = Math.max(0, timelineTime + dtTimeline);
+      }
+
+      renderFrameAtTime(timelineTime, Math.abs(dtTimeline), false);
+      updateTransportDisplay();
     }
 
     refreshPresetSelect();
     init();
+    updateTransportDisplay();
     animate();
   </script>
 </body>
