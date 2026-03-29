@@ -430,6 +430,7 @@
         <button id="deletePresetBtn">Delete Selected</button>
         <button id="exportPresetBtn">Export Preset JSON</button>
         <button id="importPresetBtn">Import Preset JSON</button>
+        <button id="copyStateBtn">Copy State JSON</button>
         <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;" />
       </div>
 
@@ -1741,6 +1742,7 @@ float primitiveShape(vec3 pos) {
     const deletePresetBtn = document.getElementById("deletePresetBtn");
     const exportPresetBtn = document.getElementById("exportPresetBtn");
     const importPresetBtn = document.getElementById("importPresetBtn");
+    const copyStateBtn = document.getElementById("copyStateBtn");
     const importPresetInput = document.getElementById("importPresetInput");
 
     const fsToggleBtn = document.getElementById("fsToggleBtn");
@@ -1869,7 +1871,22 @@ float primitiveShape(vec3 pos) {
       });
       return data;
     }
+function copyCurrentStateToClipboard() {
+  const state = getCurrentPresetData();
+  const json = JSON.stringify(state, null, 2);
 
+  navigator.clipboard.writeText(json)
+    .then(() => {
+      const oldText = copyStateBtn.textContent;
+      copyStateBtn.textContent = "Copied";
+      setTimeout(() => {
+        copyStateBtn.textContent = oldText;
+      }, 1200);
+    })
+    .catch(() => {
+      alert("Could not copy state JSON.");
+    });
+}
     function getBlendablePresetData(values) {
       const data = {};
       PRESET_KEYS.forEach((key) => {
@@ -2362,7 +2379,7 @@ float primitiveShape(vec3 pos) {
     deletePresetBtn.addEventListener("click", deleteSelectedPreset);
     exportPresetBtn.addEventListener("click", exportSelectedPreset);
     importPresetBtn.addEventListener("click", () => importPresetInput.click());
-
+copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
     importPresetInput.addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
