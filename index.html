@@ -431,6 +431,12 @@
         <button id="exportPresetBtn">Export Preset JSON</button>
         <button id="importPresetBtn">Import Preset JSON</button>
         <button id="copyStateBtn">Copy State JSON</button>
+        <button id="pasteStateBtn">Apply State JSON</button>
+
+<textarea id="pasteStateBox"
+placeholder="Paste state JSON here"
+style="width:100%; height:90px;"></textarea>
+
         <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;" />
       </div>
 
@@ -1743,6 +1749,8 @@ float primitiveShape(vec3 pos) {
     const exportPresetBtn = document.getElementById("exportPresetBtn");
     const importPresetBtn = document.getElementById("importPresetBtn");
     const copyStateBtn = document.getElementById("copyStateBtn");
+    const pasteStateBtn = document.getElementById("pasteStateBtn");
+const pasteStateBox = document.getElementById("pasteStateBox");
     const importPresetInput = document.getElementById("importPresetInput");
 
     const fsToggleBtn = document.getElementById("fsToggleBtn");
@@ -1871,6 +1879,24 @@ float primitiveShape(vec3 pos) {
       });
       return data;
     }
+    function applyStateFromJSON() {
+  try {
+    const json = pasteStateBox.value.trim();
+    if (!json) return;
+
+    const data = JSON.parse(json);
+    applyPresetData(data);
+
+    const oldText = pasteStateBtn.textContent;
+    pasteStateBtn.textContent = "Applied";
+    setTimeout(() => {
+      pasteStateBtn.textContent = oldText;
+    }, 1200);
+
+  } catch (e) {
+    alert("Invalid JSON.");
+  }
+}
 function copyCurrentStateToClipboard() {
   const state = getCurrentPresetData();
   const json = JSON.stringify(state, null, 2);
@@ -2380,6 +2406,7 @@ function copyCurrentStateToClipboard() {
     exportPresetBtn.addEventListener("click", exportSelectedPreset);
     importPresetBtn.addEventListener("click", () => importPresetInput.click());
 copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
+    pasteStateBtn.addEventListener("click", applyStateFromJSON);
     importPresetInput.addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
