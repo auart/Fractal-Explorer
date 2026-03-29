@@ -688,12 +688,78 @@
     uniform float uOffsetOn;
     uniform float uOffsetAmount;
 
+    uniform float uWaveDistortOn;
+    uniform float uWaveDistortStrength;
+    uniform float uWaveDistortScale;
+    uniform float uWaveDistortSpeed;
+    uniform float uWaveDistortDirection;
+
+    uniform float uRippleOn;
+    uniform float uRippleStrength;
+    uniform float uRippleScale;
+    uniform float uRippleSpeed;
+    uniform float uRippleCenterX;
+    uniform float uRippleCenterY;
+    uniform float uRippleMode;
+
+    uniform float uChromaticOn;
+    uniform float uChromaticStrength;
+    uniform float uChromaticEdgeBias;
+    uniform float uChromaticAnimated;
+    uniform float uChromaticSpeed;
+
     uniform float uScreenRotateAngle;
 
     vec2 rotate2d(vec2 v, float a) {
       float c = cos(a);
       float s = sin(a);
       return vec2(v.x * c - v.y * s, v.x * s + v.y * c);
+    }
+
+    vec2 applyWaveDistortion(vec2 uv) {
+      if (uWaveDistortOn < 0.5 || uWaveDistortStrength <= 0.00001) return uv;
+
+      vec2 dir = vec2(cos(uWaveDistortDirection), sin(uWaveDistortDirection));
+      vec2 perp = vec2(-dir.y, dir.x);
+      float along = dot(uv, dir);
+      float across = dot(uv, perp);
+
+      float waveA = sin(along * uWaveDistortScale + iTime * uWaveDistortSpeed);
+      float waveB = sin(across * uWaveDistortScale * 0.73 - iTime * uWaveDistortSpeed * 0.61);
+
+      uv += perp * (waveA * uWaveDistortStrength * 0.65);
+      uv += dir * (waveB * uWaveDistortStrength * 0.35);
+
+      return uv;
+    }
+
+    vec2 applyRippleDistortion(vec2 uv) {
+      if (uRippleOn < 0.5 || uRippleStrength <= 0.00001) return uv;
+
+      vec2 center = vec2(uRippleCenterX, uRippleCenterY);
+      vec2 delta = uv - center;
+      float r = length(delta) + 0.0001;
+      vec2 dir = delta / r;
+      float t = iTime * uRippleSpeed;
+
+      float ripple = 0.0;
+
+      if (uRippleMode < 0.5) {
+        ripple = sin(r * uRippleScale - t);
+      } else {
+        ripple =
+          sin((delta.x + delta.y) * uRippleScale + t) * 0.55 +
+          sin((delta.x - delta.y) * uRippleScale * 1.23 - t * 0.77) * 0.45;
+      }
+
+      uv += dir * ripple * uRippleStrength * 0.06;
+      return uv;
+    }
+
+    vec2 applyPostDistortion(vec2 uv) {
+      uv = applyWaveDistortion(uv);
+      uv = applyRippleDistortion(uv);
+      return uv;
     }
 
     vec2 applyBaseMode(vec2 uv) {
@@ -1037,8 +1103,8 @@
       return 0.5 + 0.5 * sin((x + y + z) * s + sin((x - y) * s * 0.7 + t) * 2.0 + t);
     }
 
-    void main() {
-      vec2 uv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
+    vec3 renderScene(vec2 screenUv) {
+      vec2 uv = screenUv;
       uv.x *= iResolution.x / iResolution.y;
 
       uv = rotate2d(uv, uScreenRotateAngle);
@@ -1250,7 +1316,33 @@
       }
 
       col *= uLightIntensity;
-      gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+      return clamp(col, 0.0, 1.0);
+    }
+
+    void main() {
+      vec2 screenUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
+      vec2 distortedUv = applyPostDistortion(screenUv);
+
+      vec3 col;
+
+      if (uChromaticOn > 0.5 && uChromaticStrength > 0.00001) {
+        float edge = clamp(length(screenUv), 0.0, 1.41421356) / 1.41421356;
+        float edgeWeight = mix(1.0, pow(edge, 1.0 + uChromaticEdgeBias * 4.0), clamp(uChromaticEdgeBias, 0.0, 1.0));
+        vec2 dir = normalize(screenUv + vec2(0.0001, 0.0002));
+        float animPhase = (uChromaticAnimated > 0.5) ? sin(iTime * uChromaticSpeed) * 0.5 + 0.5 : 0.5;
+        float shift = uChromaticStrength * edgeWeight * (0.35 + animPhase * 0.65);
+        vec2 chromaOffset = dir * shift;
+
+        vec3 colR = renderScene(distortedUv + chromaOffset);
+        vec3 colG = renderScene(distortedUv);
+        vec3 colB = renderScene(distortedUv - chromaOffset);
+
+        col = vec3(colR.r, colG.g, colB.b);
+      } else {
+        col = renderScene(distortedUv);
+      }
+
+      gl_FragColor = vec4(col, 1.0);
     }
   </script>
 
@@ -1434,6 +1526,26 @@
       offsetAnimSpeed: 1.0,
       offsetAnimAmount: 0.25,
 
+      waveDistortOn: false,
+      waveDistortStrength: 0.025,
+      waveDistortScale: 5.5,
+      waveDistortSpeed: 0.65,
+      waveDistortDirection: 0.0,
+
+      rippleOn: false,
+      rippleStrength: 0.035,
+      rippleScale: 10.0,
+      rippleSpeed: 1.1,
+      rippleCenterX: 0.0,
+      rippleCenterY: 0.0,
+      rippleMode: 0,
+
+      chromaticOn: false,
+      chromaticStrength: 0.012,
+      chromaticEdgeBias: 0.85,
+      chromaticAnimated: false,
+      chromaticSpeed: 0.8,
+
       cameraRotateOn: false,
       cameraRotateSpeed: 0.25,
 
@@ -1442,6 +1554,7 @@
       breathingAmount: 0.08,
 
       freezeAnimation: false,
+      playbackSpeed: 1.0,
 
       previewQuality: 0.7,
       showFps: false,
@@ -1487,6 +1600,11 @@
       "Radial (Kaleidoscope)": 7,
       "Tiling": 8,
       "Polar (Tunnel)": 9
+    };
+
+    const RIPPLE_MODE_OPTIONS = {
+      Radial: 0,
+      Interference: 1
     };
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -2618,8 +2736,8 @@
       recordBtn.textContent = "Recording...";
 
       for (let i = 0; i < totalFrames; i++) {
-        const t = exportStartTime + i / fps;
-        renderFrameAtTime(t, 1 / fps, true);
+        const t = exportStartTime + (i / fps) * transportBaseSpeed;
+        renderFrameAtTime(t, (1 / fps) * transportBaseSpeed, true);
         await waitFrame();
       }
 
@@ -2808,6 +2926,26 @@
           uOffsetOn: { value: 0.0 },
           uOffsetAmount: { value: params.offsetAmount },
 
+          uWaveDistortOn: { value: 0.0 },
+          uWaveDistortStrength: { value: params.waveDistortStrength },
+          uWaveDistortScale: { value: params.waveDistortScale },
+          uWaveDistortSpeed: { value: params.waveDistortSpeed },
+          uWaveDistortDirection: { value: params.waveDistortDirection },
+
+          uRippleOn: { value: 0.0 },
+          uRippleStrength: { value: params.rippleStrength },
+          uRippleScale: { value: params.rippleScale },
+          uRippleSpeed: { value: params.rippleSpeed },
+          uRippleCenterX: { value: params.rippleCenterX },
+          uRippleCenterY: { value: params.rippleCenterY },
+          uRippleMode: { value: params.rippleMode },
+
+          uChromaticOn: { value: 0.0 },
+          uChromaticStrength: { value: params.chromaticStrength },
+          uChromaticEdgeBias: { value: params.chromaticEdgeBias },
+          uChromaticAnimated: { value: 0.0 },
+          uChromaticSpeed: { value: params.chromaticSpeed },
+
           uScreenRotateAngle: { value: 0.0 }
         }
       });
@@ -2972,6 +3110,31 @@
       igF.add(params, "innerGlowWidth", 0.1, 4).name("Inner Glow Width");
       igF.addColor(params, "innerGlowColor").name("Inner Glow Color");
 
+      const postFxF = gui.addFolder("Post FX / Distortion");
+
+      const waveF = postFxF.addFolder("Wave Distortion");
+      waveF.add(params, "waveDistortOn").name("Wave On");
+      waveF.add(params, "waveDistortStrength", 0.0, 0.12).name("Wave Strength");
+      waveF.add(params, "waveDistortScale", 0.5, 20.0).name("Wave Scale");
+      waveF.add(params, "waveDistortSpeed", 0.0, 4.0).name("Wave Speed");
+      waveF.add(params, "waveDistortDirection", -Math.PI, Math.PI).name("Wave Direction");
+
+      const rippleF = postFxF.addFolder("Ripple");
+      rippleF.add(params, "rippleOn").name("Ripple On");
+      rippleF.add(params, "rippleStrength", 0.0, 0.12).name("Ripple Strength");
+      rippleF.add(params, "rippleScale", 1.0, 24.0).name("Ripple Scale");
+      rippleF.add(params, "rippleSpeed", 0.0, 5.0).name("Ripple Speed");
+      rippleF.add(params, "rippleCenterX", -1.0, 1.0).name("Ripple Center X");
+      rippleF.add(params, "rippleCenterY", -1.0, 1.0).name("Ripple Center Y");
+      rippleF.add(params, "rippleMode", RIPPLE_MODE_OPTIONS).name("Ripple Mode");
+
+      const chromaF = postFxF.addFolder("Chromatic Aberration");
+      chromaF.add(params, "chromaticOn").name("Chromatic On");
+      chromaF.add(params, "chromaticStrength", 0.0, 0.05).name("Chromatic Strength");
+      chromaF.add(params, "chromaticEdgeBias", 0.0, 1.0).name("Chromatic Edge Bias");
+      chromaF.add(params, "chromaticAnimated").name("Chromatic Animated");
+      chromaF.add(params, "chromaticSpeed", 0.0, 4.0).name("Chromatic Speed");
+
       const audioF = gui.addFolder("Audio Settings");
       audioF.add(params, "musicReact").name("Mic Reactive");
       audioF.add(params, "micSensitivity", 0, 5).name("Mic Sensitivity");
@@ -2993,6 +3156,7 @@
       glowF.close();
       lineF.close();
       igF.close();
+      postFxF.close();
       audioF.close();
       miscF.close();
 
@@ -3235,6 +3399,26 @@
       material.uniforms.uPolarOn.value = params.polarOn ? 1.0 : 0.0;
       material.uniforms.uOffsetOn.value = params.offsetOn ? 1.0 : 0.0;
       material.uniforms.uOffsetAmount.value = animatedOffsetAmount;
+
+      material.uniforms.uWaveDistortOn.value = params.waveDistortOn ? 1.0 : 0.0;
+      material.uniforms.uWaveDistortStrength.value = params.waveDistortStrength;
+      material.uniforms.uWaveDistortScale.value = params.waveDistortScale;
+      material.uniforms.uWaveDistortSpeed.value = params.waveDistortSpeed;
+      material.uniforms.uWaveDistortDirection.value = params.waveDistortDirection;
+
+      material.uniforms.uRippleOn.value = params.rippleOn ? 1.0 : 0.0;
+      material.uniforms.uRippleStrength.value = params.rippleStrength;
+      material.uniforms.uRippleScale.value = params.rippleScale;
+      material.uniforms.uRippleSpeed.value = params.rippleSpeed;
+      material.uniforms.uRippleCenterX.value = params.rippleCenterX;
+      material.uniforms.uRippleCenterY.value = params.rippleCenterY;
+      material.uniforms.uRippleMode.value = params.rippleMode;
+
+      material.uniforms.uChromaticOn.value = params.chromaticOn ? 1.0 : 0.0;
+      material.uniforms.uChromaticStrength.value = params.chromaticStrength;
+      material.uniforms.uChromaticEdgeBias.value = params.chromaticEdgeBias;
+      material.uniforms.uChromaticAnimated.value = params.chromaticAnimated ? 1.0 : 0.0;
+      material.uniforms.uChromaticSpeed.value = params.chromaticSpeed;
 
       material.uniforms.uScreenRotateAngle.value = screenRotateAngle;
 
