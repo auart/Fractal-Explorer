@@ -1014,14 +1014,14 @@ float primitiveShape(vec3 pos) {
   vec3 p = rotationMatrix(uFractalRotation) * pos;
 
   if (uShape == 1) {
-    return sdSphere(p, 1.0);
+    return sdSphere(p, 0.9);
   } else if (uShape == 2) {
     return sdBox(p, vec3(0.85));
   } else if (uShape == 3) {
-    return sdTorus(p, vec2(0.78, 0.28));
+    return sdTorus(p, vec2(0.65, 0.22));
   }
 
-  return sdSphere(p, 1.0);
+  return sdSphere(p, 0.9);
 }
     
         float mandelbulb(vec3 pos) {
