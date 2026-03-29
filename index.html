@@ -540,7 +540,6 @@
         </select>
       </div>
 
-      <button id="randomBtn">Random</button>
       <button id="freezeBtn" class="freezeBtn">⏸ Freeze Animation</button>
       <button id="exportStillBtn">Export Still</button>
       <button id="recordBtn">Record Clip</button>
@@ -905,7 +904,135 @@
 
       return rz * ry * rx;
     }
+float sdSphere(vec3 p, float r) {
+  return length(p) - r;
+}
 
+float sdBox(vec3 p, vec3 b) {
+  vec3 q = abs(p) - b;
+  return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+float sdTorus(vec3 p, vec2 t) {
+  vec2 q = vec2(length(p.xz) - t.x, p.y);
+  return length(q) - t.y;
+}
+
+float sdOctahedron(vec3 p, float s) {
+  p = abs(p);
+  return (p.x + p.y + p.z - s) * 0.57735027;
+}
+
+float sdTetrahedron(vec3 p, float s) {
+  const float k = 0.57735027;
+  p /= s;
+  float d = max(
+    abs(p.x + p.y + p.z),
+    max(
+      abs(p.x - p.y - p.z),
+      max(
+        abs(-p.x + p.y - p.z),
+        abs(-p.x - p.y + p.z)
+      )
+    )
+  ) - 1.0;
+  return d * s * k;
+}
+
+float sdSquarePyramid(vec3 p, float h) {
+  p.y += h * 0.5;
+  float m2 = h * h + 0.25;
+
+  p.xz = abs(p.xz);
+  if (p.z > p.x) p.xz = p.zx;
+  p.xz -= 0.5;
+
+  vec3 q = vec3(p.z, h * p.y - 0.5 * p.x, h * p.x + 0.5 * p.y);
+  float s = max(-q.x, 0.0);
+  float t = clamp((q.y - 0.5 * p.z) / (m2 + 0.25), 0.0, 1.0);
+
+  float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y;
+  float b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) + (q.y - m2 * t) * (q.y - m2 * t);
+
+  float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b);
+
+  float d = sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y));
+  return d;
+}
+
+float sdIcosahedron(vec3 p, float r) {
+  const float PHI = 1.61803398875;
+  vec3 n1 = normalize(vec3( PHI, 1.0, 0.0));
+  vec3 n2 = normalize(vec3(-PHI, 1.0, 0.0));
+  vec3 n3 = normalize(vec3( 1.0, 0.0, PHI));
+  vec3 n4 = normalize(vec3(-1.0, 0.0, PHI));
+  vec3 n5 = normalize(vec3( 0.0, PHI, 1.0));
+  vec3 n6 = normalize(vec3( 0.0,-PHI, 1.0));
+
+  p = abs(p);
+
+  float d = max(
+    max(dot(p, n1), dot(p, n2)),
+    max(
+      max(dot(p, n3), dot(p, n4)),
+      max(dot(p, n5), dot(p, n6))
+    )
+  ) - r;
+
+  return d;
+}
+
+float sdDodecahedron(vec3 p, float r) {
+  const float PHI = 1.61803398875;
+  const float INVPHI = 0.61803398875;
+
+  vec3 n1 = normalize(vec3(1.0, 1.0, 1.0));
+  vec3 n2 = normalize(vec3(0.0, INVPHI, PHI));
+  vec3 n3 = normalize(vec3(0.0,-INVPHI, PHI));
+  vec3 n4 = normalize(vec3(INVPHI, PHI, 0.0));
+  vec3 n5 = normalize(vec3(-INVPHI, PHI, 0.0));
+  vec3 n6 = normalize(vec3(PHI, 0.0, INVPHI));
+  vec3 n7 = normalize(vec3(-PHI, 0.0, INVPHI));
+
+  p = abs(p);
+
+  float d = max(
+    dot(p, n1),
+    max(
+      max(dot(p, n2), dot(p, n3)),
+      max(
+        max(dot(p, n4), dot(p, n5)),
+        max(dot(p, n6), dot(p, n7))
+      )
+    )
+  ) - r;
+
+  return d;
+}
+
+float primitiveShape(vec3 pos) {
+  vec3 p = rotationMatrix(uFractalRotation) * pos;
+
+  if (uShape == 1) {
+    return sdSphere(p, 1.0);
+  } else if (uShape == 2) {
+    return sdBox(p, vec3(0.85));
+  } else if (uShape == 3) {
+    return sdSquarePyramid(p, 1.4);
+  } else if (uShape == 4) {
+    return sdTetrahedron(p, 1.35);
+  } else if (uShape == 5) {
+    return sdOctahedron(p, 1.55);
+  } else if (uShape == 6) {
+    return sdIcosahedron(p, 1.05);
+  } else if (uShape == 7) {
+    return sdDodecahedron(p, 1.18);
+  } else if (uShape == 8) {
+    return sdTorus(p, vec2(0.78, 0.28));
+  }
+
+  return sdSphere(p, 1.0);
+}
     float mandelbulb(vec3 pos) {
       pos = rotationMatrix(uFractalRotation) * pos;
 
@@ -919,35 +1046,42 @@
         r = length(z);
         if (r > uBailout) break;
 
-        if (uShape == 0) {
-          float safeR = max(r, 0.00001);
-          float theta = acos(z.z / safeR);
-          float phi = atan(z.y, z.x);
-          dr = pow(safeR, uPower - 1.0) * uPower * dr + 1.0;
-          float zr = pow(safeR, uPower);
-          theta *= uPower;
-          phi *= uPower;
-          z = zr * vec3(
-            sin(theta) * cos(phi),
-            sin(theta) * sin(phi),
-            cos(theta)
-          );
-        } else if (uShape == 1) {
-          float rc = max(max(abs(z.x), abs(z.y)), abs(z.z));
-          float safeRc = max(rc, 0.00001);
-          dr = pow(safeRc, uPower - 1.0) * uPower * dr + 1.0;
-          z = sign(z) * pow(safeRc, uPower);
-        } else if (uShape == 2) {
-          float rp = max(abs(z.x) + abs(z.y), abs(z.z));
-          float safeRp = max(rp, 0.00001);
-          dr = pow(safeRp, uPower - 1.0) * uPower * dr + 1.0;
-          z = sign(z) * pow(safeRp, uPower);
-        } else {
-          float rh = max(length(z.xy) / cos(3.14159 / 6.0), abs(z.z));
-          float safeRh = max(rh, 0.00001);
-          dr = pow(safeRh, uPower - 1.0) * uPower * dr + 1.0;
-          z = sign(z) * pow(safeRh, uPower);
-        }
+        float mandelbulb(vec3 pos) {
+  if (uShape != 0) {
+    return primitiveShape(pos);
+  }
+
+  pos = rotationMatrix(uFractalRotation) * pos;
+
+  vec3 z = pos;
+  float dr = 1.0;
+  float r = 0.0;
+
+  for (int i = 0; i < 100; i++) {
+    if (i >= uIterations) break;
+
+    r = length(z);
+    if (r > uBailout) break;
+
+    float safeR = max(r, 0.00001);
+    float theta = acos(z.z / safeR);
+    float phi = atan(z.y, z.x);
+    dr = pow(safeR, uPower - 1.0) * uPower * dr + 1.0;
+    float zr = pow(safeR, uPower);
+    theta *= uPower;
+    phi *= uPower;
+
+    z = zr * vec3(
+      sin(theta) * cos(phi),
+      sin(theta) * sin(phi),
+      cos(theta)
+    );
+
+    z += pos;
+  }
+
+  return 0.5 * log(max(r, 0.00001)) * r / max(dr, 0.00001);
+}
 
         z += pos;
       }
@@ -1641,11 +1775,6 @@
     const exportStillBtn = document.getElementById("exportStillBtn");
     const recordBtn = document.getElementById("recordBtn");
     const freezeBtn = document.getElementById("freezeBtn");
-    const randomBtn = document.getElementById("randomBtn");
-
-randomBtn.addEventListener("click", () => {
-  randomizeParameters();
-});
     const previewQualitySelect = document.getElementById("previewQualitySelect");
     const toggleFpsBtn = document.getElementById("toggleFpsBtn");
     const fpsDisplay = document.getElementById("fpsDisplay");
@@ -2166,104 +2295,7 @@ randomBtn.addEventListener("click", () => {
       });
       return out;
     }
-function rand(min, max) {
-  return min + Math.random() * (max - min);
-}
 
-function randInt(min, max) {
-  return Math.floor(rand(min, max + 1));
-}
-
-function chance(p) {
-  return Math.random() < p;
-}
-
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-    function randomizeParameters() {
-
-  /* Fractal Structure */
-
-  params.uBailout = rand(0.9, 1.5);
-  params.uIterations = randInt(3, 10);
-  params.uSurfaceEpsilon = rand(0.008, 0.03);
-
-  params.uShape = chance(0.8) ? 0 : randInt(0,3);
-
-  /* Animation */
-
-  params.powerAnimationSpeed = rand(0, 1);
-
-  /* Symmetry */
-
-  const symModes = Object.values(SYMMETRY_MODE_OPTIONS);
-  let sym = pick(symModes);
-
-  if (sym === 4 && chance(0.8)) sym = 0;
-
-  params.symmetryMode = sym;
-
-  if (sym === 7) {
-    params.radialSegments = randInt(3, 12);
-  }
-
-  /* Stack */
-
-  params.symmetryStack = chance(0.5);
-
-  /* Camera */
-
-  params.zoomValue = rand(1.8, 3.8);
-
-  /* Color */
-
-  params.colorSaturation = rand(0.6, 1.8);
-  params.colorVibrance = rand(0, 2.5);
-  params.paletteContrast = rand(0.8, 1.8);
-
-  params.psyEmission = rand(0.7, 1.6);
-  params.psyContrast = rand(0.7, 1.6);
-  params.psySaturation = rand(0.7, 1.6);
-
-  params.colorIntensity = rand(0.6, 1.6);
-
-  /* Psy Animation */
-
-  params.psyScale = rand(3, 14);
-  params.psyFlow = rand(0, 2);
-  params.psySpinStrength = rand(0, 4);
-
-  params.paletteCycleSpeed = rand(0.1, 1.2);
-
-  /* Pattern */
-
-  params.patternMode = randInt(0, Object.keys(PATTERN_OPTIONS).length - 1);
-
-  params.patternScale = rand(2, 14);
-  params.patternSpeed = rand(0, 1.2);
-  params.patternBlend = rand(0, 1.2);
-
-  /* Lighting */
-
-  params.lightIntensity = rand(0.4, 1.1);
-  params.shadowStrength = rand(0, 1.4);
-  params.ridgeAccent = rand(0, 1.5);
-
-  params.cavityStrength = rand(0, 0.25);
-
-  /* FX */
-
-  params.glowOn = chance(0.4);
-  params.lineOn = chance(0.35);
-  params.innerGlowStrength = chance(0.4) ? rand(0.05,0.4) : 0;
-
-  if (params.glowOn && params.lineOn && params.innerGlowStrength > 0) {
-    if (chance(0.5)) params.lineOn = false;
-  }
-
-  refreshGuiDisplays();
-}
     function handlePlaylistAutomation() {
       if (!params.playlistAutoplay || params.playlist.length < 2 || isBusyExport) return;
 
@@ -3067,7 +3099,17 @@ function pick(arr) {
       fractalF.add(params, "uBailout", 0.01, 4.0).name("Bailout");
       fractalF.add(params, "uIterations", 3, 20, 1).name("Iterations");
       fractalF.add(params, "uSurfaceEpsilon", 0.0001, 0.01).name("Surface Epsilon");
-      fractalF.add(params, "uShape", { Mandelbulb: 0, Cube: 1, Pyramid: 2, Hexagon: 3 }).name("Base Shape");
+     fractalF.add(params, "uShape", {
+  Mandelbulb: 0,
+  Sphere: 1,
+  Cube: 2,
+  "Square Pyramid": 3,
+  Tetrahedron: 4,
+  Octahedron: 5,
+  Icosahedron: 6,
+  Dodecahedron: 7,
+  Torus: 8
+}).name("Base Shape");
 
       const motionF = gui.addFolder("Motion");
       motionF.add(params, "powerAnimation").name("Power Animation");
