@@ -1018,16 +1018,6 @@ float primitiveShape(vec3 pos) {
   } else if (uShape == 2) {
     return sdBox(p, vec3(0.85));
   } else if (uShape == 3) {
-    return sdSquarePyramid(p, 1.4);
-  } else if (uShape == 4) {
-    return sdTetrahedron(p, 1.35);
-  } else if (uShape == 5) {
-    return sdOctahedron(p, 1.55);
-  } else if (uShape == 6) {
-    return sdIcosahedron(p, 1.05);
-  } else if (uShape == 7) {
-    return sdDodecahedron(p, 1.18);
-  } else if (uShape == 8) {
     return sdTorus(p, vec2(0.78, 0.28));
   }
 
@@ -3081,16 +3071,11 @@ float primitiveShape(vec3 pos) {
       fractalF.add(params, "uBailout", 0.01, 4.0).name("Bailout");
       fractalF.add(params, "uIterations", 3, 20, 1).name("Iterations");
       fractalF.add(params, "uSurfaceEpsilon", 0.0001, 0.01).name("Surface Epsilon");
-     fractalF.add(params, "uShape", {
+  fractalF.add(params, "uShape", {
   Mandelbulb: 0,
   Sphere: 1,
   Cube: 2,
-  "Square Pyramid": 3,
-  Tetrahedron: 4,
-  Octahedron: 5,
-  Icosahedron: 6,
-  Dodecahedron: 7,
-  Torus: 8
+  Torus: 3
 }).name("Base Shape");
 
       const motionF = gui.addFolder("Motion");
