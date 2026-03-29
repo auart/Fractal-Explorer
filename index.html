@@ -1033,19 +1033,7 @@ float primitiveShape(vec3 pos) {
 
   return sdSphere(p, 1.0);
 }
-    float mandelbulb(vec3 pos) {
-      pos = rotationMatrix(uFractalRotation) * pos;
-
-      vec3 z = pos;
-      float dr = 1.0;
-      float r = 0.0;
-
-      for (int i = 0; i < 100; i++) {
-        if (i >= uIterations) break;
-
-        r = length(z);
-        if (r > uBailout) break;
-
+    
         float mandelbulb(vec3 pos) {
   if (uShape != 0) {
     return primitiveShape(pos);
