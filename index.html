@@ -540,6 +540,7 @@
         </select>
       </div>
 
+      <button id="randomBtn">Random</button>
       <button id="freezeBtn" class="freezeBtn">⏸ Freeze Animation</button>
       <button id="exportStillBtn">Export Still</button>
       <button id="recordBtn">Record Clip</button>
@@ -1640,6 +1641,11 @@
     const exportStillBtn = document.getElementById("exportStillBtn");
     const recordBtn = document.getElementById("recordBtn");
     const freezeBtn = document.getElementById("freezeBtn");
+    const randomBtn = document.getElementById("randomBtn");
+
+randomBtn.addEventListener("click", () => {
+  randomizeParameters();
+});
     const previewQualitySelect = document.getElementById("previewQualitySelect");
     const toggleFpsBtn = document.getElementById("toggleFpsBtn");
     const fpsDisplay = document.getElementById("fpsDisplay");
@@ -2160,7 +2166,104 @@
       });
       return out;
     }
+function rand(min, max) {
+  return min + Math.random() * (max - min);
+}
 
+function randInt(min, max) {
+  return Math.floor(rand(min, max + 1));
+}
+
+function chance(p) {
+  return Math.random() < p;
+}
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+    function randomizeParameters() {
+
+  /* Fractal Structure */
+
+  params.uBailout = rand(0.9, 1.5);
+  params.uIterations = randInt(3, 10);
+  params.uSurfaceEpsilon = rand(0.008, 0.03);
+
+  params.uShape = chance(0.8) ? 0 : randInt(0,3);
+
+  /* Animation */
+
+  params.powerAnimationSpeed = rand(0, 1);
+
+  /* Symmetry */
+
+  const symModes = Object.values(SYMMETRY_MODE_OPTIONS);
+  let sym = pick(symModes);
+
+  if (sym === 4 && chance(0.8)) sym = 0;
+
+  params.symmetryMode = sym;
+
+  if (sym === 7) {
+    params.radialSegments = randInt(3, 12);
+  }
+
+  /* Stack */
+
+  params.symmetryStack = chance(0.5);
+
+  /* Camera */
+
+  params.zoomValue = rand(1.8, 3.8);
+
+  /* Color */
+
+  params.colorSaturation = rand(0.6, 1.8);
+  params.colorVibrance = rand(0, 2.5);
+  params.paletteContrast = rand(0.8, 1.8);
+
+  params.psyEmission = rand(0.7, 1.6);
+  params.psyContrast = rand(0.7, 1.6);
+  params.psySaturation = rand(0.7, 1.6);
+
+  params.colorIntensity = rand(0.6, 1.6);
+
+  /* Psy Animation */
+
+  params.psyScale = rand(3, 14);
+  params.psyFlow = rand(0, 2);
+  params.psySpinStrength = rand(0, 4);
+
+  params.paletteCycleSpeed = rand(0.1, 1.2);
+
+  /* Pattern */
+
+  params.patternMode = randInt(0, Object.keys(PATTERN_OPTIONS).length - 1);
+
+  params.patternScale = rand(2, 14);
+  params.patternSpeed = rand(0, 1.2);
+  params.patternBlend = rand(0, 1.2);
+
+  /* Lighting */
+
+  params.lightIntensity = rand(0.4, 1.1);
+  params.shadowStrength = rand(0, 1.4);
+  params.ridgeAccent = rand(0, 1.5);
+
+  params.cavityStrength = rand(0, 0.25);
+
+  /* FX */
+
+  params.glowOn = chance(0.4);
+  params.lineOn = chance(0.35);
+  params.innerGlowStrength = chance(0.4) ? rand(0.05,0.4) : 0;
+
+  if (params.glowOn && params.lineOn && params.innerGlowStrength > 0) {
+    if (chance(0.5)) params.lineOn = false;
+  }
+
+  refreshGuiDisplays();
+}
     function handlePlaylistAutomation() {
       if (!params.playlistAutoplay || params.playlist.length < 2 || isBusyExport) return;
 
