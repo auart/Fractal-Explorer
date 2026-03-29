@@ -267,7 +267,12 @@
       font-size: 13px;
       color: rgba(255, 255, 255, 0.72);
     }
-
+#randomControls {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:10px;
+}
     #keyboardHelpOverlay {
       position: fixed;
       inset: 0;
@@ -415,6 +420,9 @@
   <div id="appShell">
     <div id="leftPanel">
       <div class="panelBox rowGap">
+         <button id="randomBtn">Random</button>
+  <button id="goodBtn">👍 Good</button>
+  <button id="badBtn">👎 Bad</button>
         <label for="presetNameInput">Preset Name</label>
         <input id="presetNameInput" type="text" placeholder="My preset" />
 
@@ -1855,7 +1863,93 @@ const pasteStateBox = document.getElementById("pasteStateBox");
       playlistState.isFading = false;
       updateTransportDisplay();
     }
+function rand(min,max){
+  return min + Math.random()*(max-min);
+}
 
+function randInt(min,max){
+  return Math.floor(rand(min,max+1));
+}
+
+function choice(arr){
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+function randomizePalette(){
+
+  function randColor(){
+    const hue = Math.random()*360
+    const sat = 70 + Math.random()*30
+    const light = 50 + Math.random()*20
+    return `hsl(${hue},${sat}%,${light}%)`
+  }
+
+  params.warmColor = randColor()
+  params.coolColor = randColor()
+
+  params.psyColorA = randColor()
+  params.psyColorB = randColor()
+  params.psyColorC = randColor()
+  params.psyColorD = randColor()
+
+}
+    function randomizeParameters(){
+
+  params.uBailout = rand(0.9,1.5)
+
+  params.uIterations = randInt(3,10)
+
+  params.uSurfaceEpsilon = rand(0.008,0.03)
+
+  params.powerAnimationSpeed = rand(0,1)
+
+  params.uShape = choice([
+    0,0,0,0,0,
+    1,
+    2,
+    3
+  ])
+
+  params.symmetryMode = choice([
+    0,1,2,3,5,6,7,8,9
+  ])
+
+  if(params.symmetryMode===7){
+    params.radialSegments = randInt(3,12)
+  }
+
+  params.symmetryStack = Math.random()<0.5
+
+  params.lightIntensity = rand(0.4,1.2)
+
+  params.shadowStrength = rand(0,1)
+
+  params.ridgeAccent = rand(0,1)
+
+  params.psyFlow = rand(0.1,1)
+
+  params.psyScale = rand(0.5,20)
+
+  params.psySpinStrength = rand(0,2)
+
+  params.colorSaturation = rand(0.4,1)
+
+  params.colorVibrance = rand(0,1)
+
+  params.paletteContrast = rand(0,1.5)
+
+  params.colorIntensity = rand(0,1.5)
+
+  params.patternMode = randInt(0,17)
+
+  params.patternScale = rand(0.5,12)
+
+  params.patternBlend = rand(0,1)
+
+  randomizePalette()
+
+  applyPresetData(getCurrentPresetData());
+
+}
     function togglePanels() {
       document.body.classList.toggle("panelsHidden");
       layoutPreviewFrame();
@@ -2407,6 +2501,23 @@ function copyCurrentStateToClipboard() {
     importPresetBtn.addEventListener("click", () => importPresetInput.click());
 copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
     pasteStateBtn.addEventListener("click", applyStateFromJSON);
+    document.getElementById("randomBtn").addEventListener("click", () => {
+  randomizeParameters();
+});
+
+document.getElementById("goodBtn").addEventListener("click", () => {
+  const list = getGood();
+  list.push(captureState());
+  saveGood(list);
+  console.log("GOOD presets:", list.length);
+});
+
+document.getElementById("badBtn").addEventListener("click", () => {
+  const list = getBad();
+  list.push(captureState());
+  saveBad(list);
+  console.log("BAD presets:", list.length);
+});
     importPresetInput.addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -2932,7 +3043,24 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
       frame.style.left = `${(cw - fw) * 0.5}px`;
       frame.style.top = `${(ch - fh) * 0.5}px`;
     }
+function captureState(){
+  return JSON.parse(JSON.stringify(params))
+}
+function getGood(){
+  return JSON.parse(localStorage.getItem("goodPresetsV1")||"[]")
+}
 
+function getBad(){
+  return JSON.parse(localStorage.getItem("badPresetsV1")||"[]")
+}
+
+function saveGood(list){
+  localStorage.setItem("goodPresetsV1",JSON.stringify(list))
+}
+
+function saveBad(list){
+  localStorage.setItem("badPresetsV1",JSON.stringify(list))
+}
     function init() {
       renderer = new THREE.WebGLRenderer({
         antialias: true,
