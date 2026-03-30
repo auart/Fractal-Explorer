@@ -267,12 +267,7 @@
       font-size: 13px;
       color: rgba(255, 255, 255, 0.72);
     }
-#randomControls {
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-bottom:10px;
-}
+
     #keyboardHelpOverlay {
       position: fixed;
       inset: 0;
@@ -420,9 +415,9 @@
   <div id="appShell">
     <div id="leftPanel">
       <div class="panelBox rowGap">
-         <button id="randomBtn">Random</button>
-  <button id="goodBtn">👍 Good</button>
-  <button id="badBtn">👎 Bad</button>
+<button id="randomBtn">Random</button>
+<button id="goodBtn">👍 Good</button>
+<button id="badBtn">👎 Bad</button>
         <label for="presetNameInput">Preset Name</label>
         <input id="presetNameInput" type="text" placeholder="My preset" />
 
@@ -1797,6 +1792,9 @@ const pasteStateBox = document.getElementById("pasteStateBox");
     const formatSelect = document.getElementById("formatSelect");
     const qualitySelect = document.getElementById("qualitySelect");
     const durationSelect = document.getElementById("durationSelect");
+const randomBtn = document.getElementById("randomBtn");
+const goodBtn = document.getElementById("goodBtn");
+const badBtn = document.getElementById("badBtn");
 
     function clampZoom(v) {
       return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, v));
@@ -1863,92 +1861,249 @@ const pasteStateBox = document.getElementById("pasteStateBox");
       playlistState.isFading = false;
       updateTransportDisplay();
     }
-function rand(min,max){
-  return min + Math.random()*(max-min);
+function rand(min, max) {
+  return min + Math.random() * (max - min);
 }
 
-function randInt(min,max){
-  return Math.floor(rand(min,max+1));
+function randInt(min, max) {
+  return Math.floor(rand(min, max + 1));
 }
 
-function choice(arr){
-  return arr[Math.floor(Math.random()*arr.length)];
+function chance(p) {
+  return Math.random() < p;
 }
-function randomizePalette(){
 
-  function randColor(){
-    const hue = Math.random()*360
-    const sat = 70 + Math.random()*30
-    const light = 50 + Math.random()*20
-    return `hsl(${hue},${sat}%,${light}%)`
+function choice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function captureState() {
+  return JSON.parse(JSON.stringify(params));
+}
+
+function getGoodPresets() {
+  try {
+    return JSON.parse(localStorage.getItem("goodPresetsV1") || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function getBadPresets() {
+  try {
+    return JSON.parse(localStorage.getItem("badPresetsV1") || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveGoodPresets(list) {
+  localStorage.setItem("goodPresetsV1", JSON.stringify(list));
+}
+
+function saveBadPresets(list) {
+  localStorage.setItem("badPresetsV1", JSON.stringify(list));
+}
+
+function recordGood() {
+  const list = getGoodPresets();
+  list.push(captureState());
+  saveGoodPresets(list);
+  randomizeFromGoodSeed();
+}
+
+function recordBad() {
+  const list = getBadPresets();
+  list.push(captureState());
+  saveBadPresets(list);
+  randomizeFromGoodSeed();
+}
+
+function mutateBoolean(current, probabilityFlip = 0.25) {
+  return chance(probabilityFlip) ? !current : current;
+}
+
+function mutateNumber(current, amount, min, max) {
+  return clamp(current + rand(-amount, amount), min, max);
+}
+
+function mutateInt(current, amount, min, max) {
+  return clamp(Math.round(current + randInt(-amount, amount)), min, max);
+}
+
+function randomizePaletteLight() {
+  if (!chance(0.35)) return;
+
+  const paletteSets = [
+    ["#00c2ff", "#8600ff", "#20b0cf", "#be00ff"],
+    ["#ff3100", "#ed00ff", "#0094ff", "#ff002c"],
+    ["#03a750", "#002dff", "#ff9a1f", "#4600ff"],
+    ["#00fff0", "#00a2ff", "#7a00ff", "#ff4fd8"],
+    ["#a6ff3c", "#18d8d8", "#ff9a1f", "#ff4d7a"],
+    ["#66fff4", "#2fe1d6", "#18d8d8", "#0094ff"]
+  ];
+
+  const p = choice(paletteSets);
+  params.psyColorA = p[0];
+  params.psyColorB = p[1];
+  params.psyColorC = p[2];
+  params.psyColorD = p[3];
+
+  if (chance(0.4)) {
+    params.warmColor = choice([p[2], p[3], "#ff8c3a", "#ff3100", "#a400ff"]);
+    params.coolColor = choice([p[0], p[1], "#2fe1d6", "#0094ff", "#000fff"]);
+  }
+}
+
+function mutateStructure() {
+  if (chance(0.35)) {
+    params.symmetryMode = choice([0, 1, 2, 3, 5, 6, 7, 8, 9]);
   }
 
-  params.warmColor = randColor()
-  params.coolColor = randColor()
-
-  params.psyColorA = randColor()
-  params.psyColorB = randColor()
-  params.psyColorC = randColor()
-  params.psyColorD = randColor()
-
-}
-    function randomizeParameters(){
-
-  params.uBailout = rand(0.9,1.5)
-
-  params.uIterations = randInt(3,10)
-
-  params.uSurfaceEpsilon = rand(0.008,0.03)
-
-  params.powerAnimationSpeed = rand(0,1)
-
-  params.uShape = choice([
-    0,0,0,0,0,
-    1,
-    2,
-    3
-  ])
-
-  params.symmetryMode = choice([
-    0,1,2,3,5,6,7,8,9
-  ])
-
-  if(params.symmetryMode===7){
-    params.radialSegments = randInt(3,12)
+  if (Number(params.symmetryMode) === 7) {
+    params.radialSegments = randInt(4, 9);
   }
 
-  params.symmetryStack = Math.random()<0.5
+  if (chance(0.45)) params.symmetryStack = mutateBoolean(!!params.symmetryStack, 0.35);
+  if (chance(0.50)) params.zoomValue = mutateNumber(Number(params.zoomValue), 0.35, 1.1, 3.2);
+  if (chance(0.20)) params.uShape = choice([0, 0, 0, 0, 1, 2, 3]);
 
-  params.lightIntensity = rand(0.4,1.2)
+  if (chance(0.35)) params.uIterations = mutateInt(Number(params.uIterations), 2, 3, 10);
+  if (chance(0.35)) params.uBailout = mutateNumber(Number(params.uBailout), 0.18, 0.9, 1.8);
+  if (chance(0.30)) params.uSurfaceEpsilon = choice([0.008, 0.01, 0.012, 0.015, 0.02]);
+}
 
-  params.shadowStrength = rand(0,1)
+function mutateTransforms() {
+  if (chance(0.50)) params.twistOn = mutateBoolean(!!params.twistOn, 0.35);
+  if (chance(0.45)) params.twistAmount = mutateNumber(Number(params.twistAmount), 0.35, -0.75, 1.25);
 
-  params.ridgeAccent = rand(0,1)
+  if (chance(0.35)) params.foldOn = mutateBoolean(!!params.foldOn, 0.25);
+  if (chance(0.30)) params.foldIterations = mutateInt(Number(params.foldIterations), 1, 1, 4);
 
-  params.psyFlow = rand(0.1,1)
+  if (chance(0.40)) params.tileOn = mutateBoolean(!!params.tileOn, 0.30);
+  if (chance(0.35)) params.tileAmount = mutateNumber(Number(params.tileAmount), 0.5, 1.0, 3.5);
 
-  params.psyScale = rand(0.5,20)
+  if (chance(0.18)) params.polarOn = mutateBoolean(!!params.polarOn, 0.50);
+  if (chance(0.18)) params.offsetOn = mutateBoolean(!!params.offsetOn, 0.40);
+  if (chance(0.20)) params.offsetAmount = mutateNumber(Number(params.offsetAmount), 0.25, 0.0, 1.5);
 
-  params.psySpinStrength = rand(0,2)
+  if (chance(0.22)) params.twistAnimate = mutateBoolean(!!params.twistAnimate, 0.40);
+  if (chance(0.20)) params.tileAnimate = mutateBoolean(!!params.tileAnimate, 0.35);
+  if (chance(0.12)) params.offsetAnimate = mutateBoolean(!!params.offsetAnimate, 0.35);
 
-  params.colorSaturation = rand(0.4,1)
+  if (params.twistAnimate) {
+    params.twistAnimSpeed = mutateNumber(Number(params.twistAnimSpeed), 0.35, 0.1, 2.0);
+    params.twistAnimAmount = mutateNumber(Number(params.twistAnimAmount), 0.4, 0.1, 2.0);
+  }
 
-  params.colorVibrance = rand(0,1)
+  if (params.tileAnimate) {
+    params.tileAnimSpeed = mutateNumber(Number(params.tileAnimSpeed), 0.35, 0.1, 2.0);
+    params.tileAnimAmount = mutateNumber(Number(params.tileAnimAmount), 0.4, 0.1, 2.0);
+  }
 
-  params.paletteContrast = rand(0,1.5)
+  if (params.offsetAnimate) {
+    params.offsetAnimSpeed = mutateNumber(Number(params.offsetAnimSpeed), 0.35, 0.1, 2.0);
+    params.offsetAnimAmount = mutateNumber(Number(params.offsetAnimAmount), 0.2, 0.05, 0.75);
+  }
+}
 
-  params.colorIntensity = rand(0,1.5)
+function mutateMotion() {
+  if (chance(0.35)) params.powerAnimation = mutateBoolean(!!params.powerAnimation, 0.30);
+  if (chance(0.40)) params.powerAnimationSpeed = mutateNumber(Number(params.powerAnimationSpeed), 0.2, 0.0, 1.0);
 
-  params.patternMode = randInt(0,17)
+  if (chance(0.35)) params.autoRotateX = mutateBoolean(!!params.autoRotateX, 0.30);
+  if (chance(0.35)) params.autoRotateY = mutateBoolean(!!params.autoRotateY, 0.30);
+  if (chance(0.25)) params.autoRotateZ = mutateBoolean(!!params.autoRotateZ, 0.25);
 
-  params.patternScale = rand(0.5,12)
+  if (chance(0.40)) params.rotateSpeedX = mutateNumber(Number(params.rotateSpeedX), 0.12, -0.8, 0.8);
+  if (chance(0.40)) params.rotateSpeedY = mutateNumber(Number(params.rotateSpeedY), 0.12, -0.8, 0.8);
+  if (chance(0.30)) params.rotateSpeedZ = mutateNumber(Number(params.rotateSpeedZ), 0.12, -0.8, 0.8);
 
-  params.patternBlend = rand(0,1)
+  if (chance(0.15)) params.cameraRotateOn = mutateBoolean(!!params.cameraRotateOn, 0.35);
+  if (chance(0.18)) params.cameraRotateSpeed = mutateNumber(Number(params.cameraRotateSpeed), 0.12, -0.8, 0.8);
 
-  randomizePalette()
+  if (chance(0.10)) params.breathingOn = mutateBoolean(!!params.breathingOn, 0.35);
+  if (chance(0.15)) params.breathingSpeed = mutateNumber(Number(params.breathingSpeed), 0.15, 0.0, 1.2);
+  if (chance(0.15)) params.breathingAmount = mutateNumber(Number(params.breathingAmount), 0.03, 0.0, 0.16);
+}
 
-  applyPresetData(getCurrentPresetData());
+function mutateVisualsLight() {
+  if (chance(0.25)) params.patternMode = choice([0, 1, 3, 9, 12, 13, 14, 15, 16]);
+  if (chance(0.30)) params.patternScale = mutateNumber(Number(params.patternScale), 2.0, 0.5, 14.0);
+  if (chance(0.25)) params.patternSpeed = mutateNumber(Number(params.patternSpeed), 0.4, 0.0, 2.0);
 
+  if (chance(0.25)) params.lightAzimuth = mutateNumber(Number(params.lightAzimuth), 0.7, -Math.PI, Math.PI);
+  if (chance(0.20)) params.lightElevation = mutateNumber(Number(params.lightElevation), 0.35, -0.2, 1.57);
+  if (chance(0.20)) params.lightIntensity = mutateNumber(Number(params.lightIntensity), 0.2, 0.35, 1.2);
+
+  if (chance(0.15)) params.glowOn = mutateBoolean(!!params.glowOn, 0.35);
+  if (chance(0.15)) params.lineOn = mutateBoolean(!!params.lineOn, 0.35);
+  if (chance(0.12)) params.innerGlowStrength = mutateNumber(Number(params.innerGlowStrength), 0.15, 0.0, 0.8);
+}
+
+function mutateFxRare() {
+  if (chance(0.08)) params.waveDistortOn = !params.waveDistortOn;
+  if (chance(0.08)) params.rippleOn = !params.rippleOn;
+  if (chance(0.06)) params.chromaticOn = !params.chromaticOn;
+
+  if (params.waveDistortOn) {
+    params.waveDistortStrength = mutateNumber(Number(params.waveDistortStrength), 0.01, 0.0, 0.06);
+    params.waveDistortScale = mutateNumber(Number(params.waveDistortScale), 1.0, 1.0, 10.0);
+    params.waveDistortSpeed = mutateNumber(Number(params.waveDistortSpeed), 0.3, 0.0, 2.0);
+  }
+
+  if (params.rippleOn) {
+    params.rippleStrength = mutateNumber(Number(params.rippleStrength), 0.015, 0.0, 0.08);
+    params.rippleScale = mutateNumber(Number(params.rippleScale), 2.0, 4.0, 20.0);
+    params.rippleSpeed = mutateNumber(Number(params.rippleSpeed), 0.5, 0.0, 3.0);
+  }
+
+  if (params.chromaticOn) {
+    params.chromaticStrength = mutateNumber(Number(params.chromaticStrength), 0.004, 0.0, 0.02);
+  }
+}
+
+function loadRandomGoodPreset() {
+  const good = getGoodPresets();
+  if (!good.length) return false;
+
+  const seed = choice(good);
+  applyPresetData(seed);
+  return true;
+}
+
+function normalizeRandomTypes() {
+  params.symmetryMode = Number(params.symmetryMode);
+  params.psyStyle = Number(params.psyStyle);
+  params.psyShaderMode = Number(params.psyShaderMode);
+  params.patternMode = Number(params.patternMode);
+  params.rippleMode = Number(params.rippleMode);
+  params.uShape = Number(params.uShape);
+}
+
+function randomizeFromGoodSeed() {
+  const loaded = loadRandomGoodPreset();
+
+  if (!loaded) {
+    alert("No good presets found yet.");
+    return;
+  }
+
+  normalizeRandomTypes();
+
+  mutateStructure();
+  mutateTransforms();
+  mutateMotion();
+  mutateVisualsLight();
+  mutateFxRare();
+  randomizePaletteLight();
+
+  normalizeRandomTypes();
+  refreshGuiDisplays();
 }
     function togglePanels() {
       document.body.classList.toggle("panelsHidden");
@@ -2484,6 +2639,9 @@ function copyCurrentStateToClipboard() {
 
     savePresetBtn.addEventListener("click", () => savePresetByName(presetNameInput.value, false));
 
+randomBtn.addEventListener("click", randomizeFromGoodSeed);
+goodBtn.addEventListener("click", recordGood);
+badBtn.addEventListener("click", recordBad);
     overwritePresetBtn.addEventListener("click", () => {
       const selected = presetSelect.value || presetNameInput.value.trim();
 
@@ -2501,23 +2659,6 @@ function copyCurrentStateToClipboard() {
     importPresetBtn.addEventListener("click", () => importPresetInput.click());
 copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
     pasteStateBtn.addEventListener("click", applyStateFromJSON);
-    document.getElementById("randomBtn").addEventListener("click", () => {
-  randomizeParameters();
-});
-
-document.getElementById("goodBtn").addEventListener("click", () => {
-  const list = getGood();
-  list.push(captureState());
-  saveGood(list);
-  console.log("GOOD presets:", list.length);
-});
-
-document.getElementById("badBtn").addEventListener("click", () => {
-  const list = getBad();
-  list.push(captureState());
-  saveBad(list);
-  console.log("BAD presets:", list.length);
-});
     importPresetInput.addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
@@ -3039,28 +3180,11 @@ document.getElementById("badBtn").addEventListener("click", () => {
       }
 
       frame.style.width = `${fw}px`;
-      frame.style.height = `${fh}px`;
-      frame.style.left = `${(cw - fw) * 0.5}px`;
-      frame.style.top = `${(ch - fh) * 0.5}px`;
+frame.style.height = `${fh}px`;
+frame.style.left = `${(cw - fw) * 0.5}px`;
+frame.style.top = `${(ch - fh) * 0.5}px`;
     }
-function captureState(){
-  return JSON.parse(JSON.stringify(params))
-}
-function getGood(){
-  return JSON.parse(localStorage.getItem("goodPresetsV1")||"[]")
-}
 
-function getBad(){
-  return JSON.parse(localStorage.getItem("badPresetsV1")||"[]")
-}
-
-function saveGood(list){
-  localStorage.setItem("goodPresetsV1",JSON.stringify(list))
-}
-
-function saveBad(list){
-  localStorage.setItem("badPresetsV1",JSON.stringify(list))
-}
     function init() {
       renderer = new THREE.WebGLRenderer({
         antialias: true,
