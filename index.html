@@ -344,43 +344,7 @@
         max-width: 300px;
       }
     }
-
-    @media only screen and (max-width: 900px) {
-      #appShell {
-        flex-direction: column;
-      }
-
-      #leftPanel,
-      #rightPanel {
-        width: 100%;
-        min-width: 100%;
-        max-width: 100%;
-        height: auto;
-        max-height: 28vh;
-        border: none;
-      }
-
-      #leftPanel {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-      }
-
-      #rightPanel {
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
-      }
-
-      #canvasContainer {
-        height: 44vh;
-      }
-
-      body.panelsHidden #canvasContainer {
-        height: 100vh;
-      }
-
-      #startCard h1 {
-        font-size: 32px;
-      }
-          body.mobileMode #leftPanel,
-    body.mobileMode #rightPanel {
+ body.mobileMode #rightPanel {
       display: none !important;
     }
 
@@ -514,6 +478,42 @@
       border: 1px solid rgba(255,255,255,0.25);
       flex: 0 0 auto;
     }
+    @media only screen and (max-width: 900px) {
+      #appShell {
+        flex-direction: column;
+      }
+
+      #leftPanel,
+      #rightPanel {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 28vh;
+        border: none;
+      }
+
+      #leftPanel {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      #rightPanel {
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      #canvasContainer {
+        height: 44vh;
+      }
+
+      body.panelsHidden #canvasContainer {
+        height: 100vh;
+      }
+
+      #startCard h1 {
+        font-size: 32px;
+      }
+          body.mobileMode #leftPanel,
+   
     }
   </style>
 </head>
