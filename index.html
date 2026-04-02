@@ -360,10 +360,120 @@
       width: 100vw;
       height: 100vh;
     }
+body.mobileMode {
+  overflow: hidden;
+}
 
-    #mobileBar,
-    #mobileRandomBtn,
-    #shapePanel,
+body.mobileMode #appShell {
+  display: block !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+body.mobileMode #leftPanel,
+body.mobileMode #rightPanel {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+body.mobileMode #canvasContainer {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-width: 100vw !important;
+  min-height: 100vh !important;
+  overflow: hidden !important;
+  z-index: 1;
+}
+
+body.mobileMode #previewFrame {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+#mobileBar,
+#mobileRandomBtn,
+#shapePanel,
+#stylePanel {
+  display: none;
+}
+
+body.mobileMode #mobileBar,
+body.mobileMode #mobileRandomBtn {
+  display: flex;
+}
+
+body.mobileMode .mobilePanel.show {
+  display: flex !important;
+}
+
+#mobileBar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  height: 58px;
+  padding: 8px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 80;
+}
+
+#mobileBar button {
+  height: 42px;
+  min-width: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#shapeBtn,
+#styleBtn {
+  flex: 1;
+  max-width: 120px;
+}
+
+#mobileRandomBtn {
+  position: fixed;
+  left: 50%;
+  bottom: 78px;
+  transform: translateX(-50%);
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  font-size: 15px;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  backdrop-filter: blur(12px);
+}
+
+#shapePanel,
 #stylePanel {
   position: fixed;
   left: 12px;
@@ -381,7 +491,37 @@
   z-index: 85;
   display: none;
 }
-    }
+
+.mobileSliderRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobileSliderRow label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+}
+
+.mobileSliderRow input[type="range"] {
+  width: 100%;
+  height: 32px;
+}
+
+.mobilePaletteRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.mobilePaletteSwatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  flex: 0 0 auto;
+}
 
     body.mobileMode #mobileBar,
     body.mobileMode #mobileRandomBtn,
@@ -1964,9 +2104,9 @@ float primitiveShape(vec3 pos) {
       Interference: 1
     };
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
 if (isMobile) {
   document.body.classList.add("mobileMode");
+  document.body.classList.add("panelsHidden");
   params.zoomValue = 3.8;
   params.previewQuality = 0.35;
 }
