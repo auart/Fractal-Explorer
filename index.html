@@ -379,6 +379,141 @@
       #startCard h1 {
         font-size: 32px;
       }
+          body.mobileMode #leftPanel,
+    body.mobileMode #rightPanel {
+      display: none !important;
+    }
+
+    body.mobileMode #canvasContainer {
+      width: 100vw;
+      height: 100vh !important;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body.mobileMode #appShell {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #mobileBar,
+    #mobileRandomBtn,
+    #shapePanel,
+    #stylePanel {
+      display: none;
+    }
+
+    body.mobileMode #mobileBar,
+    body.mobileMode #mobileRandomBtn,
+    body.mobileMode #shapePanel,
+    body.mobileMode #stylePanel {
+      display: flex;
+    }
+
+    #mobileBar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 74px;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(12px);
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 80;
+    }
+
+    #mobileBar button {
+      height: 46px;
+      min-width: 46px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #shapeBtn,
+    #styleBtn {
+      flex: 1;
+      max-width: 120px;
+    }
+
+    #mobileRandomBtn {
+      position: fixed;
+      left: 50%;
+      bottom: calc(86px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      height: 54px;
+      padding: 0 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-size: 16px;
+      align-items: center;
+      justify-content: center;
+      z-index: 90;
+      backdrop-filter: blur(12px);
+    }
+
+    #shapePanel,
+    #stylePanel {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(150px + env(safe-area-inset-bottom));
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.12);
+      z-index: 85;
+      display: none;
+    }
+
+    body.mobileMode .mobilePanel.show {
+      display: flex !important;
+    }
+
+    .mobileSliderRow {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mobileSliderRow label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .mobileSliderRow input[type="range"] {
+      width: 100%;
+      height: 32px;
+    }
+
+    .mobilePaletteRow {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .mobilePaletteSwatch {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.25);
+      flex: 0 0 auto;
+    }
     }
   </style>
 </head>
@@ -563,7 +698,52 @@ style="width:100%; height:90px;"></textarea>
       <div id="previewFrame"></div>
       <div id="fpsDisplay">FPS 0</div>
     </div>
+    <button id="mobileRandomBtn" type="button">Random</button>
 
+    <div id="shapePanel" class="mobilePanel">
+      <div class="mobileSliderRow">
+        <label for="mobileZoom">Zoom</label>
+        <input id="mobileZoom" type="range" min="1" max="6" step="0.01" />
+      </div>
+      <div class="mobileSliderRow">
+        <label for="mobileDetail">Detail</label>
+        <input id="mobileDetail" type="range" min="0" max="1" step="0.001" />
+      </div>
+      <div class="mobileSliderRow">
+        <label for="mobilePower">Power</label>
+        <input id="mobilePower" type="range" min="2" max="20" step="0.01" />
+      </div>
+      <div class="mobileSliderRow">
+        <label for="mobileRotation">Rotation</label>
+        <input id="mobileRotation" type="range" min="-180" max="180" step="0.1" />
+      </div>
+    </div>
+
+    <div id="stylePanel" class="mobilePanel">
+      <div class="mobileSliderRow">
+        <label>Palette</label>
+        <div id="mobilePaletteRow" class="mobilePaletteRow"></div>
+      </div>
+      <div class="mobileSliderRow">
+        <label for="mobileGlow">Glow</label>
+        <input id="mobileGlow" type="range" min="0" max="2" step="0.01" />
+      </div>
+      <div class="mobileSliderRow">
+        <label for="mobilePowerAnimate">Power Animate</label>
+        <input id="mobilePowerAnimate" type="range" min="0" max="1" step="0.01" />
+      </div>
+      <div class="mobileSliderRow">
+        <label for="mobilePsyScale">Psy Scale</label>
+        <input id="mobilePsyScale" type="range" min="0.5" max="20" step="0.01" />
+      </div>
+    </div>
+
+    <div id="mobileBar">
+      <button id="menuBtn" type="button">Menu</button>
+      <button id="shapeBtn" type="button">Shape</button>
+      <button id="styleBtn" type="button">Style</button>
+      <button id="mobilePlayBtn" type="button">Play</button>
+    </div>
     <div id="rightPanel">
       <div id="gui"></div>
     </div>
@@ -1725,12 +1905,13 @@ float primitiveShape(vec3 pos) {
       Radial: 0,
       Interference: 1
     };
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile) {
-      params.zoomValue = 3.8;
-      params.previewQuality = 0.35;
-    }
+if (isMobile) {
+  document.body.classList.add("mobileMode");
+  params.zoomValue = 3.8;
+  params.previewQuality = 0.35;
+}
 
     let lastBeatTime = 0;
     let bpm = 120;
@@ -1797,7 +1978,25 @@ const pasteStateBox = document.getElementById("pasteStateBox");
 const randomBtn = document.getElementById("randomBtn");
 const goodBtn = document.getElementById("goodBtn");
 const badBtn = document.getElementById("badBtn");
+    const mobileRandomBtn = document.getElementById("mobileRandomBtn");
+    const menuBtn = document.getElementById("menuBtn");
+    const shapeBtn = document.getElementById("shapeBtn");
+    const styleBtn = document.getElementById("styleBtn");
+    const mobilePlayBtn = document.getElementById("mobilePlayBtn");
 
+    const shapePanel = document.getElementById("shapePanel");
+    const stylePanel = document.getElementById("stylePanel");
+
+    const mobileZoom = document.getElementById("mobileZoom");
+    const mobileDetail = document.getElementById("mobileDetail");
+    const mobilePower = document.getElementById("mobilePower");
+    const mobileRotation = document.getElementById("mobileRotation");
+
+    const mobileGlow = document.getElementById("mobileGlow");
+    const mobilePowerAnimate = document.getElementById("mobilePowerAnimate");
+    const mobilePsyScale = document.getElementById("mobilePsyScale");
+    const mobilePaletteRow = document.getElementById("mobilePaletteRow");
+    
     function clampZoom(v) {
       return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, v));
     }
@@ -1832,7 +2031,77 @@ const badBtn = document.getElementById("badBtn");
     function isTypingContext() {
       return isEditableTarget(document.activeElement);
     }
+    function closeMobilePanels() {
+      shapePanel.classList.remove("show");
+      stylePanel.classList.remove("show");
+    }
 
+    function toggleMobilePanel(panelEl) {
+      const isOpen = panelEl.classList.contains("show");
+      closeMobilePanels();
+      if (!isOpen) panelEl.classList.add("show");
+    }
+
+    function applyEasyDetail(v) {
+      const t = Math.max(0, Math.min(1, v));
+
+      params.uIterations = Math.round(8 + t * 24);
+      params.uSurfaceEpsilon = Math.max(0.001, 0.02 - t * 0.019);
+      params.uBailout = Math.max(1.1, 1.1 + t * 1.4);
+
+      if (t < 0.08) {
+        params.lineOn = false;
+      } else {
+        params.lineOn = true;
+        const thickZone = 1.0 - t;
+        params.lineWidth = Math.max(0.15, Math.min(2.5, 0.2 + thickZone * 1.8));
+        params.lineStrength = Math.max(0.25, Math.min(1.0, 0.35 + thickZone * 0.6));
+      }
+    }
+
+    function syncMobileControlsFromParams() {
+      if (!mobileZoom) return;
+
+      mobileZoom.value = params.zoomValue;
+      mobilePower.value = params.uPower;
+      mobileRotation.value = params.uFractalRotationZ;
+      mobileGlow.value = params.glowStrength;
+      mobilePowerAnimate.value = params.powerAnimation ? 1 : 0;
+      mobilePsyScale.value = params.psyScale;
+
+      const detailNormalized = 1.0 - ((params.uSurfaceEpsilon - 0.001) / (0.02 - 0.001));
+      mobileDetail.value = Math.max(0, Math.min(1, detailNormalized));
+    }
+
+    function buildMobilePalettes() {
+      if (!mobilePaletteRow) return;
+
+      const palettes = [
+        ["#18d8d8", "#a6ff3c", "#ff9a1f", "#ff4d7a"],
+        ["#0094ff", "#ff002c", "#ff9a1f", "#ff4d7a"],
+        ["#03a750", "#002dff", "#ff9a1f", "#4600ff"],
+        ["#20b0cf", "#00c2ff", "#be00ff", "#8600ff"],
+        ["#ff3100", "#ed00ff", "#00e5ff", "#fff000"],
+        ["#7bff00", "#00ffd9", "#004cff", "#d500ff"]
+      ];
+
+      mobilePaletteRow.innerHTML = "";
+
+      palettes.forEach((palette) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "mobilePaletteSwatch";
+        btn.style.background = `linear-gradient(135deg, ${palette.join(",")})`;
+        btn.addEventListener("click", () => {
+          params.paletteMode = 2;
+          params.psyColorA = palette[0];
+          params.psyColorB = palette[1];
+          params.psyColorC = palette[2];
+          params.psyColorD = palette[3];
+        });
+        mobilePaletteRow.appendChild(btn);
+      });
+    }
     function getEffectivePlaybackRate() {
       if (!transportPlaying) return 0;
       if (transportShuttle === -1) return -Math.abs(transportBaseSpeed);
@@ -2769,6 +3038,68 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
     keyboardHelpOverlay.addEventListener("click", (e) => {
       if (e.target === keyboardHelpOverlay) closeKeyboardHelp();
     });
+        if (mobileRandomBtn) {
+      mobileRandomBtn.addEventListener("click", () => {
+        randomBtn.click();
+      });
+    }
+
+    if (shapeBtn) {
+      shapeBtn.addEventListener("click", () => toggleMobilePanel(shapePanel));
+    }
+
+    if (styleBtn) {
+      styleBtn.addEventListener("click", () => toggleMobilePanel(stylePanel));
+    }
+
+    if (menuBtn) {
+      menuBtn.addEventListener("click", () => {
+        document.body.classList.toggle("panelsHidden");
+      });
+    }
+
+    if (mobilePlayBtn) {
+      mobilePlayBtn.addEventListener("click", () => {
+        playPauseBtn.click();
+        mobilePlayBtn.textContent = transportPlaying ? "Pause" : "Play";
+      });
+    }
+
+    if (mobileZoom) {
+      mobileZoom.addEventListener("input", (e) => {
+        params.zoomValue = Number(e.target.value);
+      });
+
+      mobileDetail.addEventListener("input", (e) => {
+        applyEasyDetail(Number(e.target.value));
+      });
+
+      mobilePower.addEventListener("input", (e) => {
+        params.uPower = Number(e.target.value);
+      });
+
+      mobileRotation.addEventListener("input", (e) => {
+        params.uFractalRotationZ = Number(e.target.value);
+      });
+
+      mobileGlow.addEventListener("input", (e) => {
+        params.glowOn = Number(e.target.value) > 0.01;
+        params.glowStrength = Number(e.target.value);
+      });
+
+      mobilePowerAnimate.addEventListener("input", (e) => {
+        const v = Number(e.target.value);
+        params.powerAnimation = v > 0.01;
+        params.powerAnimationSpeed = 0.1 + v * 1.5;
+      });
+
+      mobilePsyScale.addEventListener("input", (e) => {
+        params.psyScale = Number(e.target.value);
+      });
+    }
+
+    buildMobilePalettes();
+    syncMobileControlsFromParams();
 
     function parseExportDimensions() {
       const [w, h] = exportFormatSelect.value.split("x").map(Number);
@@ -2825,8 +3156,14 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
         e.preventDefault();
         stepTimeline(STEP_TIME);
       }
+       if (e.key === "r" || e.key === "R") {
+        if (!isTypingContext()) {
+          e.preventDefault();
+          randomBtn.click();
+        }
+      }
     });
-
+    
     window.addEventListener("keyup", (e) => {
       keys[e.key] = false;
 
@@ -2860,7 +3197,8 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
       prevMouse.x = e.clientX;
       prevMouse.y = e.clientY;
     }
-
+let lastTapTime = 0;
+    
     function onTouchStart(e) {
       if (e.touches.length === 1) {
         isDragging = true;
@@ -2896,9 +3234,20 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
     }
 
     function onTouchEnd(e) {
-      if (e.touches.length < 2) isPinching = false;
-      if (e.touches.length === 0) isDragging = false;
+  if (e.touches.length < 2) isPinching = false;
+  if (e.touches.length === 0) isDragging = false;
+
+  if (!isPinching) {
+    const now = Date.now();
+    const dt = now - lastTapTime;
+
+    if (dt < 300) {
+      randomBtn.click();
     }
+
+    lastTapTime = now;
+  }
+}
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const analyser = audioCtx.createAnalyser();
