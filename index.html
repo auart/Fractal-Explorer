@@ -364,8 +364,23 @@
     #mobileBar,
     #mobileRandomBtn,
     #shapePanel,
-    #stylePanel {
-      display: none;
+#stylePanel {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 110px;
+  max-height: 42vh;
+  overflow-y: auto;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  z-index: 85;
+  display: none;
+}
     }
 
     body.mobileMode #mobileBar,
@@ -374,22 +389,23 @@
     body.mobileMode #stylePanel {
       display: flex;
     }
-
-    #mobileBar {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 74px;
-      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-      box-sizing: border-box;
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(12px);
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      z-index: 80;
-    }
+#mobileBar {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  height: 58px;
+  padding: 8px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  z-index: 80;
+}
 
     #mobileBar button {
       height: 46px;
@@ -408,24 +424,23 @@
       flex: 1;
       max-width: 120px;
     }
-
-    #mobileRandomBtn {
-      position: fixed;
-      left: 50%;
-      bottom: calc(86px + env(safe-area-inset-bottom));
-      transform: translateX(-50%);
-      height: 54px;
-      padding: 0 22px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      font-size: 16px;
-      align-items: center;
-      justify-content: center;
-      z-index: 90;
-      backdrop-filter: blur(12px);
-    }
+#mobileRandomBtn {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  transform: translateX(-50%);
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  font-size: 15px;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  backdrop-filter: blur(12px);
+}
 
     #shapePanel,
     #stylePanel {
@@ -512,7 +527,48 @@
       #startCard h1 {
         font-size: 32px;
       }
-          body.mobileMode #leftPanel,
+          body.mobileMode {
+  overflow: hidden;
+}
+
+body.mobileMode #appShell {
+  display: block !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+body.mobileMode #leftPanel,
+body.mobileMode #rightPanel {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+body.mobileMode #canvasContainer {
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-width: 100vw !important;
+  min-height: 100vh !important;
+  overflow: hidden !important;
+  z-index: 1;
+}
+
+body.mobileMode #previewFrame {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+}
    
     }
   </style>
@@ -1651,7 +1707,9 @@ float primitiveShape(vec3 pos) {
 
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
     const PLAYLIST_STORAGE_KEY = "fractalExplorerPlaylistV1";
-    const FIXED_PREVIEW_ASPECT = 16 / 9;
+    function getPreviewAspect() {
+  return document.body.classList.contains("mobileMode") ? (9 / 16) : (16 / 9);
+}
     const FIXED_MAX_STEPS = 50;
     const FIXED_MAX_DISTANCE = 50.0;
     const MIN_ZOOM = 1.0;
@@ -3525,12 +3583,12 @@ let lastTapTime = 0;
       let fw;
       let fh;
 
-      if (cw / ch > FIXED_PREVIEW_ASPECT) {
+      if (cw / ch > getPreviewAspect()) {
         fh = ch;
-        fw = fh * FIXED_PREVIEW_ASPECT;
+        fw = fh * getPreviewAspect();
       } else {
         fw = cw;
-        fh = fw / FIXED_PREVIEW_ASPECT;
+        fh = fw / getPreviewAspect();
       }
 
       frame.style.width = `${fw}px`;
@@ -3547,7 +3605,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       document.getElementById("previewFrame").appendChild(renderer.domElement);
 
-      navCamera = new THREE.PerspectiveCamera(75, FIXED_PREVIEW_ASPECT, 0.1, 1000);
+      navCamera = new THREE.PerspectiveCamera(75, getPreviewAspect(), 0.1, 1000);
 
       const startZ = isMobile ? 3.8 : 2.2;
       navCamera.position.set(0, 0, startZ);
