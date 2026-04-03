@@ -389,7 +389,6 @@ body.mobileMode #previewFrame {
   height: 100vh !important;
   max-width: none !important;
   max-height: none !important;
-  pointer-events: none;
 }
 
 #mobileBar,
@@ -438,7 +437,22 @@ body.mobileMode .mobilePanel.show {
   font-size: 16px;
   cursor: pointer;
 }
+#mobileBar,
+#menuPanel,
+#shapePanel,
+#stylePanel {
+  pointer-events: auto;
+}
 
+#mobileBar button,
+#menuPanel button,
+#shapePanel input,
+#stylePanel input,
+.mobilePaletteSwatch {
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 #menuPanel,
 #shapePanel,
 #stylePanel {
