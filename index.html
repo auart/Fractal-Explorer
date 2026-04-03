@@ -3375,10 +3375,7 @@ if (easyResetViewBtn) {
   });
 }
 
-buildEasyPalettes();
-syncEasyDockControlsFromParams();
 
-    if (easyShapePanel) easyShapePanel.classList.add("show");
 if (easyZoom) {
   easyZoom.addEventListener("input", (e) => {
     params.zoomValue = clampZoom(parseFloat(e.target.value));
@@ -3422,6 +3419,10 @@ if (easyPsyScale) {
     params.psyScale = parseFloat(e.target.value);
   });
 }
+    buildEasyPalettes();
+syncEasyDockControlsFromParams();
+if (easyShapePanel) easyShapePanel.classList.add("show");
+    
     function parseExportDimensions() {
       const [w, h] = exportFormatSelect.value.split("x").map(Number);
       return { width: w, height: h };
