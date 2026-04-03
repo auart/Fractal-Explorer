@@ -74,21 +74,103 @@
     }
 
     #canvasContainer {
-      flex: 1;
-      position: relative;
-      min-width: 0;
-      min-height: 0;
-      overflow: hidden;
-      background: black;
-    }
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: black;
+  display: flex;
+  flex-direction: column;
+}
 
-    #previewFrame {
-      position: absolute;
-      background: black;
-      overflow: hidden;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
-    }
+   #easyDock {
+  flex: 0 0 auto;
+  padding: 0 14px 14px 14px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
+#easyDockBar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+#easyDockBar button {
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.easyDockPanel {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-sizing: border-box;
+  min-height: 110px;
+}
+
+.easyDockPanel.show {
+  display: grid;
+}
+
+.easySliderRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.easySliderRow label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.9);
+}
+
+.easySliderRow input[type="range"] {
+  width: 100%;
+}
+
+#easyMenuPanel button {
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.easyPaletteBlock {
+  grid-column: span 2;
+}
+
+.easyPaletteRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.easyPaletteSwatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+  cursor: pointer;
+}
+
+body.mobileMode #easyDock {
+  display: none !important;
+}
     #fpsDisplay {
       position: absolute;
       top: 10px;
@@ -744,9 +826,63 @@ style="width:100%; height:90px;"></textarea>
     </div>
 
     <div id="canvasContainer">
-      <div id="previewFrame"></div>
-      <div id="fpsDisplay">FPS 0</div>
+  <div id="previewFrame"></div>
+  <div id="fpsDisplay">FPS 0</div>
+
+  <div id="easyDock">
+    <div id="easyMenuPanel" class="easyDockPanel">
+      <button id="easyRandomBtn" type="button">Random</button>
+      <button id="easyToggleUiBtn" type="button">Toggle UI</button>
+      <button id="easyShowFpsBtn" type="button">FPS</button>
+      <button id="easyResetViewBtn" type="button">Reset View</button>
     </div>
+
+    <div id="easyShapePanel" class="easyDockPanel">
+      <div class="easySliderRow">
+        <label for="easyZoom">Zoom</label>
+        <input id="easyZoom" type="range" min="1" max="6" step="0.01" />
+      </div>
+      <div class="easySliderRow">
+        <label for="easyDetail">Detail</label>
+        <input id="easyDetail" type="range" min="0" max="1" step="0.001" />
+      </div>
+      <div class="easySliderRow">
+        <label for="easyPower">Power</label>
+        <input id="easyPower" type="range" min="2" max="20" step="0.01" />
+      </div>
+      <div class="easySliderRow">
+        <label for="easyRotation">Rotation</label>
+        <input id="easyRotation" type="range" min="-180" max="180" step="0.1" />
+      </div>
+    </div>
+
+    <div id="easyStylePanel" class="easyDockPanel">
+      <div class="easySliderRow easyPaletteBlock">
+        <label>Palette</label>
+        <div id="easyPaletteRow" class="easyPaletteRow"></div>
+      </div>
+      <div class="easySliderRow">
+        <label for="easyGlow">Glow</label>
+        <input id="easyGlow" type="range" min="0" max="2" step="0.01" />
+      </div>
+      <div class="easySliderRow">
+        <label for="easyPowerAnimate">Power Animate</label>
+        <input id="easyPowerAnimate" type="range" min="0" max="1" step="0.01" />
+      </div>
+      <div class="easySliderRow">
+        <label for="easyPsyScale">Psy Scale</label>
+        <input id="easyPsyScale" type="range" min="0.5" max="20" step="0.01" />
+      </div>
+    </div>
+
+    <div id="easyDockBar">
+      <button id="easyMenuBtn" type="button">Menu</button>
+      <button id="easyShapeBtn" type="button">Shape</button>
+      <button id="easyStyleBtn" type="button">Style</button>
+      <button id="easyPlayBtn" type="button">Play</button>
+    </div>
+  </div>
+</div>
 
    <div id="menuPanel" class="mobilePanel">
   <button id="mobileRandomAction">Random</button>
@@ -2036,7 +2172,29 @@ const badBtn = document.getElementById("badBtn");
     const shapeBtn = document.getElementById("shapeBtn");
     const styleBtn = document.getElementById("styleBtn");
     const mobilePlayBtn = document.getElementById("mobilePlayBtn");
+const easyMenuBtn = document.getElementById("easyMenuBtn");
+const easyShapeBtn = document.getElementById("easyShapeBtn");
+const easyStyleBtn = document.getElementById("easyStyleBtn");
+const easyPlayBtn = document.getElementById("easyPlayBtn");
 
+const easyMenuPanel = document.getElementById("easyMenuPanel");
+const easyShapePanel = document.getElementById("easyShapePanel");
+const easyStylePanel = document.getElementById("easyStylePanel");
+
+const easyRandomBtn = document.getElementById("easyRandomBtn");
+const easyToggleUiBtn = document.getElementById("easyToggleUiBtn");
+const easyShowFpsBtn = document.getElementById("easyShowFpsBtn");
+const easyResetViewBtn = document.getElementById("easyResetViewBtn");
+
+const easyZoom = document.getElementById("easyZoom");
+const easyDetail = document.getElementById("easyDetail");
+const easyPower = document.getElementById("easyPower");
+const easyRotation = document.getElementById("easyRotation");
+
+const easyGlow = document.getElementById("easyGlow");
+const easyPowerAnimate = document.getElementById("easyPowerAnimate");
+const easyPsyScale = document.getElementById("easyPsyScale");
+const easyPaletteRow = document.getElementById("easyPaletteRow");
     const shapePanel = document.getElementById("shapePanel");
     const stylePanel = document.getElementById("stylePanel");
 const menuPanel = document.getElementById("menuPanel");
@@ -2097,7 +2255,17 @@ const mobileHideUiAction = document.getElementById("mobileHideUiAction");
       closeMobilePanels();
       if (!isOpen) panelEl.classList.add("show");
     }
+function closeEasyDockPanels() {
+  easyMenuPanel.classList.remove("show");
+  easyShapePanel.classList.remove("show");
+  easyStylePanel.classList.remove("show");
+}
 
+function toggleEasyDockPanel(panelEl) {
+  const isOpen = panelEl.classList.contains("show");
+  closeEasyDockPanels();
+  if (!isOpen) panelEl.classList.add("show");
+}
     function applyEasyDetail(v) {
       const t = Math.max(0, Math.min(1, v));
 
@@ -3159,8 +3327,101 @@ bindTap(mobilePlayBtn, () => {
     }
 
     buildMobilePalettes();
-    syncMobileControlsFromParams();
+syncMobileControlsFromParams();
 
+if (easyMenuBtn) {
+  easyMenuBtn.addEventListener("click", () => toggleEasyDockPanel(easyMenuPanel));
+}
+
+if (easyShapeBtn) {
+  easyShapeBtn.addEventListener("click", () => toggleEasyDockPanel(easyShapePanel));
+}
+
+if (easyStyleBtn) {
+  easyStyleBtn.addEventListener("click", () => toggleEasyDockPanel(easyStylePanel));
+}
+
+if (easyPlayBtn) {
+  easyPlayBtn.addEventListener("click", () => {
+    playPauseBtn.click();
+    easyPlayBtn.textContent = transportPlaying ? "Pause" : "Play";
+  });
+}
+
+if (easyRandomBtn) {
+  easyRandomBtn.addEventListener("click", () => randomBtn.click());
+}
+
+if (easyToggleUiBtn) {
+  easyToggleUiBtn.addEventListener("click", () => {
+    document.body.classList.toggle("panelsHidden");
+  });
+}
+
+if (easyShowFpsBtn) {
+  easyShowFpsBtn.addEventListener("click", () => {
+    toggleFpsBtn.click();
+  });
+}
+
+if (easyResetViewBtn) {
+  easyResetViewBtn.addEventListener("click", () => {
+    params.zoomValue = 2.2;
+    params.uFractalRotationX = 0;
+    params.uFractalRotationY = 0;
+    params.uFractalRotationZ = 0;
+    syncMobileControlsFromParams();
+    syncEasyDockControlsFromParams();
+  });
+}
+
+buildEasyPalettes();
+syncEasyDockControlsFromParams();
+
+    if (easyShapePanel) easyShapePanel.classList.add("show");
+if (easyZoom) {
+  easyZoom.addEventListener("input", (e) => {
+    params.zoomValue = clampZoom(parseFloat(e.target.value));
+  });
+}
+
+if (easyDetail) {
+  easyDetail.addEventListener("input", (e) => {
+    applyEasyDetail(parseFloat(e.target.value));
+  });
+}
+
+if (easyPower) {
+  easyPower.addEventListener("input", (e) => {
+    params.uPower = parseFloat(e.target.value);
+  });
+}
+
+if (easyRotation) {
+  easyRotation.addEventListener("input", (e) => {
+    params.uFractalRotationZ = parseFloat(e.target.value);
+  });
+}
+
+if (easyGlow) {
+  easyGlow.addEventListener("input", (e) => {
+    params.glowStrength = parseFloat(e.target.value);
+  });
+}
+
+if (easyPowerAnimate) {
+  easyPowerAnimate.addEventListener("input", (e) => {
+    const v = Number(e.target.value);
+    params.powerAnimation = v > 0.01;
+    params.powerAnimationSpeed = 0.1 + v * 1.5;
+  });
+}
+
+if (easyPsyScale) {
+  easyPsyScale.addEventListener("input", (e) => {
+    params.psyScale = parseFloat(e.target.value);
+  });
+}
     function parseExportDimensions() {
       const [w, h] = exportFormatSelect.value.split("x").map(Number);
       return { width: w, height: h };
@@ -3174,7 +3435,7 @@ bindTap(mobilePlayBtn, () => {
 
       if (keyboardHelpOverlay.style.display === "flex" && key === "Escape") {
         e.preventDefault();
-        closeKeyboardHelp();
+        closeKeyboardHelp();w
         return;
       }
 
