@@ -3096,31 +3096,35 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
       if (e.target === keyboardHelpOverlay) closeKeyboardHelp();
     });
 
-    if (shapeBtn) {
-      shapeBtn.addEventListener("click", () => toggleMobilePanel(shapePanel));
-    }
+   function bindTap(el, handler) {
+  if (!el) return;
 
-    if (styleBtn) {
-      styleBtn.addEventListener("click", () => toggleMobilePanel(stylePanel));
-    }
+  el.addEventListener("click", handler);
 
-   if (menuBtn) {
-  menuBtn.addEventListener("click", () => {
-  toggleMobilePanel(menuPanel);
+  el.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handler(e);
+  }, { passive: false });
+}
+
+bindTap(shapeBtn, () => toggleMobilePanel(shapePanel));
+bindTap(styleBtn, () => toggleMobilePanel(stylePanel));
+bindTap(menuBtn, () => toggleMobilePanel(menuPanel));
+
+bindTap(mobileRandomAction, () => {
+  randomBtn.click();
 });
-}
-if (mobileRandomAction) {
-  mobileRandomAction.addEventListener("click", () => {
-    randomBtn.click();
-  });
-}
 
-if (mobileHideUiAction) {
-  mobileHideUiAction.addEventListener("click", () => {
-    closeMobilePanels();
-    document.body.classList.toggle("panelsHidden");
-  });
-}
+bindTap(mobileHideUiAction, () => {
+  closeMobilePanels();
+  document.body.classList.toggle("panelsHidden");
+});
+
+bindTap(mobilePlayBtn, () => {
+  playPauseBtn.click();
+  mobilePlayBtn.textContent = transportPlaying ? "Pause" : "Play";
+});
     if (mobilePlayBtn) {
       mobilePlayBtn.addEventListener("click", () => {
         playPauseBtn.click();
