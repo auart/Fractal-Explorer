@@ -411,8 +411,8 @@ body.mobileMode .mobilePanel.show {
   left: 12px;
   right: 12px;
   bottom: calc(92px + env(safe-area-inset-bottom));
-  height: 64px;
-  padding: 8px;
+  height: 112px;
+  padding: 10px;
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(10px);
@@ -421,20 +421,20 @@ body.mobileMode .mobilePanel.show {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
   z-index: 9999;
 }
 
 #mobileBar button {
   flex: 1 1 0;
-  height: 48px;
+  height: 88px;
   min-width: 0;
   padding: 0 8px;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.18);
   background: rgba(255,255,255,0.08);
   color: #fff;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
 }
 #mobileBar,
@@ -459,7 +459,7 @@ body.mobileMode .mobilePanel.show {
   position: fixed;
   left: 12px;
   right: 12px;
-  bottom: calc(170px + env(safe-area-inset-bottom));
+  bottom: calc(210px + env(safe-area-inset-bottom));
   max-height: 28vh;
   overflow-y: auto;
   flex-direction: column;
@@ -471,7 +471,6 @@ body.mobileMode .mobilePanel.show {
   border: 1px solid rgba(255,255,255,0.12);
   z-index: 9999;
 }
-
 #menuPanel button {
   width: 100%;
   height: 52px;
@@ -3125,13 +3124,7 @@ bindTap(mobilePlayBtn, () => {
   playPauseBtn.click();
   mobilePlayBtn.textContent = transportPlaying ? "Pause" : "Play";
 });
-    if (mobilePlayBtn) {
-      mobilePlayBtn.addEventListener("click", () => {
-        playPauseBtn.click();
-        mobilePlayBtn.textContent = transportPlaying ? "Pause" : "Play";
-      });
-    }
-
+   
     if (mobileZoom) {
       mobileZoom.addEventListener("input", (e) => {
         params.zoomValue = Number(e.target.value);
@@ -3265,42 +3258,53 @@ bindTap(mobilePlayBtn, () => {
       prevMouse.y = e.clientY;
     }
 let lastTapTime = 0;
-    
+    function isTouchOnMobileUi(e) {
+  const t = e.target;
+  return !!(
+    t &&
+    t.closest &&
+    t.closest("#mobileBar, #menuPanel, #shapePanel, #stylePanel")
+  );
+}
     function onTouchStart(e) {
-      if (e.touches.length === 1) {
-        isDragging = true;
-        prevMouse.x = e.touches[0].clientX;
-        prevMouse.y = e.touches[0].clientY;
-      } else if (e.touches.length === 2) {
-        isPinching = true;
-        lastPinchDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-      }
-    }
+  if (isTouchOnMobileUi(e)) return;
 
+  if (e.touches.length === 1) {
+    isDragging = true;
+    prevMouse.x = e.touches[0].clientX;
+    prevMouse.y = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    isPinching = true;
+    lastPinchDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+}
     function onTouchMove(e) {
-      if (isPinching && e.touches.length === 2) {
-        const d = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
+  if (isTouchOnMobileUi(e)) return;
 
-        params.zoomValue = clampZoom(params.zoomValue + (d - lastPinchDist) * 0.005);
-        lastPinchDist = d;
-      } else if (isDragging && e.touches.length === 1) {
-        params.uFractalRotationY += (e.touches[0].clientX - prevMouse.x) * 0.005;
-        params.uFractalRotationX += (e.touches[0].clientY - prevMouse.y) * 0.005;
+  if (isPinching && e.touches.length === 2) {
+    const d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
 
-        prevMouse.x = e.touches[0].clientX;
-        prevMouse.y = e.touches[0].clientY;
-      }
+    params.zoomValue = clampZoom(params.zoomValue + (d - lastPinchDist) * 0.005);
+    lastPinchDist = d;
+  } else if (isDragging && e.touches.length === 1) {
+    params.uFractalRotationY += (e.touches[0].clientX - prevMouse.x) * 0.005;
+    params.uFractalRotationX += (e.touches[0].clientY - prevMouse.y) * 0.005;
 
-      e.preventDefault();
-    }
+    prevMouse.x = e.touches[0].clientX;
+    prevMouse.y = e.touches[0].clientY;
+  }
 
+  e.preventDefault();
+}
     function onTouchEnd(e) {
+  if (isTouchOnMobileUi(e)) return;
+
   if (e.touches.length < 2) isPinching = false;
   if (e.touches.length === 0) isDragging = false;
 
@@ -3315,7 +3319,6 @@ let lastTapTime = 0;
     lastTapTime = now;
   }
 }
-
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;
