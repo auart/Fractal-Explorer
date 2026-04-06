@@ -26,9 +26,22 @@
       display: none !important;
     }
 
+    /* Vertical mode — viewport shows 9:16 portrait canvas */
+    body.verticalMode #viewportArea {
+      background: repeating-linear-gradient(
+        45deg,
+        #111 0px, #111 10px,
+        #0a0a0a 10px, #0a0a0a 20px
+      );
+    }
+
     body.panelsHidden #canvasContainer {
       flex: 1 1 100%;
       width: 100%;
+      height: 100%;
+    }
+
+    body.panelsHidden #viewportArea {
       height: 100%;
     }
 
@@ -84,6 +97,18 @@
   flex-direction: column;
 }
 
+    #viewportArea {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: black;
+}
+
+    #previewFrame {
+  position: absolute;
+}
+
    #easyDock {
   flex: 0 0 auto;
   padding: 0 14px 14px 14px;
@@ -91,6 +116,18 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+/* When UI panels are hidden, dock floats fixed at bottom of screen */
+body.panelsHidden #easyDock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 #easyDockBar {
@@ -184,6 +221,89 @@ body.mobileMode #easyDock {
       border: 1px solid rgba(255, 255, 255, 0.18);
       pointer-events: none;
       display: none;
+    }
+
+    #exportOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #exportOverlay.show {
+      display: flex;
+    }
+
+    #exportCard {
+      width: min(92vw, 460px);
+      padding: 32px 28px;
+      background: rgba(10, 10, 10, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      color: #fff;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    #exportCard h2 {
+      margin: 0 0 6px 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    #exportStatusText {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      margin: 0 0 20px 0;
+      min-height: 18px;
+    }
+
+    #exportProgressTrack {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    #exportProgressFill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #18d8d8, #a6ff3c);
+      border-radius: 999px;
+      transition: width 0.08s linear;
+    }
+
+    #exportPercent {
+      font-size: 36px;
+      font-weight: 700;
+      margin: 14px 0 4px 0;
+      letter-spacing: -0.02em;
+    }
+
+    #exportTimeRemaining {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      margin: 0 0 24px 0;
+    }
+
+    #exportCancelBtn {
+      padding: 10px 28px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #exportCancelBtn:hover {
+      background: rgba(255,255,255,0.12);
     }
 
     #transportDisplay {
@@ -462,6 +582,13 @@ body.mobileMode #canvasContainer {
   min-height: 100vh !important;
   overflow: hidden !important;
   z-index: 1;
+}
+
+body.mobileMode #viewportArea {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 body.mobileMode #previewFrame {
@@ -784,50 +911,57 @@ style="width:100%; height:90px;"></textarea>
       </div>
 
       <div class="panelBox rowGap">
-        <label for="exportFormatSelect">Export Format</label>
-        <select id="exportFormatSelect">
-          <option value="1280x720">Landscape HD, 1280 x 720</option>
-          <option value="1920x1080">Landscape Full HD, 1920 x 1080</option>
-          <option value="3840x2160" selected>Landscape 4K, 3840 x 2160</option>
-          <option value="2160x3840">Vertical 4K, 2160 x 3840</option>
-          <option value="1080x1920">Vertical HD, 1080 x 1920</option>
-          <option value="2160x2160">Square 4K, 2160 x 2160</option>
+        <label>Orientation</label>
+        <div class="twoCol">
+          <button id="orientHorizBtn" class="secondaryDark active">⬛ Horizontal</button>
+          <button id="orientVertBtn" class="secondaryDark">▮ Vertical</button>
+        </div>
+
+        <label for="exportResSelect">Resolution</label>
+        <select id="exportResSelect">
+          <option value="1920x1080">1080p HD</option>
+          <option value="3840x2160" selected>4K UHD</option>
         </select>
 
-        <label for="formatSelect">Video Format</label>
-        <select id="formatSelect">
-          <option value="webm-vp9">WebM VP9</option>
-          <option value="webm">WebM Basic</option>
-          <option value="mp4">MP4, if supported</option>
+        <label for="exportFpsSelect">Frame Rate</label>
+        <select id="exportFpsSelect">
+          <option value="24">24 fps — Cinematic</option>
+          <option value="30">30 fps — Social / Broadcast</option>
+          <option value="60" selected>60 fps — Live Visuals</option>
         </select>
 
-        <label for="qualitySelect">Video Quality</label>
-        <select id="qualitySelect">
-          <option value="low">Low, 5 Mbps</option>
-          <option value="medium">Medium, 12 Mbps</option>
-          <option value="high" selected>High, 25 Mbps</option>
-          <option value="ultra">Ultra, 50 Mbps</option>
+        <label for="exportCrfSelect">Quality</label>
+        <select id="exportCrfSelect">
+          <option value="15">Lossless+ (CRF 15, largest)</option>
+          <option value="18" selected>Visually Lossless (CRF 18)</option>
+          <option value="23">High (CRF 23)</option>
+          <option value="28">Compact (CRF 28)</option>
         </select>
 
-        <label for="durationSelect">Clip Duration</label>
+        <label for="durationSelect">Duration</label>
         <select id="durationSelect">
           <option value="5">5 sec</option>
           <option value="10" selected>10 sec</option>
           <option value="15">15 sec</option>
           <option value="30">30 sec</option>
+          <option value="60">1 min</option>
+          <option value="120">2 min</option>
+          <option value="300">5 min</option>
         </select>
       </div>
 
       <button id="freezeBtn" class="freezeBtn">⏸ Freeze Animation</button>
-      <button id="exportStillBtn">Export Still</button>
-      <button id="recordBtn">Record Clip</button>
+      <button id="exportStillBtn">Export Still (PNG)</button>
+      <button id="masterExportBtn">Master Export (MP4)</button>
       <button id="keyboardHelpBtn">Keyboard Help</button>
       <button id="fsToggleBtn">Enter Full Screen</button>
     </div>
 
     <div id="canvasContainer">
-  <div id="previewFrame"></div>
-  <div id="fpsDisplay">FPS 0</div>
+  <div id="viewportArea">
+    <div id="previewFrame"></div>
+    <div id="fpsDisplay">FPS 0</div>
+  </div>
 
   <div id="easyDock">
     <div id="easyMenuPanel" class="easyDockPanel">
@@ -835,6 +969,7 @@ style="width:100%; height:90px;"></textarea>
       <button id="easyToggleUiBtn" type="button">Toggle UI</button>
       <button id="easyShowFpsBtn" type="button">FPS</button>
       <button id="easyResetViewBtn" type="button">Reset View</button>
+      <button id="easyVerticalModeBtn" type="button" style="grid-column: span 2;">⬛ Horizontal Mode</button>
     </div>
 
     <div id="easyShapePanel" class="easyDockPanel">
@@ -937,8 +1072,22 @@ style="width:100%; height:90px;"></textarea>
     </div>
   </div>
 
+  <div id="exportOverlay">
+    <div id="exportCard">
+      <h2 id="exportCardTitle">Rendering</h2>
+      <p id="exportStatusText">Preparing...</p>
+      <div id="exportProgressTrack">
+        <div id="exportProgressFill"></div>
+      </div>
+      <div id="exportPercent">0%</div>
+      <div id="exportTimeRemaining">&nbsp;</div>
+      <button id="exportCancelBtn" type="button">Cancel</button>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 
   <script id="fragmentShader" type="x-shader/x-fragment">
     #ifdef GL_OES_standard_derivatives
@@ -1840,8 +1989,9 @@ float primitiveShape(vec3 pos) {
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
     const PLAYLIST_STORAGE_KEY = "fractalExplorerPlaylistV1";
     function getPreviewAspect() {
-  return document.body.classList.contains("mobileMode") ? (9 / 16) : (16 / 9);
-}
+      if (document.body.classList.contains("mobileMode")) return 9 / 16;
+      return document.body.classList.contains("verticalMode") ? (9 / 16) : (16 / 9);
+    }
     const FIXED_MAX_STEPS = 50;
     const FIXED_MAX_DISTANCE = 50.0;
     const MIN_ZOOM = 1.0;
@@ -2131,7 +2281,6 @@ const pasteStateBox = document.getElementById("pasteStateBox");
 
     const fsToggleBtn = document.getElementById("fsToggleBtn");
     const exportStillBtn = document.getElementById("exportStillBtn");
-    const recordBtn = document.getElementById("recordBtn");
     const freezeBtn = document.getElementById("freezeBtn");
     const previewQualitySelect = document.getElementById("previewQualitySelect");
     const toggleFpsBtn = document.getElementById("toggleFpsBtn");
@@ -2161,9 +2310,6 @@ const pasteStateBox = document.getElementById("pasteStateBox");
     const keyboardHelpOverlay = document.getElementById("keyboardHelpOverlay");
     const keyboardHelpCloseBtn = document.getElementById("keyboardHelpCloseBtn");
 
-    const exportFormatSelect = document.getElementById("exportFormatSelect");
-    const formatSelect = document.getElementById("formatSelect");
-    const qualitySelect = document.getElementById("qualitySelect");
     const durationSelect = document.getElementById("durationSelect");
 const randomBtn = document.getElementById("randomBtn");
 const goodBtn = document.getElementById("goodBtn");
@@ -3355,6 +3501,9 @@ if (easyRandomBtn) {
 if (easyToggleUiBtn) {
   easyToggleUiBtn.addEventListener("click", () => {
     document.body.classList.toggle("panelsHidden");
+    closeEasyDockPanels();
+    layoutPreviewFrame();
+    resizeRendererToPreviewFrame();
   });
 }
 
@@ -3366,10 +3515,15 @@ if (easyShowFpsBtn) {
 
 if (easyResetViewBtn) {
   easyResetViewBtn.addEventListener("click", () => {
-    params.zoomValue = 2.2;
+    const startZ = isMobile ? 3.8 : 2.2;
+    params.zoomValue = startZ;
     params.uFractalRotationX = 0;
     params.uFractalRotationY = 0;
     params.uFractalRotationZ = 0;
+    if (navCamera) {
+      navCamera.position.set(0, 0, startZ);
+      navCamera.quaternion.set(0, 0, 0, 1);
+    }
     syncMobileControlsFromParams();
     syncEasyDockControlsFromParams();
   });
@@ -3424,7 +3578,8 @@ if (easyPsyScale) {
 // if (easyShapePanel) easyShapePanel.classList.add("show");
     
     function parseExportDimensions() {
-      const [w, h] = exportFormatSelect.value.split("x").map(Number);
+      const val = exportResSelect ? exportResSelect.value : "1920x1080";
+      const [w, h] = val.split("x").map(Number);
       return { width: w, height: h };
     }
 
@@ -3667,37 +3822,6 @@ let lastTapTime = 0;
       await exportStill(width, height);
     });
 
-    function getBitrate(quality) {
-      return {
-        low: 5e6,
-        medium: 12e6,
-        high: 25e6,
-        ultra: 50e6
-      }[quality] || 25e6;
-    }
-
-    function getMime(format) {
-      const supported = (t) => MediaRecorder.isTypeSupported(t) ? t : null;
-
-      if (format === "webm-vp9") {
-        return supported("video/webm;codecs=vp9") || supported("video/webm") || "";
-      }
-
-      if (format === "webm") {
-        return supported("video/webm") || "";
-      }
-
-      if (format === "mp4") {
-        return supported("video/mp4;codecs=avc1") || supported("video/mp4") || "";
-      }
-
-      return supported("video/webm;codecs=vp9") || supported("video/webm") || "";
-    }
-
-    function getExt(mime) {
-      return mime.includes("mp4") ? "mp4" : "webm";
-    }
-
     function setRenderResolution(width, height) {
       renderer.setPixelRatio(1);
       renderer.setSize(width, height, false);
@@ -3725,39 +3849,122 @@ let lastTapTime = 0;
       resizeRendererToPreviewFrame();
     }
 
+    // ─── Vertical mode ────────────────────────────────────────────────────
+    let isVerticalMode = false;
+
+    // Orientation buttons in left panel
+    const orientHorizBtn      = document.getElementById("orientHorizBtn");
+    const orientVertBtn       = document.getElementById("orientVertBtn");
+    const exportResSelect     = document.getElementById("exportResSelect");
+    const exportFpsSelect     = document.getElementById("exportFpsSelect");
+    const exportCrfSelect     = document.getElementById("exportCrfSelect");
+    const masterExportBtn     = document.getElementById("masterExportBtn");
+    const easyVerticalModeBtn = document.getElementById("easyVerticalModeBtn");
+
+    function setVerticalMode(on) {
+      isVerticalMode = on;
+      document.body.classList.toggle("verticalMode", on);
+      if (orientHorizBtn) orientHorizBtn.classList.toggle("active", !on);
+      if (orientVertBtn)  orientVertBtn.classList.toggle("active", on);
+      updateExportResOptions();
+      if (easyVerticalModeBtn) {
+        easyVerticalModeBtn.textContent = on ? "▮ Vertical Mode" : "⬛ Horizontal Mode";
+      }
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
+    }
+
+    function updateExportResOptions() {
+      if (!exportResSelect) return;
+      exportResSelect.innerHTML = isVerticalMode
+        ? `<option value="1080x1920">1080p Vertical</option>
+           <option value="2160x3840" selected>4K Vertical</option>`
+        : `<option value="1920x1080">1080p HD</option>
+           <option value="3840x2160" selected>4K UHD</option>`;
+    }
+
+    if (orientHorizBtn) orientHorizBtn.addEventListener("click", () => setVerticalMode(false));
+    if (orientVertBtn)  orientVertBtn.addEventListener("click",  () => setVerticalMode(true));
+    if (easyVerticalModeBtn) easyVerticalModeBtn.addEventListener("click", () => setVerticalMode(!isVerticalMode));
+
+    // ─── Export overlay UI ────────────────────────────────────────────────
+    const exportOverlay      = document.getElementById("exportOverlay");
+    const exportCardTitle    = document.getElementById("exportCardTitle");
+    const exportStatusText   = document.getElementById("exportStatusText");
+    const exportProgressFill = document.getElementById("exportProgressFill");
+    const exportPercent      = document.getElementById("exportPercent");
+    const exportTimeRemaining= document.getElementById("exportTimeRemaining");
+    const exportCancelBtn    = document.getElementById("exportCancelBtn");
+
+    let exportCancelled = false;
+    exportCancelBtn.addEventListener("click", () => { exportCancelled = true; });
+
+    function showExportOverlay(title) {
+      exportCancelled = false;
+      exportCardTitle.textContent = title;
+      exportStatusText.textContent = "Preparing…";
+      exportProgressFill.style.width = "0%";
+      exportPercent.textContent = "0%";
+      exportTimeRemaining.textContent = "\u00a0";
+      exportOverlay.classList.add("show");
+    }
+
+    function updateExportProgress(done, total, startMs, phase) {
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      exportProgressFill.style.width = pct + "%";
+      exportPercent.textContent = pct + "%";
+      const elapsed = (Date.now() - startMs) / 1000;
+      if (done > 2 && elapsed > 0.5) {
+        const rate = done / elapsed;
+        const remaining = Math.max(0, (total - done) / rate);
+        const mins = Math.floor(remaining / 60);
+        const secs = Math.floor(remaining % 60);
+        exportTimeRemaining.textContent = mins > 0
+          ? `~${mins}m ${secs}s remaining`
+          : `~${secs}s remaining`;
+      }
+    }
+
+    function hideExportOverlay() {
+      exportOverlay.classList.remove("show");
+    }
+
+    // ─── Core render helpers ──────────────────────────────────────────────
     function beginOfflineRender(width, height) {
       isBusyExport = true;
-      recordBtn.disabled = true;
-      exportStillBtn.disabled = true;
-      freezeBtn.disabled = true;
+      if (masterExportBtn) masterExportBtn.disabled = true;
+      if (exportStillBtn)  exportStillBtn.disabled  = true;
+      if (freezeBtn)       freezeBtn.disabled       = true;
       setRenderResolution(width, height);
     }
 
     function endOfflineRender() {
       isBusyExport = false;
-      recordBtn.disabled = false;
-      exportStillBtn.disabled = false;
-      freezeBtn.disabled = false;
+      if (masterExportBtn) masterExportBtn.disabled = false;
+      if (exportStillBtn)  exportStillBtn.disabled  = false;
+      if (freezeBtn)       freezeBtn.disabled       = false;
       restorePreviewResolution();
       updateTransportDisplay();
+      hideExportOverlay();
     }
 
-    function waitFrame() {
-      return new Promise((resolve) => requestAnimationFrame(resolve));
+    function yieldToBrowser() {
+      return new Promise(resolve => setTimeout(resolve, 0));
     }
 
+    // ─── Still export ─────────────────────────────────────────────────────
     async function exportStill(width, height) {
+      showExportOverlay("Exporting Still");
+      exportStatusText.textContent = `Rendering ${width}×${height}…`;
       beginOfflineRender(width, height);
+      await yieldToBrowser();
       renderFrameAtTime(timelineTime, 0, true);
-      await waitFrame();
-
+      await yieldToBrowser();
+      exportProgressFill.style.width = "100%";
+      exportPercent.textContent = "100%";
+      exportStatusText.textContent = "Saving PNG…";
       renderer.domElement.toBlob((blob) => {
-        if (!blob) {
-          alert("Export failed.");
-          endOfflineRender();
-          return;
-        }
-
+        if (!blob) { alert("Still export failed."); endOfflineRender(); return; }
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -3768,87 +3975,160 @@ let lastTapTime = 0;
       }, "image/png");
     }
 
-    recordBtn.addEventListener("click", async () => {
-      const durationMs = parseInt(durationSelect.value, 10) * 1000;
-      const mimeType = getMime(formatSelect.value);
-      const bitrate = getBitrate(qualitySelect.value);
-      const { width, height } = parseExportDimensions();
+    // ─── ffmpeg.wasm state ────────────────────────────────────────────────
+    let ffmpegInstance = null;
+    let ffmpegLoaded   = false;
 
-      if (!mimeType) {
-        alert("Browser doesn't support selected recording format.");
+    async function loadFfmpeg() {
+      if (ffmpegLoaded) return ffmpegInstance;
+      exportStatusText.textContent = "Loading ffmpeg (first time only, ~30MB)…";
+      exportProgressFill.style.width = "0%";
+      exportPercent.textContent = "";
+      const { createFFmpeg, fetchFile } = FFmpeg;
+      ffmpegInstance = createFFmpeg({
+        log: false,
+        progress: ({ ratio }) => {
+          const pct = Math.round(ratio * 100);
+          exportProgressFill.style.width = pct + "%";
+          exportPercent.textContent = pct + "%";
+          exportStatusText.textContent = `Encoding… ${pct}%`;
+        }
+      });
+      await ffmpegInstance.load();
+      ffmpegLoaded = true;
+      window._fetchFile = fetchFile; // store for use in export
+      return ffmpegInstance;
+    }
+
+    // ─── Master Export ────────────────────────────────────────────────────
+    if (masterExportBtn) {
+      masterExportBtn.addEventListener("click", async () => {
+        const [w, h] = exportResSelect.value.split("x").map(Number);
+        const fps    = parseInt(exportFpsSelect.value, 10);
+        const crf    = parseInt(exportCrfSelect.value, 10);
+        const durSec = parseInt(durationSelect.value, 10);
+        await masterExport({ width: w, height: h, fps, crf, durSec });
+      });
+    }
+
+    async function masterExport({ width, height, fps, crf, durSec }) {
+      const totalFrames    = durSec * fps;
+      const exportStartTime= timelineTime;
+      const isVert         = isVerticalMode;
+      const orient         = isVert ? "vertical" : "horizontal";
+      const filename       = `fractal-${width}x${height}-${fps}fps-${durSec}s.mp4`;
+      const digits         = 5; // frame00001.png
+
+      showExportOverlay("Master Export");
+      exportStatusText.textContent = `${width}×${height} · ${fps}fps · ${durSec}s`;
+
+      // ── Phase 1: load ffmpeg ──────────────────────────────────────────
+      let ff;
+      try {
+        ff = await loadFfmpeg();
+      } catch (err) {
+        alert("Failed to load ffmpeg: " + err.message);
+        hideExportOverlay();
         return;
       }
 
-      await recordVideo({
-        durationMs,
-        videoBitsPerSecond: bitrate,
-        mimeType,
-        width,
-        height
-      });
-    });
+      if (exportCancelled) { hideExportOverlay(); return; }
 
-    async function recordVideo({ durationMs = 10000, videoBitsPerSecond = 25e6, mimeType, width, height }) {
+      // ── Phase 2: capture frames ───────────────────────────────────────
       beginOfflineRender(width, height);
+      exportTimeRemaining.textContent = "Phase 1/2 — Capturing frames";
 
-      let recorder;
-      const stream = renderer.domElement.captureStream(60);
+      const captureStart = Date.now();
 
-      try {
-        recorder = new MediaRecorder(stream, {
-          mimeType,
-          videoBitsPerSecond
-        });
-      } catch (err) {
-        alert("Recording failed to start.");
+      for (let i = 0; i < totalFrames; i++) {
+        if (exportCancelled) break;
+
+        const t = exportStartTime + (i / fps) * transportBaseSpeed;
+        renderFrameAtTime(t, (1 / fps) * transportBaseSpeed, true);
+
+        // Grab PNG from canvas
+        const pngBlob = await new Promise(resolve =>
+          renderer.domElement.toBlob(resolve, "image/png")
+        );
+
+        if (!pngBlob || exportCancelled) break;
+
+        // Write into ffmpeg virtual filesystem
+        const frameNum = String(i).padStart(digits, "0");
+        const frameName = `frame${frameNum}.png`;
+        ff.FS("writeFile", frameName, await window._fetchFile(pngBlob));
+
+        // Update progress every frame
+        updateExportProgress(i + 1, totalFrames, captureStart, "capture");
+        exportStatusText.textContent = `Capturing frame ${i + 1} / ${totalFrames}`;
+
+        // Yield every 3 frames so browser stays responsive
+        if (i % 3 === 0) await yieldToBrowser();
+      }
+
+      if (exportCancelled) {
+        // Clean up FS
+        try {
+          for (let i = 0; i < totalFrames; i++) {
+            ff.FS("unlink", `frame${String(i).padStart(digits,"0")}.png`);
+          }
+        } catch(_) {}
         endOfflineRender();
         return;
       }
 
-      const chunks = [];
-      const ext = getExt(mimeType);
-      const exportStartTime = timelineTime;
-      const fps = 60;
-      const totalFrames = Math.max(1, Math.round((durationMs / 1000) * fps));
+      // ── Phase 3: encode ───────────────────────────────────────────────
+      exportStatusText.textContent = "Phase 2/2 — Encoding MP4…";
+      exportProgressFill.style.width = "0%";
+      exportPercent.textContent = "0%";
+      exportTimeRemaining.textContent = "This may take a few minutes…";
+      await yieldToBrowser();
 
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
-
-      const stopPromise = new Promise((resolve) => {
-        recorder.onstop = resolve;
-      });
-
-      recorder.start();
-      recordBtn.textContent = "Recording...";
-
-      for (let i = 0; i < totalFrames; i++) {
-        const t = exportStartTime + (i / fps) * transportBaseSpeed;
-        renderFrameAtTime(t, (1 / fps) * transportBaseSpeed, true);
-        await waitFrame();
+      try {
+        await ff.run(
+          "-r", String(fps),
+          "-i", `frame%0${digits}d.png`,
+          "-c:v", "libx264",
+          "-crf", String(crf),
+          "-preset", "medium",
+          "-pix_fmt", "yuv420p",
+          "-movflags", "+faststart",
+          "output.mp4"
+        );
+      } catch (err) {
+        alert("ffmpeg encode failed: " + err.message);
+        endOfflineRender();
+        return;
       }
 
-      recorder.stop();
-      await stopPromise;
+      // ── Phase 4: download ─────────────────────────────────────────────
+      exportStatusText.textContent = "Saving file…";
+      exportProgressFill.style.width = "100%";
+      exportPercent.textContent = "100%";
+      await yieldToBrowser();
 
-      const blob = new Blob(chunks, { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-
+      const data = ff.FS("readFile", "output.mp4");
+      const blob = new Blob([data.buffer], { type: "video/mp4" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
       a.href = url;
-      a.download = `fractal-clip-${width}x${height}.${ext}`;
+      a.download = filename;
       a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
 
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      // Clean up ffmpeg virtual FS
+      try {
+        ff.FS("unlink", "output.mp4");
+        for (let i = 0; i < totalFrames; i++) {
+          ff.FS("unlink", `frame${String(i).padStart(digits,"0")}.png`);
+        }
+      } catch(_) {}
 
       endOfflineRender();
-      recordBtn.textContent = "Record Clip";
     }
 
     function layoutPreviewFrame() {
-      const container = document.getElementById("canvasContainer");
+      const container = document.getElementById("viewportArea");
       const frame = document.getElementById("previewFrame");
 
       const cw = Math.max(1, container.clientWidth);
@@ -4575,6 +4855,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
     refreshPresetSelect();
     init();
     updateTransportDisplay();
+    updateExportResOptions();
     animate();
   </script>
 </body>
