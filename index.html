@@ -6031,6 +6031,11 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       if (!params.musicReact) return 0;
 
       if (micEnabled) {
+        // Resume audio context if suspended (browser requires user gesture)
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
+          return 0; // return silence this frame while resuming
+        }
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
@@ -6053,30 +6058,30 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       params.zoomValue = clampZoom(params.zoomValue);
       params.uBailout = safeBailout(params.uBailout);
 
-      const rawAudio = getAudioReactiveAverage();
+      const rawAudioRaw = getAudioReactiveAverage();
+      // Guard against NaN — a NaN uniform value breaks WebGL rendering entirely
+      const rawAudio = (isFinite(rawAudioRaw) && rawAudioRaw >= 0) ? rawAudioRaw : 0;
 
       // ── Low-pass smooth the audio signal ─────────────────────────────────
-      // Attack fast (0.25), release slow (0.06) — follows transients but decays smoothly
-      const attackRate  = 1.0 - Math.pow(0.25, dt * 60);
-      const releaseRate = 1.0 - Math.pow(0.06, dt * 60);
+      const safeDt = Math.max(0.001, Math.min(0.1, dt)); // clamp dt so filter is stable
+      const attackRate  = 1.0 - Math.pow(0.25, safeDt * 60);
+      const releaseRate = 1.0 - Math.pow(0.06, safeDt * 60);
       if (rawAudio > smoothedAudio) {
         smoothedAudio += (rawAudio - smoothedAudio) * attackRate;
       } else {
         smoothedAudio += (rawAudio - smoothedAudio) * releaseRate;
       }
-      smoothedAudio = Math.max(0, Math.min(1, smoothedAudio));
+      smoothedAudio = isFinite(smoothedAudio) ? Math.max(0, Math.min(1, smoothedAudio)) : 0;
 
       // ── Beat phase from tap BPM or auto-detect ────────────────────────────
-      // beatPhase advances at the BPM rate — always a steady clock
-      const effectiveBpm = tapTimes.length >= 2 ? tapBpmValue : bpm;
-      beatPhase = ((t - lastBeatPhaseT) * effectiveBpm / 60.0) % 1.0;
-      // Soft beat pulse: 1 at downbeat, decays to 0 by next beat
+      const effectiveBpm = (tapTimes.length >= 2 ? tapBpmValue : bpm) || 120;
+      beatPhase = ((t * effectiveBpm / 60.0)) % 1.0; // simple phase, no lastBeatPhaseT offset
       const beatPulse = Math.pow(Math.max(0, Math.cos(beatPhase * Math.PI * 2.0)), 3);
 
       // Auto BPM detection from mic peaks
       if (params.musicReact && micEnabled && rawAudio > 0.45 && (t - lastBeatTime > 0.25)) {
         const gap = t - lastBeatTime;
-        if (gap < 2.0) bpm = 0.85 * bpm + 0.15 * (60.0 / gap); // gentle IIR update
+        if (gap > 0.1 && gap < 2.0) bpm = 0.85 * bpm + 0.15 * (60.0 / gap);
         lastBeatTime = t;
       }
 
@@ -6238,7 +6243,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         // Glow scroll speed follows the beat — speeds up on kick/downbeat, slows between
         // Auto-enables scroll so the color moves along the edge
         const baseScrollSpeed = Math.max(0.1, params.glowScrollSpeed);
-        const beatScrollSpeed = baseScrollSpeed * (1.0 + beatPulse * params.musicReactGlowAmount * 3.0);
+        const beatScrollSpeed = Math.min(10, baseScrollSpeed * (1.0 + (isFinite(beatPulse) ? beatPulse : 0) * params.musicReactGlowAmount * 3.0));
         material.uniforms.uGlowScroll.value     = 1.0;  // force scroll on
         material.uniforms.uGlowScrollSpeed.value= beatScrollSpeed;
 
