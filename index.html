@@ -2601,8 +2601,8 @@ float primitiveShape(vec3 pos) {
       micSensitivity: 1.0,
       musicReactGlow: true,
       musicReactGlowAmount: 1.0,
-      musicReactSpeed: false,
-      musicReactSpeedAmount: 0.5,
+      musicReactColor: false,
+      musicReactColorAmount: 0.5,
       musicReactPower: false,
       musicReactPowerAmount: 0.5,
       musicReactTwist: false,
@@ -2783,7 +2783,7 @@ float primitiveShape(vec3 pos) {
     const AUDIO_KEYS = new Set([
       "musicReact", "micSensitivity", "musicMatch",
       "musicReactGlow", "musicReactGlowAmount",
-      "musicReactSpeed", "musicReactSpeedAmount",
+      "musicReactColor", "musicReactColorAmount",
       "musicReactPower", "musicReactPowerAmount",
       "musicReactTwist", "musicReactTwistAmount",
       "tunnelMusicReact",
@@ -5874,7 +5874,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       const motionF = gui.addFolder("Motion");
       motionF.add(params, "powerAnimation").name("Power Anim On");
       motionF.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
-      motionF.add(params, "powerAnimationDepth", 0, 0.85).name("Power Anim Depth");
+      motionF.add(params, "powerMin", 2, 100).name("Power Min").listen();
+      motionF.add(params, "powerMax", 2, 100).name("Power Max").listen();
       motionF.add(params, "autoRotateX").name("Rotate X On");
       motionF.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
       motionF.add(params, "autoRotateY").name("Rotate Y On");
@@ -5971,11 +5972,11 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       audioF.add(params, "musicReact").name("Mic On");
       audioF.add(params, "micSensitivity", 0, 5).name("Sensitivity");
       audioF.add(params, "musicReactGlow").name("Glow Pulse");
-      audioF.add(params, "musicReactGlowAmount", 0, 3).name("Glow Pulse Amount");
-      audioF.add(params, "musicReactSpeed").name("Speed React");
-      audioF.add(params, "musicReactSpeedAmount", 0, 3).name("Speed Amount");
+      audioF.add(params, "musicReactGlowAmount", 0, 2.0).name("Glow Pulse Amount");
+      audioF.add(params, "musicReactColor").name("Color React");
+      audioF.add(params, "musicReactColorAmount", 0, 2).name("Color React Amount");
       audioF.add(params, "musicReactPower").name("Power React");
-      audioF.add(params, "musicReactPowerAmount", 0, 3).name("Power Amount");
+      audioF.add(params, "musicReactPowerAmount", 0, 1.0).name("Power React Amount");
       audioF.add(params, "musicReactTwist").name("Twist React");
       audioF.add(params, "musicReactTwistAmount", 0, 3).name("Twist Amount");
       audioF.add(params, "musicMatch").name("BPM Match");
@@ -6089,20 +6090,20 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
             bpm = 60.0 / Math.max(0.0001, (t - lastBeatTime));
             lastBeatTime = t;
           }
-          // Blend auto-detected bpm with tap bpm — tap takes priority if used recently
           const effectiveBpm = tapTimes.length >= 2 ? tapBpmValue : bpm;
           speed *= effectiveBpm / 120.0;
         }
 
-        // Music makes it scroll faster — smooth speed scale, not amplitude jitter
-        if (params.musicReactPower && micEnabled) {
-          speed = speed * (1.0 + sensitiveAvg * params.musicReactPowerAmount * 2.0);
+        // Power react: very subtle speed nudge only — never jumps
+        if (params.musicReactPower && params.musicReact) {
+          speed = speed * (1.0 + sensitiveAvg * params.musicReactPowerAmount * 0.3);
         }
 
-        // Multiplicative oscillation around uPower
-        const depth = Math.min(0.85, params.powerAnimationDepth || 0.5);
-        const cycle = Math.sin(t * speed * Math.PI * 2.0);
-        material.uniforms.uPower.value = Math.max(2.0, params.uPower * (1.0 + cycle * depth));
+        // Oscillate between powerMin and powerMax
+        const pMin = Math.max(2.0, params.powerMin || 2.0);
+        const pMax = Math.max(pMin + 0.1, params.powerMax || 8.0);
+        const cycle = (Math.sin(t * speed * Math.PI * 2.0) + 1.0) * 0.5; // 0..1
+        material.uniforms.uPower.value = pMin + cycle * (pMax - pMin);
       } else {
         material.uniforms.uPower.value = params.uPower;
       }
@@ -6155,15 +6156,18 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         ? Math.max(0.0, params.offsetAmount + Math.sin(t * params.offsetAnimSpeed) * params.offsetAnimAmount)
         : params.offsetAmount;
 
-      // Shader time — optionally speed up with music
-      const shaderTime = (params.musicReactSpeed && params.musicReact && micEnabled)
-        ? t * (1.0 + sensitiveAvg * params.musicReactSpeedAmount)
-        : t;
+      const shaderTime = t;
 
-      // Twist react — smoothly boost twist amount with audio
-      const animatedTwistFinal = (params.musicReactTwist && params.musicReact && micEnabled && params.twistOn)
-        ? animatedTwistAmount + sensitiveAvg * params.musicReactTwistAmount * 3.0
-        : animatedTwistAmount;
+      // Twist react — auto-enables twist, slow sine sway driven by smoothed audio
+      let animatedTwistFinal = animatedTwistAmount;
+      if (params.musicReactTwist && params.musicReact) {
+        // Force twist on
+        material.uniforms.uTwistOn.value = 1.0;
+        // Slow sway: sine wave at ~0.15Hz * amount, scaled by smoothed audio level
+        const swaySpeed = 0.15 * (params.musicReactTwistAmount + 0.2);
+        const sway = Math.sin(t * swaySpeed * Math.PI * 2.0) * sensitiveAvg * params.musicReactTwistAmount * 1.5;
+        animatedTwistFinal = animatedTwistAmount + sway;
+      }
 
       material.uniforms.iTime.value = shaderTime;
       material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
@@ -6212,20 +6216,25 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
       material.uniforms.uGlowReverse.value = params.glowReverse ? 1.0 : 0.0;
 
-      if (params.musicReactGlow && params.musicReact && micEnabled && params.glowOn) {
-        const pulse = Math.min(1.0, sensitiveAvg * params.musicReactGlowAmount * 1.5);
-        // Auto-enable scroll, speed up on beat
-        material.uniforms.uGlowScroll.value = 1.0;
-        material.uniforms.uGlowScrollSpeed.value = Math.max(0.05, params.glowScrollSpeed) * (1.0 + pulse * 3.0);
-        material.uniforms.uGlowAlphaA.value = params.glowAlphaA * (1.0 - pulse * 0.7);
-        material.uniforms.uGlowAlphaB.value = Math.min(1.0, params.glowAlphaB + pulse * 0.8);
-        material.uniforms.uGlowStrength.value = params.glowStrength * (1.0 + pulse * 0.4);
+      if (params.musicReactGlow && params.musicReact && params.glowOn) {
+        // Smooth, slow pulse — amount controls how reactive, never snappy
+        const pulse = Math.min(1.0, sensitiveAvg * params.musicReactGlowAmount * 0.8);
+        // Auto-enable scroll on Color B only — slow base scroll, audio nudges speed
+        const baseScroll = Math.max(0.08, params.glowScrollSpeed * 0.5);
+        material.uniforms.uGlowScroll.value      = 1.0;
+        material.uniforms.uGlowScrollSpeed.value = baseScroll * (1.0 + pulse * 1.5);
+        // Color A stays at base alpha, Color B pulses up to strength=1, width=2
+        material.uniforms.uGlowAlphaA.value      = params.glowAlphaA;
+        material.uniforms.uGlowAlphaB.value      = Math.min(1.0, pulse);
+        material.uniforms.uGlowStrength.value    = Math.min(1.0, params.glowStrength + pulse * 0.6);
+        material.uniforms.uGlowWidth.value       = Math.min(2.0, params.glowWidth + pulse * 0.8);
       } else {
-        material.uniforms.uGlowScroll.value = params.glowScroll ? 1.0 : 0.0;
+        material.uniforms.uGlowScroll.value      = params.glowScroll ? 1.0 : 0.0;
         material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
-        material.uniforms.uGlowAlphaA.value = params.glowAlphaA;
-        material.uniforms.uGlowAlphaB.value = params.glowAlphaB;
-        material.uniforms.uGlowStrength.value = params.glowStrength;
+        material.uniforms.uGlowAlphaA.value      = params.glowAlphaA;
+        material.uniforms.uGlowAlphaB.value      = params.glowAlphaB;
+        material.uniforms.uGlowStrength.value    = params.glowStrength;
+        material.uniforms.uGlowWidth.value       = params.glowWidth;
       }
 
       material.uniforms.uLineOn.value = params.lineOn ? 1.0 : 0.0;
@@ -6254,10 +6263,14 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uPsyColorC.value.set(params.psyColorC);
       material.uniforms.uPsyColorD.value.set(params.psyColorD);
       material.uniforms.uPsyMix.value = params.psyMix;
-      material.uniforms.uPsyFlow.value = params.psyFlow;
       material.uniforms.uPsySpinStrength.value = params.psySpinStrength;
       material.uniforms.uPaletteCycle.value = params.paletteCycle ? 1.0 : 0.0;
-      material.uniforms.uPaletteCycleSpeed.value = params.paletteCycleSpeed;
+      // Color react: audio gently speeds up color cycling and psy flow
+      const colorReactMult = (params.musicReactColor && params.musicReact)
+        ? 1.0 + sensitiveAvg * params.musicReactColorAmount * 0.6
+        : 1.0;
+      material.uniforms.uPaletteCycleSpeed.value = params.paletteCycleSpeed * colorReactMult;
+      material.uniforms.uPsyFlow.value = params.psyFlow * colorReactMult;
       material.uniforms.uPsyStyle.value = params.psyStyle;
 
       material.uniforms.uPatternMode.value = params.patternMode;
