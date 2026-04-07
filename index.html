@@ -1299,7 +1299,7 @@ style="width:100%; height:90px;"></textarea>
       </div>
 
       <!-- Preset list — shown when presets are open, scrollable -->
-      <div id="easyPresetList" style="display:none; flex-direction:column; gap:6px; max-height:320px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;"></div>
+      <div id="easyPresetList" style="display:none; flex-direction:column; gap:6px; max-height:290px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;"></div>
 
       <!-- Always-visible bottom buttons -->
       <div style="display:flex; gap:8px; margin-top:10px;">
@@ -4658,41 +4658,59 @@ bindTap(mobilePlayBtn, () => {
         easyPresetList.appendChild(msg);
         return;
       }
-      // Switch to grid layout for thumbnails
+      // 4-across compact thumbnail grid
       easyPresetList.style.display = "grid";
-      easyPresetList.style.gridTemplateColumns = "1fr 1fr";
-      easyPresetList.style.gap = "6px";
+      easyPresetList.style.gridTemplateColumns = "repeat(4, 1fr)";
+      easyPresetList.style.gap = "5px";
+      easyPresetList.style.alignContent = "start";
+
       names.forEach(name => {
         const card = document.createElement("button");
         card.type = "button";
         card.style.cssText = [
           "display:flex", "flex-direction:column", "align-items:stretch",
-          "border-radius:10px", "border:1px solid rgba(255,255,255,0.1)",
+          "border-radius:7px", "border:1px solid rgba(255,255,255,0.1)",
           "background:rgba(255,255,255,0.05)", "cursor:pointer",
           "overflow:hidden", "padding:0", "text-align:left",
-          "transition:border-color 0.12s, background 0.12s"
+          "transition:border-color 0.1s, background 0.1s",
+          "min-width:0"
         ].join(";");
 
+        // Thumbnail image or placeholder
         if (thumbs[name]) {
           const img = document.createElement("img");
           img.src = thumbs[name];
           img.style.cssText = "width:100%; aspect-ratio:16/9; object-fit:cover; display:block;";
           card.appendChild(img);
         } else {
-          // Placeholder gradient using palette colors from preset
           const ph = document.createElement("div");
-          ph.style.cssText = "width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,#18d8d8,#a6ff3c); opacity:0.3;";
+          ph.style.cssText = "width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,#18d8d833,#a6ff3c22); display:flex; align-items:center; justify-content:center;";
+          const icon = document.createElement("span");
+          icon.textContent = "✦";
+          icon.style.cssText = "font-size:14px; color:rgba(255,255,255,0.2);";
+          ph.appendChild(icon);
           card.appendChild(ph);
         }
 
+        // Name label — compact
         const label = document.createElement("div");
         label.textContent = name;
-        label.style.cssText = "padding:5px 8px; font-size:11px; color:rgba(255,255,255,0.85); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+        label.style.cssText = [
+          "padding:3px 5px 4px 5px",
+          "font-size:9px",
+          "font-weight:600",
+          "letter-spacing:0.03em",
+          "color:rgba(255,255,255,0.75)",
+          "white-space:nowrap",
+          "overflow:hidden",
+          "text-overflow:ellipsis",
+          "line-height:1.2"
+        ].join(";");
         card.appendChild(label);
 
         card.addEventListener("mouseenter", () => {
-          card.style.borderColor = "rgba(24,216,216,0.35)";
-          card.style.background  = "rgba(24,216,216,0.08)";
+          card.style.borderColor = "rgba(24,216,216,0.4)";
+          card.style.background  = "rgba(24,216,216,0.1)";
         });
         card.addEventListener("mouseleave", () => {
           card.style.borderColor = "rgba(255,255,255,0.1)";
@@ -4704,6 +4722,13 @@ bindTap(mobilePlayBtn, () => {
             applyPresetData(p.values);
             presetNameInput.value = name;
             syncEasyDockControlsFromParams();
+            // Highlight selected card
+            easyPresetList.querySelectorAll("button").forEach(b => {
+              b.style.borderColor = "rgba(255,255,255,0.1)";
+              b.style.background  = "rgba(255,255,255,0.05)";
+            });
+            card.style.borderColor = "rgba(24,216,216,0.6)";
+            card.style.background  = "rgba(24,216,216,0.15)";
           }
         });
         easyPresetList.appendChild(card);
@@ -4714,7 +4739,7 @@ bindTap(mobilePlayBtn, () => {
       easyPresetsOpen = true;
       buildEasyPresetList(); // sets display to grid internally
       if (easyPlaySliders) easyPlaySliders.style.display = "none";
-      if (easyPresetList)  { easyPresetList.style.display = "grid"; }
+      if (easyPresetList)  { easyPresetList.style.display = "grid"; easyPresetList.style.gridTemplateColumns = "repeat(4, 1fr)"; }
       if (easyPresetsBtn)  {
         easyPresetsBtn.textContent = "Exit Presets";
         easyPresetsBtn.style.background = "rgba(24,216,216,0.15)";
