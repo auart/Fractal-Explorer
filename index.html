@@ -2843,7 +2843,8 @@ if (isMobile) {
     let bpm = 120;
 
     // Smoothed audio — low-pass filtered so nothing jitters
-    let smoothedAudio   = 0.0;   // general smoothed level 0..1
+    let smoothedAudio   = 0.0;
+    let micWarmupFrames = 0;   // general smoothed level 0..1
     let beatPhase       = 0.0;   // 0..1 continuous beat phase from tap/auto BPM
     let lastBeatPhaseT  = 0.0;   // timeline time of last beat phase update
     let audioScrollAccum= 0.0;   // accumulated scroll for power/tunnel (never resets)
@@ -5185,6 +5186,7 @@ let lastTapTime = 0;
 
       audioCtx.createMediaStreamSource(stream).connect(analyser);
       micEnabled = true;
+      micWarmupFrames = 10; // skip first 10 frames of audio data
     }
 
     function closeStartOverlay() {
@@ -6034,7 +6036,12 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         // Resume audio context if suspended (browser requires user gesture)
         if (audioCtx.state === "suspended") {
           audioCtx.resume().catch(() => {});
-          return 0; // return silence this frame while resuming
+          return 0;
+        }
+        // Skip first few frames after mic connects to let analyser stabilise
+        if (micWarmupFrames > 0) {
+          micWarmupFrames--;
+          return 0;
         }
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
@@ -6058,7 +6065,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       params.zoomValue = clampZoom(params.zoomValue);
       params.uBailout = safeBailout(params.uBailout);
 
-      const rawAudioRaw = getAudioReactiveAverage();
+      let rawAudioRaw = 0;
+      try { rawAudioRaw = getAudioReactiveAverage(); } catch(e) {}
       // Guard against NaN — a NaN uniform value breaks WebGL rendering entirely
       const rawAudio = (isFinite(rawAudioRaw) && rawAudioRaw >= 0) ? rawAudioRaw : 0;
 
@@ -6071,7 +6079,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       } else {
         smoothedAudio += (rawAudio - smoothedAudio) * releaseRate;
       }
-      smoothedAudio = isFinite(smoothedAudio) ? Math.max(0, Math.min(1, smoothedAudio)) : 0;
+      if (!isFinite(smoothedAudio)) smoothedAudio = 0;
+      smoothedAudio = Math.max(0, Math.min(1, smoothedAudio));
 
       // ── Beat phase from tap BPM or auto-detect ────────────────────────────
       const effectiveBpm = (tapTimes.length >= 2 ? tapBpmValue : bpm) || 120;
