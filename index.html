@@ -2844,12 +2844,6 @@ if (isMobile) {
     let smoothedAudio = 0;
 
     // Smoothed audio — low-pass filtered so nothing jitters
-    let smoothedAudio   = 0.0;
-    let micWarmupFrames = 0;   // general smoothed level 0..1
-    let beatPhase       = 0.0;   // 0..1 continuous beat phase from tap/auto BPM
-    let lastBeatPhaseT  = 0.0;   // timeline time of last beat phase update
-    let audioScrollAccum= 0.0;   // accumulated scroll for power/tunnel (never resets)
-    // shaderTime = t always; speed react affects rotation/tunnel rates not iTime
     // Tap tempo state
     let tapTimes = [];
     let tapBpmValue = 120;
@@ -5187,7 +5181,7 @@ let lastTapTime = 0;
 
       audioCtx.createMediaStreamSource(stream).connect(analyser);
       micEnabled = true;
-      micWarmupFrames = 10; // skip first 10 frames of audio data
+
     }
 
     function closeStartOverlay() {
@@ -6037,11 +6031,6 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         // Resume audio context if suspended (browser requires user gesture)
         if (audioCtx.state === "suspended") {
           audioCtx.resume().catch(() => {});
-          return 0;
-        }
-        // Skip first few frames after mic connects to let analyser stabilise
-        if (micWarmupFrames > 0) {
-          micWarmupFrames--;
           return 0;
         }
         analyser.getByteFrequencyData(dataArray);
