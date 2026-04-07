@@ -6082,7 +6082,10 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         }
       }
 
-      if (params.powerAnimation) {
+      // Power react auto-enables power animation
+      const powerAnimActive = params.powerAnimation || (params.musicReactPower && params.musicReact);
+
+      if (powerAnimActive) {
         let speed = params.powerAnimationSpeed;
 
         if (params.musicMatch && micEnabled) {
@@ -6094,9 +6097,9 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
           speed *= effectiveBpm / 120.0;
         }
 
-        // Power react: very subtle speed nudge only — never jumps
+        // Power react: smoothed audio gently lifts speed — sensitiveAvg is already filtered
         if (params.musicReactPower && params.musicReact) {
-          speed = speed * (1.0 + sensitiveAvg * params.musicReactPowerAmount * 0.3);
+          speed = speed + smoothedAudio * params.musicReactPowerAmount * 0.4;
         }
 
         // Oscillate between powerMin and powerMax
@@ -6158,15 +6161,14 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       const shaderTime = t;
 
-      // Twist react — auto-enables twist, slow sine sway driven by smoothed audio
+      // Twist react — auto-enables twist, very slow sine sway
       let animatedTwistFinal = animatedTwistAmount;
       if (params.musicReactTwist && params.musicReact) {
-        // Force twist on
         material.uniforms.uTwistOn.value = 1.0;
-        // Slow sway: sine wave at ~0.15Hz * amount, scaled by smoothed audio level
-        const swaySpeed = 0.15 * (params.musicReactTwistAmount + 0.2);
-        const sway = Math.sin(t * swaySpeed * Math.PI * 2.0) * sensitiveAvg * params.musicReactTwistAmount * 1.5;
-        animatedTwistFinal = animatedTwistAmount + sway;
+        // Uses smoothedAudio (already low-pass filtered) — guaranteed smooth
+        const swayHz = 0.08; // very slow, ~12 second full cycle
+        const swayAmt = smoothedAudio * params.musicReactTwistAmount * 2.0;
+        animatedTwistFinal = animatedTwistAmount + Math.sin(t * swayHz * Math.PI * 2.0) * swayAmt;
       }
 
       material.uniforms.iTime.value = shaderTime;
@@ -6217,17 +6219,15 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uGlowReverse.value = params.glowReverse ? 1.0 : 0.0;
 
       if (params.musicReactGlow && params.musicReact && params.glowOn) {
-        // Smooth, slow pulse — amount controls how reactive, never snappy
-        const pulse = Math.min(1.0, sensitiveAvg * params.musicReactGlowAmount * 0.8);
-        // Auto-enable scroll on Color B only — slow base scroll, audio nudges speed
-        const baseScroll = Math.max(0.08, params.glowScrollSpeed * 0.5);
+        // Fixed: strength=1, width=2, alphaB=1, scroll on
+        // ONLY scroll speed reacts to music, hard capped at 3
+        const baseScroll = Math.max(0.1, params.glowScrollSpeed);
+        material.uniforms.uGlowStrength.value    = 1.0;
+        material.uniforms.uGlowWidth.value       = 2.0;
         material.uniforms.uGlowScroll.value      = 1.0;
-        material.uniforms.uGlowScrollSpeed.value = baseScroll * (1.0 + pulse * 1.5);
-        // Color A stays at base alpha, Color B pulses up to strength=1, width=2
         material.uniforms.uGlowAlphaA.value      = params.glowAlphaA;
-        material.uniforms.uGlowAlphaB.value      = Math.min(1.0, pulse);
-        material.uniforms.uGlowStrength.value    = Math.min(1.0, params.glowStrength + pulse * 0.6);
-        material.uniforms.uGlowWidth.value       = Math.min(2.0, params.glowWidth + pulse * 0.8);
+        material.uniforms.uGlowAlphaB.value      = 1.0;
+        material.uniforms.uGlowScrollSpeed.value = Math.min(3.0, baseScroll + smoothedAudio * params.musicReactGlowAmount * 1.5);
       } else {
         material.uniforms.uGlowScroll.value      = params.glowScroll ? 1.0 : 0.0;
         material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
