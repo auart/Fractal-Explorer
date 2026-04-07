@@ -133,58 +133,188 @@ body.panelsHidden #easyDock {
 #easyDockBar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 #easyDockBar button {
-  height: 52px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  font-size: 15px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  letter-spacing: 0.01em;
+}
+
+#easyDockBar button:hover {
+  background: rgba(255,255,255,0.11);
+  color: #fff;
+  border-color: rgba(255,255,255,0.22);
+}
+
+#easyDockBar button.active {
+  background: rgba(24,216,216,0.15);
+  border-color: rgba(24,216,216,0.45);
+  color: #18d8d8;
 }
 
 .easyDockPanel {
   display: none;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   padding: 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   box-sizing: border-box;
-  min-height: 110px;
 }
 
 .easyDockPanel.show {
   display: grid;
 }
 
+/* Slider row — label line with live value */
 .easySliderRow {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
-.easySliderRow label {
-  font-size: 13px;
+.easySliderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.easySliderLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+
+.easySliderValue {
+  font-size: 12px;
+  font-weight: 600;
   color: rgba(255,255,255,0.9);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
 }
 
+/* Custom range slider */
 .easySliderRow input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.easySliderRow input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+}
+
+.easySliderRow input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  margin-top: -6px;
+  box-shadow: 0 0 6px rgba(0,0,0,0.5);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.easySliderRow input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(24,216,216,0.5);
+}
+
+.easySliderRow input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.1);
+  background: #18d8d8;
+  box-shadow: 0 0 14px rgba(24,216,216,0.7);
+}
+
+/* Fine control mode — thumb turns green */
+.easySliderRow input[type="range"].fine-mode::-webkit-slider-thumb {
+  background: #a6ff3c;
+  box-shadow: 0 0 10px rgba(166,255,60,0.6);
+}
+
+/* Bipolar slider wrapper — center line for cam spin */
+.easyBipolarTrack {
+  position: relative;
+  width: 100%;
+}
+.easyBipolarTrack input[type="range"] {
+  width: 100%;
+}
+.easyBipolarCenter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 10px;
+  background: rgba(255,255,255,0.4);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* Easy preset panel */
+/* Easy preset list scrollbar */
+#easyPresetList {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+#easyPresetList button {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.85);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#easyPresetList button:hover {
+  background: rgba(24,216,216,0.14);
+  border-color: rgba(24,216,216,0.3);
+  color: #fff;
 }
 
 #easyMenuPanel button {
-  height: 48px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  font-size: 14px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.75);
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  letter-spacing: 0.01em;
+}
+
+#easyMenuPanel button:hover {
+  background: rgba(255,255,255,0.11);
+  color: #fff;
 }
 
 .easyPaletteBlock {
@@ -193,16 +323,32 @@ body.panelsHidden #easyDock {
 
 .easyPaletteRow {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
 }
 
 .easyPaletteSwatch {
   width: 36px;
   height: 36px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 10px;
+  border: 2px solid transparent;
   cursor: pointer;
+  flex: 0 0 auto;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.easyPaletteSwatch:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 8px rgba(255,255,255,0.3);
+}
+
+.easyPaletteSwatch.active {
+  border-color: #fff;
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(255,255,255,0.5);
 }
 
 body.mobileMode #easyDock {
@@ -308,21 +454,25 @@ body.mobileMode #easyDock {
 
     #transportDisplay {
       font-size: 12px;
-      color: #111;
-      background: rgba(255, 255, 255, 0.72);
-      border: 1px solid #000;
+      color: rgba(255,255,255,0.75);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
       padding: 8px 10px;
       box-sizing: border-box;
-      line-height: 1.35;
+      line-height: 1.45;
     }
 
     #playlistList {
       width: 100%;
-      min-height: 120px;
+      min-height: 100px;
       box-sizing: border-box;
-      border: 1px solid #000;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
       font-size: 13px;
       padding: 4px;
+      background: rgba(255,255,255,0.04);
+      color: #fff;
     }
 
     .twoCol {
@@ -338,18 +488,22 @@ body.mobileMode #easyDock {
     }
 
     .panelBox {
-      background: rgba(255, 255, 255, 0.92);
-      color: #000;
-      padding: 10px;
-      border: 1px solid #000;
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 12px;
       box-sizing: border-box;
     }
 
     .panelBox label {
       display: block;
       margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: bold;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
     }
 
     .rowGap {
@@ -360,48 +514,67 @@ body.mobileMode #easyDock {
 
     #leftPanel button,
     #leftPanel select,
-    #leftPanel input {
+    #leftPanel input[type="text"],
+    #leftPanel input[type="number"],
+    #leftPanel textarea {
       width: 100%;
       box-sizing: border-box;
-      padding: 10px 12px;
-      font-size: 14px;
-      border: 1px solid #000;
+      padding: 8px 12px;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+    }
+
+    #leftPanel select option {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    #leftPanel textarea {
+      resize: vertical;
+      font-family: inherit;
     }
 
     #leftPanel button {
-      background: #fff;
-      color: #000;
       cursor: pointer;
       text-align: center;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    #leftPanel button:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.22);
     }
 
     #leftPanel button:disabled {
-      opacity: 0.7;
+      opacity: 0.4;
       cursor: wait;
     }
 
     #leftPanel button.freezeBtn {
-      background: #222;
-      color: #fff;
-      border-color: #555;
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.7);
+      border-color: rgba(255,255,255,0.14);
     }
 
     #leftPanel button.freezeBtn.active {
-      background: #c00;
-      color: #fff;
-      border-color: #c00;
+      background: rgba(200,0,0,0.35);
+      color: #ff6b6b;
+      border-color: rgba(200,0,0,0.6);
     }
 
     #leftPanel button.secondaryDark {
-      background: #111;
-      color: #fff;
-      border-color: #444;
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.55);
+      border-color: rgba(255,255,255,0.1);
     }
 
     #leftPanel button.secondaryDark.active {
-      background: #0f5;
-      color: #000;
-      border-color: #0f5;
+      background: rgba(0,220,130,0.18);
+      color: #0f5;
+      border-color: rgba(0,220,130,0.45);
     }
 
     #startOverlay {
@@ -417,12 +590,14 @@ body.mobileMode #easyDock {
 
     #startCard {
       width: min(92vw, 520px);
-      padding: 34px 28px;
-      border: 1px solid rgba(255, 255, 255, 0.24);
-      background: rgba(0, 0, 0, 0.58);
+      padding: 36px 30px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(8, 8, 8, 0.88);
       color: white;
       text-align: center;
       box-sizing: border-box;
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
     }
 
     #startCard h1 {
@@ -431,13 +606,17 @@ body.mobileMode #easyDock {
       line-height: 1.1;
       letter-spacing: 0.02em;
       font-weight: 700;
+      background: linear-gradient(135deg, #18d8d8, #a6ff3c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     #startCard p {
       margin: 0 0 22px 0;
       font-size: 15px;
       line-height: 1.5;
-      color: rgba(255, 255, 255, 0.78);
+      color: rgba(255, 255, 255, 0.55);
     }
 
     .startButtons {
@@ -450,24 +629,36 @@ body.mobileMode #easyDock {
     .startButtons button {
       width: 100%;
       padding: 14px 16px;
-      font-size: 16px;
+      font-size: 15px;
       cursor: pointer;
-      border: 1px solid white;
-      background: white;
-      color: black;
+      border-radius: 12px;
       box-sizing: border-box;
+      transition: background 0.12s, border-color 0.12s;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+
+    .startButtons button:hover {
+      background: rgba(255,255,255,0.18);
     }
 
     .startButtons button.secondary {
       background: transparent;
-      color: white;
+      color: rgba(255,255,255,0.55);
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    .startButtons button.secondary:hover {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.8);
     }
 
     #startStatus {
       margin-top: 14px;
       min-height: 20px;
       font-size: 13px;
-      color: rgba(255, 255, 255, 0.72);
+      color: rgba(255, 255, 255, 0.45);
     }
 
     #keyboardHelpOverlay {
@@ -476,45 +667,54 @@ body.mobileMode #easyDock {
       display: none;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.55);
       z-index: 200;
     }
 
     #keyboardHelpPopup {
       width: min(92vw, 420px);
-      background: rgba(0, 0, 0, 0.86);
+      background: rgba(10, 10, 10, 0.94);
       color: white;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
       box-sizing: border-box;
-      padding: 18px 18px 16px 18px;
+      padding: 20px 20px 18px 20px;
       position: relative;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
     }
 
     #keyboardHelpPopup h2 {
       margin: 0 0 12px 0;
-      font-size: 20px;
+      font-size: 18px;
       line-height: 1.2;
+      color: rgba(255,255,255,0.9);
     }
 
     #keyboardHelpPopup ul {
       margin: 0;
       padding-left: 18px;
-      line-height: 1.6;
-      font-size: 14px;
+      line-height: 1.7;
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
     }
 
     #keyboardHelpCloseBtn {
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 12px;
+      right: 12px;
       width: auto;
-      min-width: 34px;
-      padding: 6px 10px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      background: rgba(255, 255, 255, 0.08);
-      color: white;
+      min-width: 30px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(255,255,255,0.7);
       cursor: pointer;
+      font-size: 16px;
+    }
+
+    #keyboardHelpCloseBtn:hover {
+      background: rgba(255,255,255,0.14);
     }
 
     .dg.main {
@@ -974,39 +1174,116 @@ style="width:100%; height:90px;"></textarea>
 
     <div id="easyShapePanel" class="easyDockPanel">
       <div class="easySliderRow">
-        <label for="easyZoom">Zoom</label>
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Zoom</span>
+          <span class="easySliderValue" id="easyZoomVal">2.20</span>
+        </div>
         <input id="easyZoom" type="range" min="1" max="6" step="0.01" />
       </div>
       <div class="easySliderRow">
-        <label for="easyDetail">Detail</label>
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Detail</span>
+          <span class="easySliderValue" id="easyDetailVal">0.50</span>
+        </div>
         <input id="easyDetail" type="range" min="0" max="1" step="0.001" />
       </div>
       <div class="easySliderRow">
-        <label for="easyPower">Power</label>
+        <div class="easySliderHeader">
+          <span class="easySliderLabel" id="easyPowerLabel">Power</span>
+          <span class="easySliderValue" id="easyPowerVal">8.00</span>
+        </div>
         <input id="easyPower" type="range" min="2" max="20" step="0.01" />
       </div>
       <div class="easySliderRow">
-        <label for="easyRotation">Rotation</label>
-        <input id="easyRotation" type="range" min="-180" max="180" step="0.1" />
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Symmetry</span>
+          <span class="easySliderValue" id="easySymmetryVal">None</span>
+        </div>
+        <input id="easySymmetry" type="range" min="0" max="9" step="1" value="0" />
       </div>
     </div>
 
     <div id="easyStylePanel" class="easyDockPanel">
       <div class="easySliderRow easyPaletteBlock">
-        <label>Palette</label>
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Palette</span>
+        </div>
         <div id="easyPaletteRow" class="easyPaletteRow"></div>
       </div>
       <div class="easySliderRow">
-        <label for="easyGlow">Glow</label>
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Glow</span>
+          <span class="easySliderValue" id="easyGlowVal">0.55</span>
+        </div>
         <input id="easyGlow" type="range" min="0" max="2" step="0.01" />
       </div>
       <div class="easySliderRow">
-        <label for="easyPowerAnimate">Power Animate</label>
-        <input id="easyPowerAnimate" type="range" min="0" max="1" step="0.01" />
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Pwr Anim</span>
+          <span class="easySliderValue" id="easyPowerAnimateVal">Off</span>
+        </div>
+        <input id="easyPowerAnimate" type="range" min="0" max="2" step="0.01" />
       </div>
       <div class="easySliderRow">
-        <label for="easyPsyScale">Psy Scale</label>
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Psy Scale</span>
+          <span class="easySliderValue" id="easyPsyScaleVal">8.00</span>
+        </div>
         <input id="easyPsyScale" type="range" min="0.5" max="20" step="0.01" />
+      </div>
+      <div class="easySliderRow">
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Kaleidoscope</span>
+          <span class="easySliderValue" id="easyKaleidoscopeVal">Off</span>
+        </div>
+        <input id="easyKaleidoscope" type="range" min="0" max="3" step="0.01" />
+      </div>
+    </div>
+
+    <div id="easyPlayPanel" class="easyDockPanel" style="grid-template-rows: auto auto; grid-template-columns: 1fr;">
+
+      <!-- Sliders section — hidden when presets are open -->
+      <div id="easyPlaySliders" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="easySliderRow">
+          <div class="easySliderHeader">
+            <span class="easySliderLabel">Speed</span>
+            <span class="easySliderValue" id="easySpeedVal">1.00x</span>
+          </div>
+          <input id="easySpeed" type="range" min="0.1" max="2" step="0.01" value="1" />
+        </div>
+        <div class="easySliderRow">
+          <div class="easySliderHeader">
+            <span class="easySliderLabel">Spin</span>
+            <span class="easySliderValue" id="easyRotSpeedVal">Off</span>
+          </div>
+          <input id="easyRotSpeed" type="range" min="0" max="2" step="0.01" value="0" />
+        </div>
+        <div class="easySliderRow">
+          <div class="easySliderHeader">
+            <span class="easySliderLabel">Breathe</span>
+            <span class="easySliderValue" id="easyBreatheVal">Off</span>
+          </div>
+          <input id="easyBreathe" type="range" min="0" max="0.4" step="0.005" value="0" />
+        </div>
+        <div class="easySliderRow">
+          <div class="easySliderHeader">
+            <span class="easySliderLabel">Cam Spin</span>
+            <span class="easySliderValue" id="easyCamSpinVal">Off</span>
+          </div>
+          <div class="easyBipolarTrack">
+            <input id="easyCamSpin" type="range" min="-1" max="1" step="0.01" value="0" />
+            <div class="easyBipolarCenter"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preset list — shown when presets are open, scrollable -->
+      <div id="easyPresetList" style="display:none; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;"></div>
+
+      <!-- Always-visible bottom buttons -->
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button id="easyPlayPauseBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">⏸ Pause</button>
+        <button id="easyPresetsBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">Presets</button>
       </div>
     </div>
 
@@ -1053,7 +1330,7 @@ style="width:100%; height:90px;"></textarea>
       </div>
       <div class="mobileSliderRow">
         <label for="mobilePowerAnimate">Power Animate</label>
-        <input id="mobilePowerAnimate" type="range" min="0" max="1" step="0.01" />
+        <input id="mobilePowerAnimate" type="range" min="0" max="2" step="0.01" />
       </div>
       <div class="mobileSliderRow">
         <label for="mobilePsyScale">Psy Scale</label>
@@ -1238,6 +1515,7 @@ style="width:100%; height:90px;"></textarea>
     uniform float uChromaticSpeed;
 
     uniform float uScreenRotateAngle;
+    uniform float uVerticalMode;
 
     vec2 rotate2d(vec2 v, float a) {
       float c = cos(a);
@@ -1741,7 +2019,14 @@ float primitiveShape(vec3 pos) {
 
     vec3 renderScene(vec2 screenUv) {
       vec2 uv = screenUv;
-      uv.x *= iResolution.x / iResolution.y;
+      // In horizontal mode: correct X so scene is not stretched wide
+      // In vertical mode: correct Y so scene is not stretched tall —
+      // this gives proper portrait framing (same width, more above/below)
+      if (uVerticalMode < 0.5) {
+        uv.x *= iResolution.x / iResolution.y;
+      } else {
+        uv.y *= iResolution.y / iResolution.x;
+      }
 
       uv = rotate2d(uv, uScreenRotateAngle);
       uv = applySymmetry(uv);
@@ -2034,9 +2319,18 @@ float primitiveShape(vec3 pos) {
 
       musicReact: true,
       micSensitivity: 1.0,
+      musicReactGlow: true,
+      musicReactGlowAmount: 1.0,
+      musicReactSpeed: false,
+      musicReactSpeedAmount: 0.5,
+      musicReactPower: false,
+      musicReactPowerAmount: 0.5,
+      musicReactTwist: false,
+      musicReactTwistAmount: 0.5,
 
       powerAnimation: false,
       powerAnimationSpeed: 1.0,
+      powerAnimationDepth: 0.5,
       powerMin: 2.0,
       powerMax: 100.0,
 
@@ -2341,6 +2635,8 @@ const easyGlow = document.getElementById("easyGlow");
 const easyPowerAnimate = document.getElementById("easyPowerAnimate");
 const easyPsyScale = document.getElementById("easyPsyScale");
 const easyPaletteRow = document.getElementById("easyPaletteRow");
+const easySymmetry = document.getElementById("easySymmetry");
+const easyKaleidoscope = document.getElementById("easyKaleidoscope");
     const shapePanel = document.getElementById("shapePanel");
     const stylePanel = document.getElementById("stylePanel");
 const menuPanel = document.getElementById("menuPanel");
@@ -2405,6 +2701,10 @@ function closeEasyDockPanels() {
   easyMenuPanel.classList.remove("show");
   easyShapePanel.classList.remove("show");
   easyStylePanel.classList.remove("show");
+  const pp = document.getElementById("easyPlayPanel");
+  if (pp) pp.classList.remove("show");
+  // Also reset presets view if open
+  if (typeof closeEasyPresets === "function") closeEasyPresets();
 }
 
 function toggleEasyDockPanel(panelEl) {
@@ -2436,41 +2736,76 @@ function toggleEasyDockPanel(panelEl) {
       mobilePower.value = params.uPower;
       mobileRotation.value = params.uFractalRotationZ;
       mobileGlow.value = params.glowStrength;
-      mobilePowerAnimate.value = params.powerAnimation ? 1 : 0;
+      mobilePowerAnimate.value = params.powerAnimation ? params.powerAnimationSpeed : 0;
       mobilePsyScale.value = params.psyScale;
 
       const detailNormalized = 1.0 - ((params.uSurfaceEpsilon - 0.001) / (0.02 - 0.001));
       mobileDetail.value = Math.max(0, Math.min(1, detailNormalized));
     }
 
+    const COLOR_PALETTES = [
+      { name: "Cyber",     colors: ["#18d8d8","#a6ff3c","#ff9a1f","#ff4d7a"], warm: "#ff9a1f", cool: "#18d8d8" },
+      { name: "Inferno",   colors: ["#ff3100","#ff8800","#ffdd00","#ff4d7a"], warm: "#ff8800", cool: "#ff3100" },
+      { name: "Ocean",     colors: ["#0094ff","#00d4ff","#0040ff","#00ffcc"], warm: "#00d4ff", cool: "#0040ff" },
+      { name: "Plasma",    colors: ["#ed00ff","#8600ff","#00e5ff","#ff3100"], warm: "#ed00ff", cool: "#00e5ff" },
+      { name: "Jungle",    colors: ["#03a750","#7bff00","#00ffd9","#004cff"], warm: "#7bff00", cool: "#03a750" },
+      { name: "Psycho",    colors: ["#ff3100","#ed00ff","#00e5ff","#fff000"], warm: "#ff3100", cool: "#00e5ff" },
+      { name: "Lava",      colors: ["#ff1a00","#ff6600","#ffaa00","#ff00aa"], warm: "#ff6600", cool: "#ff00aa" },
+      { name: "Aurora",    colors: ["#00ff88","#00ccff","#aa00ff","#ff0066"], warm: "#00ff88", cool: "#00ccff" },
+      { name: "Neon",      colors: ["#ff00ff","#00ffff","#ff6600","#00ff00"], warm: "#ff6600", cool: "#00ffff" },
+      { name: "Midnight",  colors: ["#1a0066","#0044cc","#00ccff","#aa00ff"], warm: "#0044cc", cool: "#00ccff" },
+      { name: "Sunset",    colors: ["#ff6b00","#ff0080","#9400d3","#ff4500"], warm: "#ff6b00", cool: "#9400d3" },
+      { name: "Acid",      colors: ["#ccff00","#00ff44","#ff00cc","#0088ff"], warm: "#ccff00", cool: "#0088ff" },
+      { name: "Ice",       colors: ["#00d4ff","#ffffff","#0066ff","#00ffee"], warm: "#ffffff", cool: "#0066ff" },
+      { name: "Gold",      colors: ["#ffd700","#ff8800","#ff4400","#ffff00"], warm: "#ff8800", cool: "#ffd700" },
+      { name: "Toxic",     colors: ["#39ff14","#ff6600","#ff00ff","#00ffaa"], warm: "#ff6600", cool: "#39ff14" },
+      { name: "Dark Psy",  colors: ["#4a00e0","#8e44ad","#00d2ff","#ff0055"], warm: "#8e44ad", cool: "#00d2ff" },
+    ];
+
+    let activeEasyPaletteIndex = -1;
+
     function buildMobilePalettes() {
+      // Build easy dock swatches
+      if (easyPaletteRow) {
+        easyPaletteRow.innerHTML = "";
+        COLOR_PALETTES.forEach((pal, i) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "easyPaletteSwatch";
+          btn.title = pal.name;
+          btn.style.background = `linear-gradient(135deg, ${pal.colors.join(",")})`;
+          btn.addEventListener("click", () => {
+            activeEasyPaletteIndex = i;
+            applyColorPalette(pal);
+            easyPaletteRow.querySelectorAll(".easyPaletteSwatch").forEach((s,j) => {
+              s.classList.toggle("active", j === i);
+            });
+          });
+          easyPaletteRow.appendChild(btn);
+        });
+      }
+
+      // Build mobile swatches
       if (!mobilePaletteRow) return;
-
-      const palettes = [
-        ["#18d8d8", "#a6ff3c", "#ff9a1f", "#ff4d7a"],
-        ["#0094ff", "#ff002c", "#ff9a1f", "#ff4d7a"],
-        ["#03a750", "#002dff", "#ff9a1f", "#4600ff"],
-        ["#20b0cf", "#00c2ff", "#be00ff", "#8600ff"],
-        ["#ff3100", "#ed00ff", "#00e5ff", "#fff000"],
-        ["#7bff00", "#00ffd9", "#004cff", "#d500ff"]
-      ];
-
       mobilePaletteRow.innerHTML = "";
-
-      palettes.forEach((palette) => {
+      COLOR_PALETTES.forEach((pal) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "mobilePaletteSwatch";
-        btn.style.background = `linear-gradient(135deg, ${palette.join(",")})`;
-        btn.addEventListener("click", () => {
-          params.paletteMode = 2;
-          params.psyColorA = palette[0];
-          params.psyColorB = palette[1];
-          params.psyColorC = palette[2];
-          params.psyColorD = palette[3];
-        });
+        btn.style.background = `linear-gradient(135deg, ${pal.colors.join(",")})`;
+        btn.addEventListener("click", () => applyColorPalette(pal));
         mobilePaletteRow.appendChild(btn);
       });
+    }
+
+    function applyColorPalette(pal) {
+      params.paletteMode = 2;
+      params.psyColorA = pal.colors[0];
+      params.psyColorB = pal.colors[1];
+      params.psyColorC = pal.colors[2];
+      params.psyColorD = pal.colors[3];
+      params.warmColor = pal.warm;
+      params.coolColor = pal.cool;
     }
     function getEffectivePlaybackRate() {
       if (!transportPlaying) return 0;
@@ -2748,9 +3083,24 @@ function randomizeFromGoodSeed() {
 
   normalizeRandomTypes();
   refreshGuiDisplays();
+  syncEasyDockControlsFromParams();
+  syncMobileControlsFromParams();
 }
     function togglePanels() {
       document.body.classList.toggle("panelsHidden");
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
+    }
+
+    function enterShowMode() {
+      // Full OS fullscreen + hide panels — same as spacebar
+      const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+      if (!isFs) {
+        const req = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+        if (req) req.call(document.documentElement);
+      }
+      document.body.classList.add("panelsHidden");
+      closeEasyDockPanels();
       layoutPreviewFrame();
       resizeRendererToPreviewFrame();
     }
@@ -3464,7 +3814,7 @@ bindTap(mobilePlayBtn, () => {
       mobilePowerAnimate.addEventListener("input", (e) => {
         const v = Number(e.target.value);
         params.powerAnimation = v > 0.01;
-        params.powerAnimationSpeed = 0.1 + v * 1.5;
+        params.powerAnimationSpeed = v;
       });
 
       mobilePsyScale.addEventListener("input", (e) => {
@@ -3472,110 +3822,415 @@ bindTap(mobilePlayBtn, () => {
       });
     }
 
-    buildMobilePalettes();
-syncMobileControlsFromParams();
+    // ─── EasyDock active button state ─────────────────────────────────────
+    const easyPlayPanel = document.getElementById("easyPlayPanel");
 
-if (easyMenuBtn) {
-  easyMenuBtn.addEventListener("click", () => toggleEasyDockPanel(easyMenuPanel));
-}
-
-if (easyShapeBtn) {
-  easyShapeBtn.addEventListener("click", () => toggleEasyDockPanel(easyShapePanel));
-}
-
-if (easyStyleBtn) {
-  easyStyleBtn.addEventListener("click", () => toggleEasyDockPanel(easyStylePanel));
-}
-
-if (easyPlayBtn) {
-  easyPlayBtn.addEventListener("click", () => {
-    playPauseBtn.click();
-    easyPlayBtn.textContent = transportPlaying ? "Pause" : "Play";
-  });
-}
-
-if (easyRandomBtn) {
-  easyRandomBtn.addEventListener("click", () => randomBtn.click());
-}
-
-if (easyToggleUiBtn) {
-  easyToggleUiBtn.addEventListener("click", () => {
-    document.body.classList.toggle("panelsHidden");
-    closeEasyDockPanels();
-    layoutPreviewFrame();
-    resizeRendererToPreviewFrame();
-  });
-}
-
-if (easyShowFpsBtn) {
-  easyShowFpsBtn.addEventListener("click", () => {
-    toggleFpsBtn.click();
-  });
-}
-
-if (easyResetViewBtn) {
-  easyResetViewBtn.addEventListener("click", () => {
-    const startZ = isMobile ? 3.8 : 2.2;
-    params.zoomValue = startZ;
-    params.uFractalRotationX = 0;
-    params.uFractalRotationY = 0;
-    params.uFractalRotationZ = 0;
-    if (navCamera) {
-      navCamera.position.set(0, 0, startZ);
-      navCamera.quaternion.set(0, 0, 0, 1);
+    function setEasyDockActive(btn) {
+      [easyMenuBtn, easyShapeBtn, easyStyleBtn, easyPlayBtn].forEach(b => {
+        if (b) b.classList.remove("active");
+      });
+      if (btn) btn.classList.add("active");
     }
+
+    if (easyMenuBtn)  easyMenuBtn.addEventListener("click",  () => { toggleEasyDockPanel(easyMenuPanel);  setEasyDockActive(easyMenuPanel.classList.contains("show")  ? easyMenuBtn  : null); });
+    if (easyShapeBtn) easyShapeBtn.addEventListener("click", () => { toggleEasyDockPanel(easyShapePanel); setEasyDockActive(easyShapePanel.classList.contains("show") ? easyShapeBtn : null); });
+    if (easyStyleBtn) easyStyleBtn.addEventListener("click", () => { toggleEasyDockPanel(easyStylePanel); setEasyDockActive(easyStylePanel.classList.contains("show") ? easyStyleBtn : null); });
+    if (easyPlayBtn)  easyPlayBtn.addEventListener("click",  () => { toggleEasyDockPanel(easyPlayPanel);  setEasyDockActive(easyPlayPanel.classList.contains("show")  ? easyPlayBtn  : null); });
+
+    if (easyRandomBtn) easyRandomBtn.addEventListener("click", () => randomBtn.click());
+
+    if (easyToggleUiBtn) {
+      easyToggleUiBtn.addEventListener("click", () => {
+        document.body.classList.toggle("panelsHidden");
+        closeEasyDockPanels();
+        layoutPreviewFrame();
+        resizeRendererToPreviewFrame();
+      });
+    }
+
+    if (easyShowFpsBtn) easyShowFpsBtn.addEventListener("click", () => toggleFpsBtn.click());
+
+    if (easyResetViewBtn) {
+      easyResetViewBtn.addEventListener("click", () => {
+        const startZ = isMobile ? 3.8 : 2.2;
+        params.zoomValue = startZ;
+        params.uFractalRotationX = 0;
+        params.uFractalRotationY = 0;
+        params.uFractalRotationZ = 0;
+        if (navCamera) {
+          navCamera.position.set(0, 0, startZ);
+          navCamera.quaternion.set(0, 0, 0, 1);
+        }
+        syncMobileControlsFromParams();
+        syncEasyDockControlsFromParams();
+      });
+    }
+
+    // ─── EasyDock smart slider system ──────────────────────────────────────
+    const easySliders = [
+      {
+        input: easyZoom,
+        valueEl: document.getElementById("easyZoomVal"),
+        format: v => v.toFixed(2),
+        getParam: () => params.zoomValue,
+        setParam: v => { params.zoomValue = clampZoom(v); },
+        baseStep: 0.01
+      },
+      {
+        input: easyDetail,
+        valueEl: document.getElementById("easyDetailVal"),
+        format: v => v.toFixed(2),
+        getParam: () => {
+          return Math.max(0, Math.min(1, 1.0 - ((params.uSurfaceEpsilon - 0.001) / (0.02 - 0.001))));
+        },
+        setParam: v => applyEasyDetail(v),
+        baseStep: 0.001
+      },
+      {
+        input: easyPower,
+        valueEl: document.getElementById("easyPowerVal"),
+        format: v => params.powerAnimation ? v.toFixed(1) + " ~" : v.toFixed(2),
+        getParam: () => params.uPower,
+        setParam: v => { params.uPower = v; },
+        baseStep: 0.01
+      },
+      {
+        input: easyGlow,
+        valueEl: document.getElementById("easyGlowVal"),
+        format: v => v.toFixed(2),
+        getParam: () => params.glowStrength,
+        setParam: v => { params.glowStrength = v; },
+        baseStep: 0.01
+      },
+      {
+        input: easyPowerAnimate,
+        valueEl: document.getElementById("easyPowerAnimateVal"),
+        format: v => {
+          if (v < 0.01) return "Off";
+          if (v < 0.67) return "Slow";
+          if (v < 1.34) return "Med";
+          return "Fast";
+        },
+        getParam: () => params.powerAnimation ? Math.max(0, params.powerAnimationSpeed) : 0,
+        setParam: v => {
+          params.powerAnimation = v > 0.01;
+          params.powerAnimationSpeed = v;
+          // depth scales with speed so slow = subtle, fast = dramatic
+          params.powerAnimationDepth = Math.min(0.85, 0.15 + v * 0.25);
+          // Update power label to show it's now the animation center
+          const lbl = document.getElementById("easyPowerLabel");
+          if (lbl) lbl.textContent = params.powerAnimation ? "Power (center)" : "Power";
+        },
+        baseStep: 0.01
+      },
+      {
+        input: easyPsyScale,
+        valueEl: document.getElementById("easyPsyScaleVal"),
+        format: v => v.toFixed(2),
+        getParam: () => params.psyScale,
+        setParam: v => { params.psyScale = v; },
+        baseStep: 0.01
+      },
+      {
+        input: easySymmetry,
+        valueEl: document.getElementById("easySymmetryVal"),
+        format: v => {
+          const names = ["None","H Mirror","V Mirror","Dual Mirror","Quad Mirror","Square Mirror","Diagonal","Radial","Tiling","Polar"];
+          return names[Math.round(v)] || "None";
+        },
+        getParam: () => params.symmetryMode,
+        setParam: v => { params.symmetryMode = Math.round(v); },
+        baseStep: 1
+      },
+      {
+        input: easyKaleidoscope,
+        valueEl: document.getElementById("easyKaleidoscopeVal"),
+        format: v => v < 0.01 ? "Off" : v.toFixed(2) + "x",
+        getParam: () => params.kaleidoscopeMode ? params.kaleidoscopeSpeed : 0,
+        setParam: v => {
+          params.kaleidoscopeMode = v > 0.005;
+          if (v > 0.005) params.kaleidoscopeSpeed = v;
+        },
+        baseStep: 0.01
+      }
+    ];
+
+    // Track shift key state
+    let shiftHeld = false;
+    window.addEventListener("keydown", e => { if (e.key === "Shift") shiftHeld = true; });
+    window.addEventListener("keyup",   e => { if (e.key === "Shift") shiftHeld = false; });
+
+    function attachSliderBehavior(sl) {
+      if (!sl.input) return;
+
+      let isDraggingSlider = false;
+
+      // Apply step on pointerdown so it's set before dragging starts
+      sl.input.addEventListener("pointerdown", () => {
+        isDraggingSlider = true;
+        sl.input.step = shiftHeld ? String(sl.baseStep / 10) : String(sl.baseStep);
+        if (shiftHeld) sl.input.classList.add("fine-mode");
+        else sl.input.classList.remove("fine-mode");
+      });
+
+      // Re-check shift state continuously during drag in case user holds shift mid-drag
+      sl.input.addEventListener("pointermove", () => {
+        if (!isDraggingSlider) return;
+        sl.input.step = shiftHeld ? String(sl.baseStep / 10) : String(sl.baseStep);
+        if (shiftHeld) sl.input.classList.add("fine-mode");
+        else sl.input.classList.remove("fine-mode");
+      });
+
+      sl.input.addEventListener("pointerup", () => {
+        isDraggingSlider = false;
+        sl.input.step = String(sl.baseStep);
+        sl.input.classList.remove("fine-mode");
+
+        // Cam spin — snap to 0 if within 0.12 of center
+        if (sl.snapToZero) {
+          const v = parseFloat(sl.input.value);
+          if (Math.abs(v) < 0.12) {
+            sl.input.value = 0;
+            sl.setParam(0);
+            if (sl.valueEl) sl.valueEl.textContent = sl.format(0);
+          }
+        }
+      });
+
+      // Live value display on input
+      sl.input.addEventListener("input", (e) => {
+        const v = parseFloat(e.target.value);
+        sl.setParam(v);
+        if (sl.valueEl) sl.valueEl.textContent = sl.format(v);
+      });
+
+      // Scroll wheel nudge
+      sl.input.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const step = shiftHeld ? sl.baseStep / 10 : sl.baseStep;
+        const dir  = e.deltaY < 0 ? 1 : -1;
+        const min  = parseFloat(sl.input.min);
+        const max  = parseFloat(sl.input.max);
+        const cur  = parseFloat(sl.input.value);
+        const next = Math.min(max, Math.max(min, cur + dir * step * 3));
+        sl.input.value = next;
+        sl.setParam(next);
+        if (sl.valueEl) sl.valueEl.textContent = sl.format(next);
+      }, { passive: false });
+    }
+
+    // Random rotation axis state — persists until slider goes back to 0
+    let easyRotAxis = null;
+
+    easySliders.forEach(attachSliderBehavior);
+
+    // ─── Sync easyDock sliders from params ────────────────────────────────
+    function syncEasyDockControlsFromParams() {
+      easySliders.forEach(sl => {
+        if (!sl.input) return;
+        const v = sl.getParam();
+        sl.input.value = v;
+        if (sl.valueEl) sl.valueEl.textContent = sl.format(v);
+      });
+      // Update power label based on animation state
+      const lbl = document.getElementById("easyPowerLabel");
+      if (lbl) lbl.textContent = params.powerAnimation ? "Power (center)" : "Power";
+      syncPlayPanelFromParams();
+    }
+
+    // ─── Play panel sliders ───────────────────────────────────────────────
+    const easySpeed     = document.getElementById("easySpeed");
+    const easySpeedVal  = document.getElementById("easySpeedVal");
+    const easyBreathe   = document.getElementById("easyBreathe");
+    const easyBreatheVal= document.getElementById("easyBreatheVal");
+    const easyCamSpin   = document.getElementById("easyCamSpin");
+    const easyCamSpinVal= document.getElementById("easyCamSpinVal");
+    const easyRotSpeed  = document.getElementById("easyRotSpeed");
+    const easyRotSpeedVal=document.getElementById("easyRotSpeedVal");
+    const easyPlayPauseBtn = document.getElementById("easyPlayPauseBtn");
+    const easyRewindBtn    = document.getElementById("easyRewindBtn");
+
+    const playSliders = [
+      {
+        input: easySpeed, valueEl: easySpeedVal,
+        format: v => v.toFixed(2) + "x",
+        getParam: () => transportBaseSpeed,
+        setParam: v => {
+          // Scale power anim speed proportionally with general speed
+          if (params.powerAnimation && params.powerAnimationSpeed > 0.01) {
+            const ratio = v / Math.max(0.01, transportBaseSpeed);
+            params.powerAnimationSpeed = Math.max(0.01, Math.min(2, params.powerAnimationSpeed * ratio));
+          }
+          transportBaseSpeed = v;
+          params.playbackSpeed = v;
+          updateTransportDisplay();
+        },
+        baseStep: 0.01
+      },
+      {
+        input: easyBreathe, valueEl: easyBreatheVal,
+        format: v => v < 0.005 ? "Off" : v.toFixed(3),
+        getParam: () => params.breathingOn ? params.breathingAmount : 0,
+        setParam: v => {
+          params.breathingOn = v > 0.004;
+          params.breathingAmount = v;
+        },
+        baseStep: 0.005
+      },
+      {
+        input: easyCamSpin, valueEl: easyCamSpinVal,
+        format: v => Math.abs(v) < 0.01 ? "Off" : v.toFixed(2) + "x",
+        getParam: () => params.cameraRotateOn ? params.cameraRotateSpeed : 0,
+        setParam: v => {
+          params.cameraRotateOn = Math.abs(v) > 0.005;
+          params.cameraRotateSpeed = v;
+        },
+        baseStep: 0.01
+      },
+      {
+        input: easyRotSpeed, valueEl: easyRotSpeedVal,
+        format: v => {
+          if (v < 0.01) return "Off";
+          // Show axis alongside speed
+          let axisLabel = "";
+          if (easyRotAxis) {
+            const ax = Math.abs(easyRotAxis.x);
+            const ay = Math.abs(easyRotAxis.y);
+            const az = Math.abs(easyRotAxis.z);
+            if (ax >= ay && ax >= az) axisLabel = " X";
+            else if (ay >= ax && ay >= az) axisLabel = " Y";
+            else axisLabel = " Z";
+          }
+          return v.toFixed(2) + "x" + axisLabel;
+        },
+        getParam: () => {
+          const sx = params.autoRotateX ? params.rotateSpeedX : 0;
+          const sy = params.autoRotateY ? params.rotateSpeedY : 0;
+          const sz = params.autoRotateZ ? params.rotateSpeedZ : 0;
+          return Math.min(2, Math.sqrt(sx*sx + sy*sy + sz*sz));
+        },
+        setParam: v => {
+          if (v < 0.01) {
+            params.autoRotateX = false;
+            params.autoRotateY = false;
+            params.autoRotateZ = false;
+            easyRotAxis = null;
+          } else {
+            if (!easyRotAxis) {
+              easyRotAxis = {
+                x: (Math.random() * 2 - 1),
+                y: (Math.random() * 2 - 1),
+                z: (Math.random() - 0.5) * 0.5
+              };
+              const len = Math.sqrt(easyRotAxis.x**2 + easyRotAxis.y**2 + easyRotAxis.z**2);
+              easyRotAxis.x /= len; easyRotAxis.y /= len; easyRotAxis.z /= len;
+            }
+            params.autoRotateX = Math.abs(easyRotAxis.x) > 0.05;
+            params.autoRotateY = Math.abs(easyRotAxis.y) > 0.05;
+            params.autoRotateZ = Math.abs(easyRotAxis.z) > 0.05;
+            params.rotateSpeedX = easyRotAxis.x * v;
+            params.rotateSpeedY = easyRotAxis.y * v;
+            params.rotateSpeedZ = easyRotAxis.z * v;
+          }
+          // Update label immediately since axis affects format
+          if (easyRotSpeedVal) {
+            const sl = playSliders ? playSliders.find(s => s.input === easyRotSpeed) : null;
+            if (sl) easyRotSpeedVal.textContent = sl.format(v);
+          }
+        },
+        baseStep: 0.01
+      }
+    ];
+
+    playSliders.forEach(attachSliderBehavior);
+
+    function syncPlayPanelFromParams() {
+      playSliders.forEach(sl => {
+        if (!sl.input) return;
+        const v = sl.getParam();
+        sl.input.value = v;
+        if (sl.valueEl) sl.valueEl.textContent = sl.format(v);
+      });
+      if (easyPlayPauseBtn) {
+        easyPlayPauseBtn.textContent = transportPlaying ? "⏸ Pause" : "▶ Play";
+      }
+    }
+
+    if (easyPlayPauseBtn) {
+      easyPlayPauseBtn.addEventListener("click", () => {
+        setTransportPlaying(!transportPlaying);
+        easyPlayPauseBtn.textContent = transportPlaying ? "⏸ Pause" : "▶ Play";
+      });
+    }
+
+    // ─── Easy Presets panel ───────────────────────────────────────────────
+    const easyPresetsBtn   = document.getElementById("easyPresetsBtn");
+    const easyPresetList   = document.getElementById("easyPresetList");
+    const easyPlaySliders  = document.getElementById("easyPlaySliders");
+    let easyPresetsOpen    = false;
+
+    function buildEasyPresetList() {
+      if (!easyPresetList) return;
+      easyPresetList.innerHTML = "";
+      const presets = loadPresetsFromStorage();
+      const names = Object.keys(presets).sort((a, b) => a.localeCompare(b));
+      if (!names.length) {
+        const msg = document.createElement("div");
+        msg.textContent = "No saved presets yet";
+        msg.style.cssText = "color:rgba(255,255,255,0.35); font-size:12px; padding:10px; text-align:center;";
+        easyPresetList.appendChild(msg);
+        return;
+      }
+      names.forEach(name => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = name;
+        btn.addEventListener("click", () => {
+          const p = presets[name];
+          if (p && p.values) {
+            applyPresetData(p.values);
+            presetNameInput.value = name;
+            syncEasyDockControlsFromParams();
+          }
+        });
+        easyPresetList.appendChild(btn);
+      });
+    }
+
+    function openEasyPresets() {
+      easyPresetsOpen = true;
+      buildEasyPresetList();
+      if (easyPlaySliders) easyPlaySliders.style.display = "none";
+      if (easyPresetList)  { easyPresetList.style.display = "flex"; }
+      if (easyPresetsBtn)  {
+        easyPresetsBtn.textContent = "Exit Presets";
+        easyPresetsBtn.style.background = "rgba(24,216,216,0.15)";
+        easyPresetsBtn.style.borderColor = "rgba(24,216,216,0.4)";
+        easyPresetsBtn.style.color = "#18d8d8";
+      }
+    }
+
+    function closeEasyPresets() {
+      easyPresetsOpen = false;
+      if (easyPlaySliders) easyPlaySliders.style.display = "grid";
+      if (easyPresetList)  easyPresetList.style.display = "none";
+      if (easyPresetsBtn)  {
+        easyPresetsBtn.textContent = "Presets";
+        easyPresetsBtn.style.background = "rgba(255,255,255,0.07)";
+        easyPresetsBtn.style.borderColor = "rgba(255,255,255,0.12)";
+        easyPresetsBtn.style.color = "#fff";
+      }
+    }
+
+    if (easyPresetsBtn) {
+      easyPresetsBtn.addEventListener("click", () => {
+        easyPresetsOpen ? closeEasyPresets() : openEasyPresets();
+      });
+    }
+
+    buildMobilePalettes();
     syncMobileControlsFromParams();
     syncEasyDockControlsFromParams();
-  });
-}
-
-
-if (easyZoom) {
-  easyZoom.addEventListener("input", (e) => {
-    params.zoomValue = clampZoom(parseFloat(e.target.value));
-  });
-}
-
-if (easyDetail) {
-  easyDetail.addEventListener("input", (e) => {
-    applyEasyDetail(parseFloat(e.target.value));
-  });
-}
-
-if (easyPower) {
-  easyPower.addEventListener("input", (e) => {
-    params.uPower = parseFloat(e.target.value);
-  });
-}
-
-if (easyRotation) {
-  easyRotation.addEventListener("input", (e) => {
-    params.uFractalRotationZ = parseFloat(e.target.value);
-  });
-}
-
-if (easyGlow) {
-  easyGlow.addEventListener("input", (e) => {
-    params.glowStrength = parseFloat(e.target.value);
-  });
-}
-
-if (easyPowerAnimate) {
-  easyPowerAnimate.addEventListener("input", (e) => {
-    const v = Number(e.target.value);
-    params.powerAnimation = v > 0.01;
-    params.powerAnimationSpeed = 0.1 + v * 1.5;
-  });
-}
-
-if (easyPsyScale) {
-  easyPsyScale.addEventListener("input", (e) => {
-    params.psyScale = parseFloat(e.target.value);
-  });
-}
-    // buildEasyPalettes();
-// syncEasyDockControlsFromParams();
-// if (easyShapePanel) easyShapePanel.classList.add("show");
     
     function parseExportDimensions() {
       const val = exportResSelect ? exportResSelect.value : "1920x1080";
@@ -3597,7 +4252,20 @@ if (easyPsyScale) {
 
       if (key === " ") {
         e.preventDefault();
-        togglePanels();
+        // Spacebar = true OS fullscreen + hide panels (show mode)
+        const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+        if (!isFs) {
+          const req = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+          if (req) req.call(document.documentElement);
+          document.body.classList.add("panelsHidden");
+          closeEasyDockPanels();
+        } else {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) exit.call(document);
+          document.body.classList.remove("panelsHidden");
+        }
+        layoutPreviewFrame();
+        resizeRendererToPreviewFrame();
         return;
       }
 
@@ -4315,7 +4983,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
           uChromaticAnimated: { value: 0.0 },
           uChromaticSpeed: { value: params.chromaticSpeed },
 
-          uScreenRotateAngle: { value: 0.0 }
+          uScreenRotateAngle: { value: 0.0 },
+          uVerticalMode: { value: 0.0 }
         }
       });
 
@@ -4328,45 +4997,19 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       gui = new dat.GUI({ autoPlace: false, width: 320 });
       document.getElementById("gui").appendChild(gui.domElement);
 
-      const fractalF = gui.addFolder("Fractal Settings");
-      fractalF.add(params, "uPower", 2, 100).name("Base Fractal Power");
-      fractalF.add(params, "uBailout", 0.01, 4.0).name("Bailout");
-      fractalF.add(params, "uIterations", 3, 20, 1).name("Iterations");
-      fractalF.add(params, "uSurfaceEpsilon", 0.0001, 0.01).name("Surface Epsilon");
-  fractalF.add(params, "uShape", {
-  Mandelbulb: 0,
-  Sphere: 1,
-  Cube: 2,
-  Torus: 3
-}).name("Base Shape");
+      // ── 1. SHAPE ─────────────────────────────────────────────────────────
+      const shapeF = gui.addFolder("Shape");
+      shapeF.add(params, "uShape", { Mandelbulb: 0, Sphere: 1, Cube: 2, Torus: 3 }).name("Base Shape");
+      shapeF.add(params, "uPower", 2, 100).name("Power");
+      shapeF.add(params, "uBailout", 0.01, 4.0).name("Bailout");
+      shapeF.add(params, "uIterations", 3, 20, 1).name("Iterations");
+      shapeF.add(params, "uSurfaceEpsilon", 0.0001, 0.01).name("Surface Detail");
 
-      const motionF = gui.addFolder("Motion");
-      motionF.add(params, "powerAnimation").name("Power Animation");
-      motionF.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
-      motionF.add(params, "powerMin", 2, 100).name("Power Min").listen();
-      motionF.add(params, "powerMax", 2, 100).name("Power Max").listen();
-      motionF.add(params, "autoRotateX").name("Auto Rotate X");
-      motionF.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
-      motionF.add(params, "autoRotateY").name("Auto Rotate Y");
-      motionF.add(params, "rotateSpeedY", -2, 2).name("Rotate Speed Y");
-      motionF.add(params, "autoRotateZ").name("Auto Rotate Z");
-      motionF.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
+      shapeF.add(params, "symmetryMode", SYMMETRY_MODE_OPTIONS).name("Symmetry");
+      shapeF.add(params, "radialSegments", 3, 16, 1).name("Radial Segments");
+      shapeF.add(params, "symmetryStack").name("Stacked Transforms On");
 
-      const cameraF = gui.addFolder("Camera");
-      cameraF.add(params, "zoomValue", MIN_ZOOM, MAX_ZOOM).name("Zoom").listen();
-      cameraF.add(params, "cameraRotateOn").name("Camera Rotate On");
-      cameraF.add(params, "cameraRotateSpeed", -2.0, 2.0).name("Rotate Speed");
-      cameraF.add(params, "breathingOn").name("Breathing On");
-      cameraF.add(params, "breathingSpeed", 0.0, 3.0).name("Breathing Speed");
-      cameraF.add(params, "breathingAmount", 0.0, 0.4).name("Breathing Amount");
-      cameraF.open();
-
-      const symF = gui.addFolder("Symmetry");
-      symF.add(params, "symmetryMode", SYMMETRY_MODE_OPTIONS).name("Symmetry Mode");
-      symF.add(params, "radialSegments", 3, 16, 1).name("Radial Segments");
-      symF.add(params, "symmetryStack").name("Enable Stack");
-
-      const stackF = symF.addFolder("Stacked Transforms");
+      const stackF = shapeF.addFolder("Stacked Transforms");
       stackF.add(params, "twistOn").name("Twist On");
       stackF.add(params, "twistAmount", -6, 6).name("Twist Amount");
       stackF.add(params, "twistAnimate").name("Twist Animate");
@@ -4385,62 +5028,87 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       stackF.add(params, "offsetAnimate").name("Offset Animate");
       stackF.add(params, "offsetAnimSpeed", 0, 5).name("Offset Anim Speed");
       stackF.add(params, "offsetAnimAmount", 0, 1.5).name("Offset Anim Amount");
-      symF.open();
 
-      const colorF = gui.addFolder("Color & Palette");
+      rotXController = shapeF.add(params, "uFractalRotationX", 0, Math.PI * 2).name("Rotation X").listen();
+      rotYController = shapeF.add(params, "uFractalRotationY", 0, Math.PI * 2).name("Rotation Y").listen();
+      rotZController = shapeF.add(params, "uFractalRotationZ", 0, Math.PI * 2).name("Rotation Z").listen();
+
+      // ── 2. COLOR ─────────────────────────────────────────────────────────
+      const colorF = gui.addFolder("Color");
       colorF.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
-      colorF.add(params, "psyStyle", { Old: 0, Hybrid: 1, New: 2 }).name("Psy Style");
+      colorF.add(params, "psyStyle", { Classic: 0, Hybrid: 1, Vivid: 2 }).name("Color Style");
       colorF.addColor(params, "uColor").name("Base Color");
-      colorF.add(params, "trippyMode").name("Trippy Mode");
-      colorF.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
+      colorF.addColor(params, "psyColorA").name("Color A");
+      colorF.addColor(params, "psyColorB").name("Color B");
+      colorF.addColor(params, "psyColorC").name("Color C");
+      colorF.addColor(params, "psyColorD").name("Color D");
+      colorF.addColor(params, "warmColor").name("Warm Tone");
+      colorF.addColor(params, "coolColor").name("Cool Tone");
+      colorF.add(params, "psyMix", 0, 1.5).name("Color Mix");
+      colorF.add(params, "psyScale", 0.5, 20).name("Color Scale");
+      colorF.add(params, "psyFlow", 0, 4).name("Color Flow");
+      colorF.add(params, "psySpinStrength", 0, 6).name("Color Spin");
       colorF.add(params, "ringScale", 0.5, 20).name("Ring Scale");
       colorF.add(params, "ringStrength", 0, 1).name("Ring Strength");
-      colorF.addColor(params, "warmColor").name("Warm Color");
-      colorF.addColor(params, "coolColor").name("Cool Color");
-      colorF.addColor(params, "psyColorA").name("Psy Color A");
-      colorF.addColor(params, "psyColorB").name("Psy Color B");
-      colorF.addColor(params, "psyColorC").name("Psy Color C");
-      colorF.addColor(params, "psyColorD").name("Psy Color D");
-      colorF.add(params, "psyMix", 0, 1.5).name("Psy Mix");
-      colorF.add(params, "psyScale", 0.5, 20).name("Psy Scale");
-      colorF.add(params, "psyFlow", 0, 4).name("Psy Flow");
-      colorF.add(params, "psySpinStrength", 0, 6).name("Psy Spin");
-      colorF.add(params, "paletteCycle").name("Palette Cycle");
+      colorF.add(params, "paletteCycle").name("Cycle Colors");
       colorF.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
-      colorF.add(params, "psyScaleCycle").name("Psy Scale Cycle");
+      colorF.add(params, "psyScaleCycle").name("Scale Cycle");
       colorF.add(params, "psyScaleCycleSpeed", 0, 4).name("Scale Cycle Speed");
       colorF.add(params, "psyScaleCycleAmount", 0, 10).name("Scale Cycle Amount");
+      colorF.add(params, "trippyMode").name("Trippy Mode");
+      colorF.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
 
-      const psyF = gui.addFolder("Psy Shader Mode");
-      psyF.add(params, "psyShaderMode", { Lit: 0, Emissive: 1, Hybrid: 2 }).name("Shader Mode");
-      psyF.add(params, "psyEmission", 0, 3).name("Psy Emission");
-      psyF.add(params, "psyDepthShade", 0, 1).name("Psy Depth Shade");
-      psyF.add(params, "psyContrast", 0.5, 2.5).name("Psy Contrast");
-      psyF.add(params, "psySaturation", 0.5, 2).name("Psy Saturation");
-      psyF.add(params, "psyGlowOn").name("Internal Glow On");
-      psyF.add(params, "psyInternalGlow", 0, 1.5).name("Psy Internal Glow");
-      psyF.add(params, "psyGlowThreshold", 0.3, 1).name("Glow Threshold");
-
-      const gradF = gui.addFolder("Color Grading");
+      const gradF = colorF.addFolder("Grading");
       gradF.add(params, "colorSaturation", 0, 2.5).name("Saturation");
       gradF.add(params, "colorVibrance", 0, 2.5).name("Vibrance");
       gradF.add(params, "paletteContrast", 0.5, 2.5).name("Palette Contrast");
-      gradF.add(params, "colorIntensity", 0.25, 2.5).name("Color Intensity");
+      gradF.add(params, "colorIntensity", 0.25, 2.5).name("Intensity");
       gradF.add(params, "preserveHighlightColor").name("Preserve Highlights");
       gradF.add(params, "colorBands", 0, 20).step(1).name("Color Bands");
       gradF.add(params, "bandStrength", 0, 1).name("Band Strength");
 
-      const patF = gui.addFolder("Patterns");
-      patF.add(params, "patternMode", PATTERN_OPTIONS).name("Pattern Mode");
-      patF.add(params, "patternStrength", 0, 2).name("Pattern Strength");
-      patF.add(params, "patternScale", 0.5, 20).name("Pattern Scale");
-      patF.add(params, "patternSpeed", 0, 5).name("Pattern Speed");
-      patF.add(params, "patternBlend", 0, 1.5).name("Pattern Blend");
+      const psyF = colorF.addFolder("Shader Style");
+      psyF.add(params, "psyShaderMode", { Lit: 0, Emissive: 1, Hybrid: 2 }).name("Shader Mode");
+      psyF.add(params, "psyEmission", 0, 3).name("Emission");
+      psyF.add(params, "psyDepthShade", 0, 1).name("Depth Shade");
+      psyF.add(params, "psyContrast", 0.5, 2.5).name("Contrast");
+      psyF.add(params, "psySaturation", 0.5, 2).name("Saturation");
+      psyF.add(params, "psyGlowOn").name("Internal Glow On");
+      psyF.add(params, "psyInternalGlow", 0, 1.5).name("Internal Glow");
+      psyF.add(params, "psyGlowThreshold", 0.3, 1).name("Glow Threshold");
 
+      const patF = colorF.addFolder("Patterns");
+      patF.add(params, "patternMode", PATTERN_OPTIONS).name("Pattern");
+      patF.add(params, "patternStrength", 0, 2).name("Strength");
+      patF.add(params, "patternScale", 0.5, 20).name("Scale");
+      patF.add(params, "patternSpeed", 0, 5).name("Speed");
+      patF.add(params, "patternBlend", 0, 1.5).name("Blend");
+
+      // ── 3. MOTION ────────────────────────────────────────────────────────
+      const motionF = gui.addFolder("Motion");
+      motionF.add(params, "powerAnimation").name("Power Anim On");
+      motionF.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
+      motionF.add(params, "powerAnimationDepth", 0, 0.85).name("Power Anim Depth");
+      motionF.add(params, "autoRotateX").name("Rotate X On");
+      motionF.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
+      motionF.add(params, "autoRotateY").name("Rotate Y On");
+      motionF.add(params, "rotateSpeedY", -2, 2).name("Rotate Speed Y");
+      motionF.add(params, "autoRotateZ").name("Rotate Z On");
+      motionF.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
+      motionF.add(params, "zoomValue", MIN_ZOOM, MAX_ZOOM).name("Zoom").listen();
+      motionF.add(params, "cameraRotateOn").name("Cam Spin On");
+      motionF.add(params, "cameraRotateSpeed", -2.0, 2.0).name("Cam Spin Speed");
+      motionF.add(params, "breathingOn").name("Breathe On");
+      motionF.add(params, "breathingSpeed", 0.0, 3.0).name("Breathe Speed");
+      motionF.add(params, "breathingAmount", 0.0, 0.4).name("Breathe Amount");
+      motionF.add(params, "kaleidoscopeMode").name("Kaleidoscope On");
+      motionF.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
+
+      // ── 4. LIGHTING ──────────────────────────────────────────────────────
       const lightF = gui.addFolder("Lighting");
-      lightF.add(params, "lightIntensity", 0, 2).name("Light Intensity");
-      lightAzimuthController = lightF.add(params, "lightAzimuth", -Math.PI, Math.PI).name("Light Azimuth").listen();
-      lightElevationController = lightF.add(params, "lightElevation", -1.57, 1.57).name("Light Elevation").listen();
+      lightF.add(params, "lightIntensity", 0, 2).name("Intensity");
+      lightAzimuthController = lightF.add(params, "lightAzimuth", -Math.PI, Math.PI).name("Azimuth").listen();
+      lightElevationController = lightF.add(params, "lightElevation", -1.57, 1.57).name("Elevation").listen();
       lightF.addColor(params, "lightColor").name("Light Color");
       lightF.add(params, "shadowStrength", 0, 1.5).name("Shadow Strength");
       lightF.addColor(params, "shadowTint").name("Shadow Tint");
@@ -4450,94 +5118,99 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       lightF.add(params, "specularSize", 0.1, 3).name("Specular Size");
       lightF.add(params, "ridgeAccent", 0, 2).name("Ridge Accent");
       lightF.add(params, "cavityStrength", 0, 2).name("Cavity");
-      lightF.add(params, "kaleidoscopeMode").name("Kaleidoscope Mode");
-      lightF.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
 
-      const glowF = gui.addFolder("Edge Glow");
-      glowF.add(params, "glowOn").name("Glow On");
-      glowF.addColor(params, "glowColorA").name("Glow Color A");
-      glowF.add(params, "glowAlphaA", 0, 1).name("Glow Alpha A");
-      glowF.addColor(params, "glowColorB").name("Glow Color B");
-      glowF.add(params, "glowAlphaB", 0, 1).name("Glow Alpha B");
-      glowF.add(params, "glowStrength", 0, 2).name("Glow Strength");
-      glowF.add(params, "glowWidth", 0.15, 4).name("Glow Width");
-      glowF.add(params, "glowEmission", 0, 3).name("Glow Emission");
-      glowF.add(params, "glowScroll").name("Glow Scroll");
-      glowF.add(params, "glowScrollSpeed", 0, 3).name("Glow Scroll Speed");
-      glowF.add(params, "glowReverse").name("Glow Reverse");
+      // ── 5. GLOW & FX ─────────────────────────────────────────────────────
+      const fxF = gui.addFolder("Glow & FX");
 
-      const lineF = gui.addFolder("Edge Line");
-      lineF.add(params, "lineOn").name("Line On");
-      lineF.addColor(params, "lineColorA").name("Line Color A");
-      lineF.add(params, "lineAlphaA", 0, 1).name("Line Alpha A");
-      lineF.addColor(params, "lineColorB").name("Line Color B");
-      lineF.add(params, "lineAlphaB", 0, 1).name("Line Alpha B");
-      lineF.add(params, "lineStrength", 0, 2).name("Line Strength");
-      lineF.add(params, "lineWidth", 0.1, 4).name("Line Width");
-      lineF.add(params, "lineSoftness", 0, 1).name("Line Softness");
-      lineF.add(params, "lineScroll").name("Line Scroll");
-      lineF.add(params, "lineScrollSpeed", 0, 3).name("Line Scroll Speed");
-      lineF.add(params, "lineReverse").name("Line Reverse");
+      const edgeGlowF = fxF.addFolder("Edge Glow");
+      edgeGlowF.add(params, "glowOn").name("On");
+      edgeGlowF.addColor(params, "glowColorA").name("Color A");
+      edgeGlowF.add(params, "glowAlphaA", 0, 1).name("Alpha A");
+      edgeGlowF.addColor(params, "glowColorB").name("Color B");
+      edgeGlowF.add(params, "glowAlphaB", 0, 1).name("Alpha B");
+      edgeGlowF.add(params, "glowStrength", 0, 2).name("Strength");
+      edgeGlowF.add(params, "glowWidth", 0.15, 4).name("Width");
+      edgeGlowF.add(params, "glowEmission", 0, 3).name("Emission");
+      edgeGlowF.add(params, "glowScroll").name("Scroll");
+      edgeGlowF.add(params, "glowScrollSpeed", 0, 3).name("Scroll Speed");
+      edgeGlowF.add(params, "glowReverse").name("Reverse");
 
-      const igF = gui.addFolder("Inner Glow");
-      igF.add(params, "innerGlowStrength", 0, 2).name("Inner Glow Strength");
-      igF.add(params, "innerGlowWidth", 0.1, 4).name("Inner Glow Width");
-      igF.addColor(params, "innerGlowColor").name("Inner Glow Color");
+      const edgeLineF = fxF.addFolder("Edge Line");
+      edgeLineF.add(params, "lineOn").name("On");
+      edgeLineF.addColor(params, "lineColorA").name("Color A");
+      edgeLineF.add(params, "lineAlphaA", 0, 1).name("Alpha A");
+      edgeLineF.addColor(params, "lineColorB").name("Color B");
+      edgeLineF.add(params, "lineAlphaB", 0, 1).name("Alpha B");
+      edgeLineF.add(params, "lineStrength", 0, 2).name("Strength");
+      edgeLineF.add(params, "lineWidth", 0.1, 4).name("Width");
+      edgeLineF.add(params, "lineSoftness", 0, 1).name("Softness");
+      edgeLineF.add(params, "lineScroll").name("Scroll");
+      edgeLineF.add(params, "lineScrollSpeed", 0, 3).name("Scroll Speed");
+      edgeLineF.add(params, "lineReverse").name("Reverse");
 
-      const postFxF = gui.addFolder("Post FX / Distortion");
+      const innerGlowF = fxF.addFolder("Inner Glow");
+      innerGlowF.add(params, "innerGlowStrength", 0, 2).name("Strength");
+      innerGlowF.add(params, "innerGlowWidth", 0.1, 4).name("Width");
+      innerGlowF.addColor(params, "innerGlowColor").name("Color");
 
-      const waveF = postFxF.addFolder("Wave Distortion");
-      waveF.add(params, "waveDistortOn").name("Wave On");
-      waveF.add(params, "waveDistortStrength", 0.0, 0.12).name("Wave Strength");
-      waveF.add(params, "waveDistortScale", 0.5, 20.0).name("Wave Scale");
-      waveF.add(params, "waveDistortSpeed", 0.0, 4.0).name("Wave Speed");
-      waveF.add(params, "waveDistortDirection", -Math.PI, Math.PI).name("Wave Direction");
+      const waveF = fxF.addFolder("Wave Distortion");
+      waveF.add(params, "waveDistortOn").name("On");
+      waveF.add(params, "waveDistortStrength", 0.0, 0.12).name("Strength");
+      waveF.add(params, "waveDistortScale", 0.5, 20.0).name("Scale");
+      waveF.add(params, "waveDistortSpeed", 0.0, 4.0).name("Speed");
+      waveF.add(params, "waveDistortDirection", -Math.PI, Math.PI).name("Direction");
 
-      const rippleF = postFxF.addFolder("Ripple");
-      rippleF.add(params, "rippleOn").name("Ripple On");
-      rippleF.add(params, "rippleStrength", 0.0, 0.12).name("Ripple Strength");
-      rippleF.add(params, "rippleScale", 1.0, 24.0).name("Ripple Scale");
-      rippleF.add(params, "rippleSpeed", 0.0, 5.0).name("Ripple Speed");
-      rippleF.add(params, "rippleCenterX", -1.0, 1.0).name("Ripple Center X");
-      rippleF.add(params, "rippleCenterY", -1.0, 1.0).name("Ripple Center Y");
-      rippleF.add(params, "rippleMode", RIPPLE_MODE_OPTIONS).name("Ripple Mode");
+      const rippleF = fxF.addFolder("Ripple");
+      rippleF.add(params, "rippleOn").name("On");
+      rippleF.add(params, "rippleStrength", 0.0, 0.12).name("Strength");
+      rippleF.add(params, "rippleScale", 1.0, 24.0).name("Scale");
+      rippleF.add(params, "rippleSpeed", 0.0, 5.0).name("Speed");
+      rippleF.add(params, "rippleCenterX", -1.0, 1.0).name("Center X");
+      rippleF.add(params, "rippleCenterY", -1.0, 1.0).name("Center Y");
+      rippleF.add(params, "rippleMode", RIPPLE_MODE_OPTIONS).name("Mode");
 
-      const chromaF = postFxF.addFolder("Chromatic Aberration");
-      chromaF.add(params, "chromaticOn").name("Chromatic On");
-      chromaF.add(params, "chromaticStrength", 0.0, 0.05).name("Chromatic Strength");
-      chromaF.add(params, "chromaticEdgeBias", 0.0, 1.0).name("Chromatic Edge Bias");
-      chromaF.add(params, "chromaticAnimated").name("Chromatic Animated");
-      chromaF.add(params, "chromaticSpeed", 0.0, 4.0).name("Chromatic Speed");
+      const chromaF = fxF.addFolder("Chromatic Aberration");
+      chromaF.add(params, "chromaticOn").name("On");
+      chromaF.add(params, "chromaticStrength", 0.0, 0.05).name("Strength");
+      chromaF.add(params, "chromaticEdgeBias", 0.0, 1.0).name("Edge Bias");
+      chromaF.add(params, "chromaticAnimated").name("Animated");
+      chromaF.add(params, "chromaticSpeed", 0.0, 4.0).name("Speed");
 
-      const audioF = gui.addFolder("Audio Settings");
-      audioF.add(params, "musicReact").name("Mic Reactive");
-      audioF.add(params, "micSensitivity", 0, 5).name("Mic Sensitivity");
-      audioF.add(params, "musicMatch").name("Music Match");
+      // ── 6. AUDIO ─────────────────────────────────────────────────────────
+      const audioF = gui.addFolder("Audio Reactive");
+      audioF.add(params, "musicReact").name("Mic On");
+      audioF.add(params, "micSensitivity", 0, 5).name("Sensitivity");
+      audioF.add(params, "musicReactGlow").name("Glow Pulse");
+      audioF.add(params, "musicReactGlowAmount", 0, 3).name("Glow Pulse Amount");
+      audioF.add(params, "musicReactSpeed").name("Speed React");
+      audioF.add(params, "musicReactSpeedAmount", 0, 3).name("Speed Amount");
+      audioF.add(params, "musicReactPower").name("Power React");
+      audioF.add(params, "musicReactPowerAmount", 0, 3).name("Power Amount");
+      audioF.add(params, "musicReactTwist").name("Twist React");
+      audioF.add(params, "musicReactTwistAmount", 0, 3).name("Twist Amount");
+      audioF.add(params, "musicMatch").name("BPM Match");
 
-      const miscF = gui.addFolder("Misc");
-      rotXController = miscF.add(params, "uFractalRotationX", 0, Math.PI * 2).name("Rotation X");
-      rotYController = miscF.add(params, "uFractalRotationY", 0, Math.PI * 2).name("Rotation Y");
-      rotZController = miscF.add(params, "uFractalRotationZ", 0, Math.PI * 2).name("Rotation Z");
-      miscF.add(params, "mirror").name("Mirror Mode (legacy)");
-      miscF.add(params, "mirrorQuad").name("Quad Mirror (legacy)");
-
-      fractalF.open();
+      // ── Open defaults ────────────────────────────────────────────────────
+      shapeF.open();
       colorF.open();
-      psyF.open();
-      gradF.open();
-      patF.open();
-      lightF.open();
-      glowF.close();
-      lineF.close();
-      igF.close();
-      postFxF.close();
+      motionF.open();
+      lightF.close();
+      fxF.close();
       audioF.close();
-      miscF.close();
 
       window.addEventListener("resize", () => {
         layoutPreviewFrame();
         resizeRendererToPreviewFrame();
       });
+
+      // Hide easyDock when entering true fullscreen, restore on exit
+      function onFullscreenChange() {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        const dock = document.getElementById("easyDock");
+        if (dock) dock.style.display = isFs ? "none" : "";
+      }
+      document.addEventListener("fullscreenchange", onFullscreenChange);
+      document.addEventListener("webkitfullscreenchange", onFullscreenChange);
 
       renderer.domElement.addEventListener("mousedown", onMouseDown);
       renderer.domElement.addEventListener("mouseup", onMouseUp);
@@ -4608,16 +5281,33 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
           speed *= bpm / 120.0;
         }
 
-        const range = params.powerMax - params.powerMin;
-
-        if (range <= 0.0001) {
-          material.uniforms.uPower.value = params.powerMin;
-        } else {
-          const x = (t * speed) % (2.0 * range);
-          material.uniforms.uPower.value = params.powerMin + (x < range ? x : (2.0 * range - x));
+        // Multiplicative oscillation: cycles between uPower * (1 - depth) and uPower * (1 + depth)
+        const depth = Math.min(0.85, params.powerAnimationDepth || 0.5);
+        let pwrBoost = 0;
+        if (params.musicReactPower && micEnabled) {
+          pwrBoost = sensitiveAvg * params.musicReactPowerAmount;
         }
+        const cycle = Math.sin(t * speed * Math.PI * 2.0);
+        material.uniforms.uPower.value = Math.max(2.0, params.uPower * (1.0 + cycle * depth + pwrBoost));
       } else {
-        material.uniforms.uPower.value = params.uPower;
+        // Even without animation, power can react to music
+        if (params.musicReactPower && micEnabled) {
+          const pwrBoost = sensitiveAvg * params.musicReactPowerAmount;
+          material.uniforms.uPower.value = Math.max(2.0, params.uPower * (1.0 + pwrBoost));
+        } else {
+          material.uniforms.uPower.value = params.uPower;
+        }
+      }
+
+      // Music reactive speed — scales shader time
+      const shaderTime = (params.musicReactSpeed && micEnabled)
+        ? t * (1.0 + sensitiveAvg * params.musicReactSpeedAmount)
+        : t;
+
+      // Music reactive twist
+      if (params.musicReactTwist && micEnabled && params.twistOn) {
+        const twistBoost = sensitiveAvg * params.musicReactTwistAmount * 3.0;
+        material.uniforms.uTwistAmount.value = params.twistAmount + twistBoost;
       }
 
       if (!isDragging) {
@@ -4664,7 +5354,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         ? Math.max(0.0, params.offsetAmount + Math.sin(t * params.offsetAnimSpeed) * params.offsetAnimAmount)
         : params.offsetAmount;
 
-      material.uniforms.iTime.value = t;
+      material.uniforms.iTime.value = shaderTime;
       material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
       material.uniforms.uFractalRotation.value.set(
         params.uFractalRotationX,
@@ -4705,7 +5395,11 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uGlowAlphaA.value = params.glowAlphaA;
       material.uniforms.uGlowColorB.value.set(params.glowColorB);
       material.uniforms.uGlowAlphaB.value = params.glowAlphaB;
-      material.uniforms.uGlowStrength.value = params.glowStrength;
+      // Glow pulse: boost strength with audio
+      const glowPulse = (params.musicReactGlow && micEnabled && params.glowOn)
+        ? sensitiveAvg * params.musicReactGlowAmount
+        : 0;
+      material.uniforms.uGlowStrength.value = params.glowStrength + glowPulse;
       material.uniforms.uGlowWidth.value = params.glowWidth;
       material.uniforms.uGlowEmission.value = params.glowEmission;
       material.uniforms.uGlowScroll.value = params.glowScroll ? 1.0 : 0.0;
@@ -4795,6 +5489,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uChromaticSpeed.value = params.chromaticSpeed;
 
       material.uniforms.uScreenRotateAngle.value = screenRotateAngle;
+      material.uniforms.uVerticalMode.value = isVerticalMode ? 1.0 : 0.0;
 
       if (!isBusyExport && !params.breathingOn) {
         if ((keys["ArrowUp"] || keys["w"] || keys["W"]) && !isTypingContext()) navCamera.translateZ(-params.flySpeed);
