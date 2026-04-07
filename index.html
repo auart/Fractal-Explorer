@@ -2841,6 +2841,7 @@ if (isMobile) {
 
     let lastBeatTime = 0;
     let bpm = 120;
+    let smoothedAudio = 0;
 
     // Smoothed audio — low-pass filtered so nothing jitters
     let smoothedAudio   = 0.0;
@@ -6065,34 +6066,15 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       params.zoomValue = clampZoom(params.zoomValue);
       params.uBailout = safeBailout(params.uBailout);
 
-      let rawAudioRaw = 0;
-      try { rawAudioRaw = getAudioReactiveAverage(); } catch(e) {}
-      // Guard against NaN — a NaN uniform value breaks WebGL rendering entirely
-      const rawAudio = (isFinite(rawAudioRaw) && rawAudioRaw >= 0) ? rawAudioRaw : 0;
-
-      // ── Low-pass smooth the audio signal ─────────────────────────────────
-      const safeDt = Math.max(0.001, Math.min(0.1, dt)); // clamp dt so filter is stable
-      const attackRate  = 1.0 - Math.pow(0.25, safeDt * 60);
-      const releaseRate = 1.0 - Math.pow(0.06, safeDt * 60);
+      const rawAudio = getAudioReactiveAverage();
+      // Simple one-pole low-pass filter — attack fast, release slow
       if (rawAudio > smoothedAudio) {
-        smoothedAudio += (rawAudio - smoothedAudio) * attackRate;
+        smoothedAudio = smoothedAudio + (rawAudio - smoothedAudio) * 0.4;
       } else {
-        smoothedAudio += (rawAudio - smoothedAudio) * releaseRate;
+        smoothedAudio = smoothedAudio + (rawAudio - smoothedAudio) * 0.08;
       }
       if (!isFinite(smoothedAudio)) smoothedAudio = 0;
-      smoothedAudio = Math.max(0, Math.min(1, smoothedAudio));
-
-      // ── Beat phase from tap BPM or auto-detect ────────────────────────────
-      const effectiveBpm = (tapTimes.length >= 2 ? tapBpmValue : bpm) || 120;
-      beatPhase = ((t * effectiveBpm / 60.0)) % 1.0; // simple phase, no lastBeatPhaseT offset
-      const beatPulse = Math.pow(Math.max(0, Math.cos(beatPhase * Math.PI * 2.0)), 3);
-
-      // Auto BPM detection from mic peaks
-      if (params.musicReact && micEnabled && rawAudio > 0.45 && (t - lastBeatTime > 0.25)) {
-        const gap = t - lastBeatTime;
-        if (gap > 0.1 && gap < 2.0) bpm = 0.85 * bpm + 0.15 * (60.0 / gap);
-        lastBeatTime = t;
-      }
+      const sensitiveAvg = smoothedAudio;
 
       handlePlaylistAutomation();
 
@@ -6105,41 +6087,41 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       if (params.kaleidoscopeMode) {
         params.lightAzimuth = ((params.lightAzimuth + dt * params.kaleidoscopeSpeed + Math.PI) % (Math.PI * 2)) - Math.PI;
-        if (lightAzimuthController) lightAzimuthController.updateDisplay();
+        if (lightAzimuthController) {
+          lightAzimuthController.updateDisplay();
+        }
       }
 
-      // ── Power animation ───────────────────────────────────────────────────
       if (params.powerAnimation) {
         let speed = params.powerAnimationSpeed;
 
-        // BPM sync scales the oscillation rate to musical tempo
-        if (params.musicMatch) speed *= effectiveBpm / 120.0;
-
-        // Audio react: accumulate scroll so power MOVES THROUGH values smoothly
-        // instead of jumping. More audio = faster scroll, never backward.
-        if (params.musicReactPower && params.musicReact) {
-          audioScrollAccum += dt * smoothedAudio * params.musicReactPowerAmount * 1.5;
+        if (params.musicMatch && micEnabled) {
+          if (sensitiveAvg > 0.4 && (t - lastBeatTime > 0.3)) {
+            bpm = 60.0 / Math.max(0.0001, (t - lastBeatTime));
+            lastBeatTime = t;
+          }
+          // Blend auto-detected bpm with tap bpm — tap takes priority if used recently
+          const effectiveBpm = tapTimes.length >= 2 ? tapBpmValue : bpm;
+          speed *= effectiveBpm / 120.0;
         }
 
+        // Music makes it scroll faster — smooth speed scale, not amplitude jitter
+        if (params.musicReactPower && micEnabled) {
+          speed = speed * (1.0 + sensitiveAvg * params.musicReactPowerAmount * 2.0);
+        }
+
+        // Multiplicative oscillation around uPower
         const depth = Math.min(0.85, params.powerAnimationDepth || 0.5);
-        const cycle = Math.sin((t * speed + audioScrollAccum) * Math.PI * 2.0);
+        const cycle = Math.sin(t * speed * Math.PI * 2.0);
         material.uniforms.uPower.value = Math.max(2.0, params.uPower * (1.0 + cycle * depth));
       } else {
         material.uniforms.uPower.value = params.uPower;
-        if (params.musicReactPower && params.musicReact) {
-          audioScrollAccum += dt * smoothedAudio * params.musicReactPowerAmount * 1.5;
-        }
       }
 
-      // ── Rotation — audio smoothly scales speed, never jumps ──────────────
       if (!isDragging) {
-        // Speed react: audio adds a smooth speed multiplier to whatever is active
-        const speedMult = (params.musicReactSpeed && params.musicReact)
-          ? 1.0 + smoothedAudio * params.musicReactSpeedAmount * 1.5
-          : 1.0;
-        if (params.autoRotateX) params.uFractalRotationX += dt * params.rotateSpeedX * speedMult;
-        if (params.autoRotateY) params.uFractalRotationY += dt * params.rotateSpeedY * speedMult;
-        if (params.autoRotateZ) params.uFractalRotationZ += dt * params.rotateSpeedZ * speedMult;
+        if (params.autoRotateX) params.uFractalRotationX += dt * params.rotateSpeedX;
+        if (params.autoRotateY) params.uFractalRotationY += dt * params.rotateSpeedY;
+        if (params.autoRotateZ) params.uFractalRotationZ += dt * params.rotateSpeedZ;
       }
 
       if (rotXController) rotXController.updateDisplay();
@@ -6147,44 +6129,34 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       if (rotZController) rotZController.updateDisplay();
 
       let effectiveZoom = params.zoomValue;
+
       if (params.breathingOn) {
         const breathOffset = Math.sin(t * params.breathingSpeed) * params.breathingAmount;
         effectiveZoom = clampZoom(params.zoomValue + breathOffset);
       }
 
+      // Infinite zoom is now shader-based — no camera change needed
+
       navCamera.position.set(0, 0, effectiveZoom);
       navCamera.quaternion.set(0, 0, 0, 1);
 
-      // Camera spin — audio smoothly scales speed
       let screenRotateAngle = 0.0;
       if (params.cameraRotateOn) {
-        const camSpeedMult = (params.musicReactSpeed && params.musicReact)
-          ? 1.0 + smoothedAudio * params.musicReactSpeedAmount * 1.2
-          : 1.0;
-        screenRotateAngle = t * params.cameraRotateSpeed * camSpeedMult;
+        screenRotateAngle = t * params.cameraRotateSpeed;
       }
 
-      // ── Psy scale — smoothed audio nudges scale gently ───────────────────
-      const scaleReact = (params.musicReact) ? smoothedAudio * params.micSensitivity * 2.0 : 0;
       if (params.psyScaleCycle) {
         const animatedScale = params.psyScale + Math.sin(t * params.psyScaleCycleSpeed) * params.psyScaleCycleAmount;
+        const scaleReact = (params.musicReact && micEnabled) ? sensitiveAvg * params.micSensitivity * 4.0 : 0;
         material.uniforms.uPsyScale.value = Math.max(0.1, animatedScale + scaleReact);
       } else {
+        const scaleReact = (params.musicReact && micEnabled) ? sensitiveAvg * params.micSensitivity * 4.0 : 0;
         material.uniforms.uPsyScale.value = Math.max(0.1, params.psyScale + scaleReact);
       }
 
-      // ── Stacked transforms ────────────────────────────────────────────────
       const animatedTwistAmount = params.twistAnimate
         ? params.twistAmount + Math.sin(t * params.twistAnimSpeed) * params.twistAnimAmount
         : params.twistAmount;
-
-      // Twist react — audio scrolls through twist values smoothly
-      let animatedTwistFinal = animatedTwistAmount;
-      if (params.musicReactTwist && params.musicReact && params.twistOn) {
-        // Accumulate twist offset so it scrolls rather than snaps
-        const twistScroll = Math.sin(t * 0.3 + audioScrollAccum * 0.5) * smoothedAudio * params.musicReactTwistAmount * 2.0;
-        animatedTwistFinal = animatedTwistAmount + twistScroll;
-      }
 
       const animatedTileAmount = params.tileAnimate
         ? Math.max(0.1, params.tileAmount + Math.sin(t * params.tileAnimSpeed) * params.tileAnimAmount)
@@ -6194,12 +6166,15 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         ? Math.max(0.0, params.offsetAmount + Math.sin(t * params.offsetAnimSpeed) * params.offsetAnimAmount)
         : params.offsetAmount;
 
-      // Shader time = real timeline always — speed react only affects rates, not iTime
-      const shaderTime = t;
-      // Speed multiplier used by rotation and tunnel below
-      const timeSpeedMult = (params.musicReactSpeed && params.musicReact)
-        ? 1.0 + smoothedAudio * params.musicReactSpeedAmount * 0.8
-        : 1.0;
+      // Shader time — optionally speed up with music
+      const shaderTime = (params.musicReactSpeed && params.musicReact && micEnabled)
+        ? t * (1.0 + sensitiveAvg * params.musicReactSpeedAmount)
+        : t;
+
+      // Twist react — smoothly boost twist amount with audio
+      const animatedTwistFinal = (params.musicReactTwist && params.musicReact && micEnabled && params.twistOn)
+        ? animatedTwistAmount + sensitiveAvg * params.musicReactTwistAmount * 3.0
+        : animatedTwistAmount;
 
       material.uniforms.iTime.value = shaderTime;
       material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
@@ -6248,24 +6223,20 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
       material.uniforms.uGlowReverse.value = params.glowReverse ? 1.0 : 0.0;
 
-      if (params.musicReactGlow && params.musicReact && params.glowOn) {
-        // Glow scroll speed follows the beat — speeds up on kick/downbeat, slows between
-        // Auto-enables scroll so the color moves along the edge
-        const baseScrollSpeed = Math.max(0.1, params.glowScrollSpeed);
-        const beatScrollSpeed = Math.min(10, baseScrollSpeed * (1.0 + (isFinite(beatPulse) ? beatPulse : 0) * params.musicReactGlowAmount * 3.0));
-        material.uniforms.uGlowScroll.value     = 1.0;  // force scroll on
-        material.uniforms.uGlowScrollSpeed.value= beatScrollSpeed;
-
-        // Alpha: Color A dims on beat, Color B brightens — creates movement feel
-        material.uniforms.uGlowAlphaA.value = params.glowAlphaA * (1.0 - beatPulse * 0.7);
-        material.uniforms.uGlowAlphaB.value = Math.min(1.0, params.glowAlphaB + beatPulse * 0.8);
-        material.uniforms.uGlowStrength.value = params.glowStrength * (1.0 + beatPulse * 0.4);
+      if (params.musicReactGlow && params.musicReact && micEnabled && params.glowOn) {
+        const pulse = Math.min(1.0, sensitiveAvg * params.musicReactGlowAmount * 1.5);
+        // Auto-enable scroll, speed up on beat
+        material.uniforms.uGlowScroll.value = 1.0;
+        material.uniforms.uGlowScrollSpeed.value = Math.max(0.05, params.glowScrollSpeed) * (1.0 + pulse * 3.0);
+        material.uniforms.uGlowAlphaA.value = params.glowAlphaA * (1.0 - pulse * 0.7);
+        material.uniforms.uGlowAlphaB.value = Math.min(1.0, params.glowAlphaB + pulse * 0.8);
+        material.uniforms.uGlowStrength.value = params.glowStrength * (1.0 + pulse * 0.4);
       } else {
-        material.uniforms.uGlowAlphaA.value     = params.glowAlphaA;
-        material.uniforms.uGlowAlphaB.value     = params.glowAlphaB;
-        material.uniforms.uGlowStrength.value   = params.glowStrength;
-        material.uniforms.uGlowScroll.value     = params.glowScroll ? 1.0 : 0.0;
-        material.uniforms.uGlowScrollSpeed.value= params.glowScrollSpeed;
+        material.uniforms.uGlowScroll.value = params.glowScroll ? 1.0 : 0.0;
+        material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
+        material.uniforms.uGlowAlphaA.value = params.glowAlphaA;
+        material.uniforms.uGlowAlphaB.value = params.glowAlphaB;
+        material.uniforms.uGlowStrength.value = params.glowStrength;
       }
 
       material.uniforms.uLineOn.value = params.lineOn ? 1.0 : 0.0;
@@ -6353,11 +6324,11 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uScreenRotateAngle.value = screenRotateAngle;
       material.uniforms.uVerticalMode.value = isVerticalMode ? 1.0 : 0.0;
 
-      // Tunnel uniforms — audio smoothly increases forward speed, never backward
-      const tunnelAudioBoost = (params.tunnelMusicReact && params.musicReact)
-        ? 1.0 + smoothedAudio * params.micSensitivity * Math.min(2.0, params.musicReactSpeedAmount + 0.5)
-        : 1.0;
-      const tunnelSpeedFinal = Math.max(0, params.tunnelSpeed) * tunnelAudioBoost;
+      // Tunnel uniforms
+      const tunnelSpeedFinal = params.tunnelSpeed *
+        (params.tunnelMusicReact && params.musicReact && micEnabled
+          ? (1.0 + sensitiveAvg * params.micSensitivity * 2.0)
+          : 1.0);
       // Infinite zoom — shader-side UV crossfade
       const izPhase = params.infiniteZoomOn
         ? (t * params.infiniteZoomSpeed * 0.2) % 1.0
