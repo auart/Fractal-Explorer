@@ -2847,7 +2847,7 @@ if (isMobile) {
     let beatPhase       = 0.0;   // 0..1 continuous beat phase from tap/auto BPM
     let lastBeatPhaseT  = 0.0;   // timeline time of last beat phase update
     let audioScrollAccum= 0.0;   // accumulated scroll for power/tunnel (never resets)
-    let shaderTimeAccum = -1.0;  // -1 = uninitialized, set to t on first frame
+    // shaderTime = t always; speed react affects rotation/tunnel rates not iTime
     // Tap tempo state
     let tapTimes = [];
     let tapBpmValue = 120;
@@ -6180,13 +6180,12 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         ? Math.max(0.0, params.offsetAmount + Math.sin(t * params.offsetAnimSpeed) * params.offsetAnimAmount)
         : params.offsetAmount;
 
-      // ── Shader time — accumulate each frame so it never jumps ──────────────
+      // Shader time = real timeline always — speed react only affects rates, not iTime
+      const shaderTime = t;
+      // Speed multiplier used by rotation and tunnel below
       const timeSpeedMult = (params.musicReactSpeed && params.musicReact)
         ? 1.0 + smoothedAudio * params.musicReactSpeedAmount * 0.8
         : 1.0;
-      if (shaderTimeAccum < 0) shaderTimeAccum = t; // init to current time on first frame
-      shaderTimeAccum += dt * timeSpeedMult;
-      const shaderTime = shaderTimeAccum;
 
       material.uniforms.iTime.value = shaderTime;
       material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
