@@ -1284,6 +1284,7 @@ style="width:100%; height:90px;"></textarea>
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button id="easyPlayPauseBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">⏸ Pause</button>
         <button id="easyPresetsBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">Presets</button>
+        <button id="easyTapBpmBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:12px; cursor:pointer;">Tap BPM</button>
       </div>
     </div>
 
@@ -1345,6 +1346,9 @@ style="width:100%; height:90px;"></textarea>
       <button id="mobilePlayBtn" type="button">Play</button>
     </div>
     <div id="rightPanel">
+      <div id="tapBpmContainer" style="display:none; padding:10px 8px 4px 8px;">
+        <button id="panelTapBpmBtn" style="width:100%; height:44px; border-radius:10px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.07); color:#fff; font-size:14px; font-weight:600; cursor:pointer; letter-spacing:0.03em;">Tap BPM — <span id="panelTapBpmVal">120</span></button>
+      </div>
       <div id="gui"></div>
     </div>
   </div>
@@ -2317,7 +2321,7 @@ float primitiveShape(vec3 pos) {
       uFractalRotationZ: 0.0,
       uShape: 0,
 
-      musicReact: true,
+      musicReact: false,
       micSensitivity: 1.0,
       musicReactGlow: true,
       musicReactGlowAmount: 1.0,
@@ -2327,6 +2331,7 @@ float primitiveShape(vec3 pos) {
       musicReactPowerAmount: 0.5,
       musicReactTwist: false,
       musicReactTwistAmount: 0.5,
+      tapBpm: 120,
 
       powerAnimation: false,
       powerAnimationSpeed: 1.0,
@@ -2499,7 +2504,15 @@ float primitiveShape(vec3 pos) {
       playlistAutoplay: false
     };
 
-    const PRESET_KEYS = Object.keys(params);
+    const AUDIO_KEYS = new Set([
+      "musicReact", "micSensitivity", "musicMatch",
+      "musicReactGlow", "musicReactGlowAmount",
+      "musicReactSpeed", "musicReactSpeedAmount",
+      "musicReactPower", "musicReactPowerAmount",
+      "musicReactTwist", "musicReactTwistAmount",
+      "tapBpm"
+    ]);
+    const PRESET_KEYS = Object.keys(params).filter(k => !AUDIO_KEYS.has(k));
 
     const PATTERN_OPTIONS = {
       Off: 0,
@@ -2549,6 +2562,10 @@ if (isMobile) {
 
     let lastBeatTime = 0;
     let bpm = 120;
+    // Tap tempo state
+    let tapTimes = [];
+    let tapBpmValue = 120;
+    const TAP_MAX_GAP_MS = 3000; // reset if >3s between taps
     let micEnabled = false;
 
     let rotXController, rotYController, rotZController;
@@ -4228,7 +4245,54 @@ bindTap(mobilePlayBtn, () => {
       });
     }
 
-    buildMobilePalettes();
+    // ─── Tap BPM ──────────────────────────────────────────────────────────
+    function handleTap() {
+      const now = Date.now();
+      // Reset if gap too large
+      if (tapTimes.length > 0 && (now - tapTimes[tapTimes.length - 1]) > TAP_MAX_GAP_MS) {
+        tapTimes = [];
+      }
+      tapTimes.push(now);
+      // Need at least 2 taps for an interval
+      if (tapTimes.length >= 2) {
+        const intervals = [];
+        for (let i = 1; i < tapTimes.length; i++) {
+          intervals.push(tapTimes[i] - tapTimes[i - 1]);
+        }
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        tapBpmValue = Math.round(60000 / avgInterval);
+        tapBpmValue = Math.max(40, Math.min(300, tapBpmValue));
+        params.tapBpm = tapBpmValue;
+        bpm = tapBpmValue; // also update the musicMatch bpm
+      }
+      // Keep only last 8 taps for rolling average
+      if (tapTimes.length > 8) tapTimes = tapTimes.slice(-8);
+      // Update displays
+      updateTapBpmDisplay();
+    }
+
+    function updateTapBpmDisplay() {
+      const val = tapTimes.length >= 2 ? tapBpmValue + " BPM" : "Tap…";
+      const easyBtn = document.getElementById("easyTapBpmBtn");
+      const panelVal = document.getElementById("panelTapBpmVal");
+      if (easyBtn) easyBtn.textContent = tapTimes.length >= 2 ? `${tapBpmValue} BPM ●` : "Tap BPM";
+      if (panelVal) panelVal.textContent = tapTimes.length >= 2 ? tapBpmValue : "Tap…";
+    }
+
+    const easyTapBpmBtn = document.getElementById("easyTapBpmBtn");
+    const panelTapBpmBtn = document.getElementById("panelTapBpmBtn");
+    if (easyTapBpmBtn) easyTapBpmBtn.addEventListener("click", handleTap);
+    if (panelTapBpmBtn) panelTapBpmBtn.addEventListener("click", handleTap);
+
+    // Show/hide the panel tap button when Audio Reactive folder opens
+    // We do this by observing the audioF folder's open state after GUI is built
+    // (dat.GUI doesn't have a native event — we poll on folder click instead)
+    const audioFolderTitle = document.querySelector("#gui .dg");
+    // Wire via mutation or just show it always since it's compact
+    const tapBpmContainer = document.getElementById("tapBpmContainer");
+    if (tapBpmContainer) tapBpmContainer.style.display = "block";
+
+
     syncMobileControlsFromParams();
     syncEasyDockControlsFromParams();
     
@@ -5278,36 +5342,22 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
             bpm = 60.0 / Math.max(0.0001, (t - lastBeatTime));
             lastBeatTime = t;
           }
-          speed *= bpm / 120.0;
+          // Blend auto-detected bpm with tap bpm — tap takes priority if used recently
+          const effectiveBpm = tapTimes.length >= 2 ? tapBpmValue : bpm;
+          speed *= effectiveBpm / 120.0;
         }
 
-        // Multiplicative oscillation: cycles between uPower * (1 - depth) and uPower * (1 + depth)
+        // Music makes it scroll faster — smooth speed scale, not amplitude jitter
+        if (params.musicReactPower && micEnabled) {
+          speed = speed * (1.0 + sensitiveAvg * params.musicReactPowerAmount * 2.0);
+        }
+
+        // Multiplicative oscillation around uPower
         const depth = Math.min(0.85, params.powerAnimationDepth || 0.5);
-        let pwrBoost = 0;
-        if (params.musicReactPower && micEnabled) {
-          pwrBoost = sensitiveAvg * params.musicReactPowerAmount;
-        }
         const cycle = Math.sin(t * speed * Math.PI * 2.0);
-        material.uniforms.uPower.value = Math.max(2.0, params.uPower * (1.0 + cycle * depth + pwrBoost));
+        material.uniforms.uPower.value = Math.max(2.0, params.uPower * (1.0 + cycle * depth));
       } else {
-        // Even without animation, power can react to music
-        if (params.musicReactPower && micEnabled) {
-          const pwrBoost = sensitiveAvg * params.musicReactPowerAmount;
-          material.uniforms.uPower.value = Math.max(2.0, params.uPower * (1.0 + pwrBoost));
-        } else {
-          material.uniforms.uPower.value = params.uPower;
-        }
-      }
-
-      // Music reactive speed — scales shader time
-      const shaderTime = (params.musicReactSpeed && micEnabled)
-        ? t * (1.0 + sensitiveAvg * params.musicReactSpeedAmount)
-        : t;
-
-      // Music reactive twist
-      if (params.musicReactTwist && micEnabled && params.twistOn) {
-        const twistBoost = sensitiveAvg * params.musicReactTwistAmount * 3.0;
-        material.uniforms.uTwistAmount.value = params.twistAmount + twistBoost;
+        material.uniforms.uPower.value = params.uPower;
       }
 
       if (!isDragging) {
@@ -5337,9 +5387,11 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       if (params.psyScaleCycle) {
         const animatedScale = params.psyScale + Math.sin(t * params.psyScaleCycleSpeed) * params.psyScaleCycleAmount;
-        material.uniforms.uPsyScale.value = Math.max(0.1, animatedScale);
+        const scaleReact = (params.musicReact && micEnabled) ? sensitiveAvg * params.micSensitivity * 4.0 : 0;
+        material.uniforms.uPsyScale.value = Math.max(0.1, animatedScale + scaleReact);
       } else {
-        material.uniforms.uPsyScale.value = params.psyScale;
+        const scaleReact = (params.musicReact && micEnabled) ? sensitiveAvg * params.micSensitivity * 4.0 : 0;
+        material.uniforms.uPsyScale.value = Math.max(0.1, params.psyScale + scaleReact);
       }
 
       const animatedTwistAmount = params.twistAnimate
@@ -5353,6 +5405,16 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       const animatedOffsetAmount = params.offsetAnimate
         ? Math.max(0.0, params.offsetAmount + Math.sin(t * params.offsetAnimSpeed) * params.offsetAnimAmount)
         : params.offsetAmount;
+
+      // Shader time — optionally speed up with music
+      const shaderTime = (params.musicReactSpeed && params.musicReact && micEnabled)
+        ? t * (1.0 + sensitiveAvg * params.musicReactSpeedAmount)
+        : t;
+
+      // Twist react — smoothly boost twist amount with audio
+      const animatedTwistFinal = (params.musicReactTwist && params.musicReact && micEnabled && params.twistOn)
+        ? animatedTwistAmount + sensitiveAvg * params.musicReactTwistAmount * 3.0
+        : animatedTwistAmount;
 
       material.uniforms.iTime.value = shaderTime;
       material.uniforms.uMusic.value = (params.musicReact && micEnabled) ? sensitiveAvg : 0.0;
@@ -5392,19 +5454,25 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       material.uniforms.uGlowOn.value = params.glowOn ? 1.0 : 0.0;
       material.uniforms.uGlowColorA.value.set(params.glowColorA);
-      material.uniforms.uGlowAlphaA.value = params.glowAlphaA;
       material.uniforms.uGlowColorB.value.set(params.glowColorB);
-      material.uniforms.uGlowAlphaB.value = params.glowAlphaB;
-      // Glow pulse: boost strength with audio
-      const glowPulse = (params.musicReactGlow && micEnabled && params.glowOn)
-        ? sensitiveAvg * params.musicReactGlowAmount
-        : 0;
-      material.uniforms.uGlowStrength.value = params.glowStrength + glowPulse;
       material.uniforms.uGlowWidth.value = params.glowWidth;
       material.uniforms.uGlowEmission.value = params.glowEmission;
       material.uniforms.uGlowScroll.value = params.glowScroll ? 1.0 : 0.0;
       material.uniforms.uGlowScrollSpeed.value = params.glowScrollSpeed;
       material.uniforms.uGlowReverse.value = params.glowReverse ? 1.0 : 0.0;
+
+      if (params.musicReactGlow && params.musicReact && micEnabled && params.glowOn) {
+        // Crossfade alpha A→B with the beat: at peak audio, Color B is fully visible
+        // This makes the glow look like it's sweeping/pulsing rather than just brightening
+        const pulse = Math.min(1.0, sensitiveAvg * params.musicReactGlowAmount * 1.5);
+        material.uniforms.uGlowAlphaA.value = params.glowAlphaA * (1.0 - pulse * 0.85);
+        material.uniforms.uGlowAlphaB.value = params.glowAlphaB + (1.0 - params.glowAlphaB) * pulse;
+        material.uniforms.uGlowStrength.value = params.glowStrength * (1.0 + pulse * 0.6);
+      } else {
+        material.uniforms.uGlowAlphaA.value = params.glowAlphaA;
+        material.uniforms.uGlowAlphaB.value = params.glowAlphaB;
+        material.uniforms.uGlowStrength.value = params.glowStrength;
+      }
 
       material.uniforms.uLineOn.value = params.lineOn ? 1.0 : 0.0;
       material.uniforms.uLineColorA.value.set(params.lineColorA);
@@ -5459,7 +5527,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uRadialSegments.value = params.radialSegments;
       material.uniforms.uSymmetryStack.value = params.symmetryStack ? 1.0 : 0.0;
       material.uniforms.uTwistOn.value = params.twistOn ? 1.0 : 0.0;
-      material.uniforms.uTwistAmount.value = animatedTwistAmount;
+      material.uniforms.uTwistAmount.value = animatedTwistFinal;
       material.uniforms.uFoldOn.value = params.foldOn ? 1.0 : 0.0;
       material.uniforms.uFoldIterations.value = params.foldIterations;
       material.uniforms.uTileOn.value = params.tileOn ? 1.0 : 0.0;
