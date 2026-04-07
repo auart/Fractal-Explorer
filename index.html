@@ -1299,7 +1299,7 @@ style="width:100%; height:90px;"></textarea>
       </div>
 
       <!-- Preset list — shown when presets are open, scrollable -->
-      <div id="easyPresetList" style="display:none; flex-direction:column; gap:6px; max-height:212px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;"></div>
+      <div id="easyPresetList" style="display:none; flex-direction:column; gap:6px; max-height:175px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;"></div>
 
       <!-- Always-visible bottom buttons -->
       <div style="display:flex; gap:8px; margin-top:10px;">
@@ -4673,21 +4673,21 @@ bindTap(mobilePlayBtn, () => {
           "background:rgba(255,255,255,0.05)", "cursor:pointer",
           "overflow:hidden", "padding:0", "text-align:left",
           "transition:border-color 0.1s, background 0.1s",
-          "min-width:0"
+          "min-width:0", "width:100%"
         ].join(";");
 
         // Unified thumbnail area — padding-top 56.25% = 16:9, bulletproof cross-browser
         const imgWrap = document.createElement("div");
-        imgWrap.style.cssText = "position:relative; width:100%; padding-top:56.25%; overflow:hidden; background:#111;";
+        imgWrap.style.cssText = "width:100%; height:60px; overflow:hidden; background:#0d0d0d; flex-shrink:0; position:relative;";
 
         if (thumbs[name]) {
           const img = document.createElement("img");
           img.src = thumbs[name];
-          img.style.cssText = "position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;";
+          img.style.cssText = "width:100%; height:100%; object-fit:cover; display:block; position:absolute; inset:0;";
           imgWrap.appendChild(img);
         } else {
           const ph = document.createElement("div");
-          ph.style.cssText = "position:absolute; inset:0; background:linear-gradient(135deg,#18d8d818,#a6ff3c10); display:flex; align-items:center; justify-content:center;";
+          ph.style.cssText = "width:100%; height:100%; background:linear-gradient(135deg,#18d8d818,#a6ff3c10); display:flex; align-items:center; justify-content:center; position:absolute; inset:0;";
           const icon = document.createElement("span");
           icon.textContent = "✦";
           icon.style.cssText = "font-size:12px; color:rgba(255,255,255,0.18);";
