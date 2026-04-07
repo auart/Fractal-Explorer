@@ -125,9 +125,9 @@ body.panelsHidden #easyDock {
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,0.07);
 }
 
 #easyDockBar {
@@ -137,38 +137,41 @@ body.panelsHidden #easyDock {
 }
 
 #easyDockBar button {
-  height: 48px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.7);
-  font-size: 13px;
-  font-weight: 500;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
-  letter-spacing: 0.01em;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 #easyDockBar button:hover {
-  background: rgba(255,255,255,0.11);
-  color: #fff;
-  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.85);
+  border-color: rgba(255,255,255,0.15);
 }
 
 #easyDockBar button.active {
-  background: rgba(24,216,216,0.15);
-  border-color: rgba(24,216,216,0.45);
+  background: rgba(24,216,216,0.12);
+  border-color: rgba(24,216,216,0.35);
   color: #18d8d8;
+  letter-spacing: 0.08em;
 }
 
 .easyDockPanel {
   display: none;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 14px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.07);
   box-sizing: border-box;
 }
 
@@ -190,20 +193,23 @@ body.panelsHidden #easyDock {
 }
 
 .easySliderLabel {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.38);
 }
 
 .easySliderValue {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
-  color: rgba(255,255,255,0.9);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: rgba(255,255,255,0.65);
   font-variant-numeric: tabular-nums;
   min-width: 36px;
   text-align: right;
+  letter-spacing: 0.02em;
 }
 
 /* Custom range slider */
@@ -219,31 +225,30 @@ body.panelsHidden #easyDock {
 }
 
 .easySliderRow input[type="range"]::-webkit-slider-runnable-track {
-  height: 4px;
+  height: 3px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.1);
 }
 
 .easySliderRow input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: #fff;
-  margin-top: -6px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.5);
-  transition: transform 0.1s, box-shadow 0.1s;
+  background: rgba(255,255,255,0.85);
+  margin-top: -4.5px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.4);
+  transition: background 0.1s, transform 0.1s;
 }
 
 .easySliderRow input[type="range"]:hover::-webkit-slider-thumb {
+  background: #18d8d8;
   transform: scale(1.2);
-  box-shadow: 0 0 10px rgba(24,216,216,0.5);
 }
 
 .easySliderRow input[type="range"]:active::-webkit-slider-thumb {
-  transform: scale(1.1);
   background: #18d8d8;
-  box-shadow: 0 0 14px rgba(24,216,216,0.7);
+  transform: scale(1.1);
 }
 
 /* Fine control mode — thumb turns green */
@@ -300,21 +305,23 @@ body.panelsHidden #easyDock {
 }
 
 #easyMenuPanel button {
-  height: 44px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.75);
-  font-size: 12px;
-  font-weight: 500;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.55);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', monospace;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-  letter-spacing: 0.01em;
+  transition: background 0.1s, color 0.1s;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 #easyMenuPanel button:hover {
-  background: rgba(255,255,255,0.11);
-  color: #fff;
+  background: rgba(255,255,255,0.09);
+  color: rgba(255,255,255,0.9);
 }
 
 .easyPaletteBlock {
@@ -487,31 +494,36 @@ body.mobileMode #easyDock {
       height: 100%;
     }
 
+    /* ── Unified Panel Design System ───────────────────────────────────── */
+    #leftPanel, #rightPanel {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    }
+
     .panelBox {
-      background: rgba(255,255,255,0.04);
-      color: #fff;
-      padding: 12px;
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 12px;
-      box-sizing: border-box;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
     .panelBox label {
       display: block;
+      padding: 0 12px;
       margin-bottom: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
+      color: rgba(255,255,255,0.3);
+      font-family: 'SF Mono', 'Fira Code', monospace;
     }
 
     .rowGap {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
+      padding: 0 10px;
     }
 
+    /* Left panel base controls */
     #leftPanel button,
     #leftPanel select,
     #leftPanel input[type="text"],
@@ -519,62 +531,66 @@ body.mobileMode #easyDock {
     #leftPanel textarea {
       width: 100%;
       box-sizing: border-box;
-      padding: 8px 12px;
-      font-size: 13px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.06);
-      color: #fff;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.75);
+      letter-spacing: 0.02em;
     }
 
-    #leftPanel select option {
-      background: #1a1a1a;
-      color: #fff;
-    }
-
-    #leftPanel textarea {
-      resize: vertical;
-      font-family: inherit;
-    }
+    #leftPanel select option { background: #111; color: #fff; }
+    #leftPanel textarea { resize: vertical; font-family: inherit; }
 
     #leftPanel button {
       cursor: pointer;
       text-align: center;
-      transition: background 0.12s, border-color 0.12s;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+      color: rgba(255,255,255,0.65);
     }
 
     #leftPanel button:hover {
-      background: rgba(255,255,255,0.12);
-      border-color: rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.9);
     }
 
-    #leftPanel button:disabled {
-      opacity: 0.4;
-      cursor: wait;
-    }
+    #leftPanel button:disabled { opacity: 0.35; cursor: wait; }
 
     #leftPanel button.freezeBtn {
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.7);
-      border-color: rgba(255,255,255,0.14);
-    }
-
-    #leftPanel button.freezeBtn.active {
-      background: rgba(200,0,0,0.35);
-      color: #ff6b6b;
-      border-color: rgba(200,0,0,0.6);
-    }
-
-    #leftPanel button.secondaryDark {
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.55);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.6);
       border-color: rgba(255,255,255,0.1);
     }
-
+    #leftPanel button.freezeBtn.active {
+      background: rgba(220,40,40,0.2);
+      color: #ff7070;
+      border-color: rgba(220,40,40,0.4);
+    }
+    #leftPanel button.secondaryDark {
+      background: transparent;
+      color: rgba(255,255,255,0.4);
+      border-color: rgba(255,255,255,0.07);
+    }
     #leftPanel button.secondaryDark.active {
-      background: rgba(0,220,130,0.18);
-      color: #0f5;
-      border-color: rgba(0,220,130,0.45);
+      background: rgba(24,216,216,0.12);
+      color: #18d8d8;
+      border-color: rgba(24,216,216,0.3);
+    }
+
+    /* Transport display */
+    #transportDisplay {
+      font-size: 10px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: rgba(255,255,255,0.5);
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      padding: 7px 10px;
+      line-height: 1.6;
+      letter-spacing: 0.04em;
     }
 
     #startOverlay {
@@ -973,6 +989,327 @@ body.mobileMode .mobilePanel.show {
         font-size: 32px;
       }
     }
+
+    /* ── Easy action buttons ───────────────────────────────────────────── */
+    .easy-action-btn {
+      flex: 1;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.6);
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+    .easy-action-btn:hover {
+      background: rgba(255,255,255,0.09);
+      color: rgba(255,255,255,0.9);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .easy-action-btn.active {
+      background: rgba(24,216,216,0.12);
+      border-color: rgba(24,216,216,0.35);
+      color: #18d8d8;
+    }
+
+    /* ── Custom Right Panel ─────────────────────────────────────────────── */
+    #rightPanel {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 11px;
+    }
+
+    .cp-panel {
+      padding: 0 0 80px 0;
+    }
+
+    .cp-section {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+
+    .cp-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px 9px 12px;
+      cursor: pointer;
+      user-select: none;
+      background: rgba(255,255,255,0.0);
+      transition: background 0.1s;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .cp-section-header:hover {
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.8);
+    }
+
+    .cp-section-header.open {
+      color: rgba(255,255,255,0.85);
+    }
+
+    .cp-section-arrow {
+      font-size: 8px;
+      transition: transform 0.18s;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .cp-section-header.open .cp-section-arrow {
+      transform: rotate(90deg);
+      color: rgba(255,255,255,0.6);
+    }
+
+    .cp-section-body {
+      display: none;
+      padding: 4px 0 8px 0;
+    }
+
+    .cp-section-body.open {
+      display: block;
+    }
+
+    /* Sub-section (nested folder) */
+    .cp-subsection {
+      margin: 2px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+
+    .cp-subsection-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.38);
+      transition: color 0.1s, background 0.1s;
+    }
+
+    .cp-subsection-header:hover {
+      color: rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .cp-subsection-header.open {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .cp-subsection-body {
+      display: none;
+      padding: 2px 0 6px 0;
+    }
+
+    .cp-subsection-body.open {
+      display: block;
+    }
+
+    /* Row — label + control */
+    .cp-row {
+      display: flex;
+      align-items: center;
+      padding: 3px 12px;
+      gap: 8px;
+      min-height: 26px;
+    }
+
+    .cp-row:hover {
+      background: rgba(255,255,255,0.025);
+    }
+
+    .cp-label {
+      flex: 0 0 auto;
+      width: 118px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cp-row:hover .cp-label {
+      color: rgba(255,255,255,0.75);
+    }
+
+    .cp-control {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    /* Slider */
+    .cp-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      outline: none;
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    .cp-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      cursor: pointer;
+      transition: background 0.1s, transform 0.1s;
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    }
+
+    .cp-slider:hover::-webkit-slider-thumb {
+      background: #18d8d8;
+      transform: scale(1.2);
+    }
+
+    .cp-slider:active::-webkit-slider-thumb {
+      background: #18d8d8;
+    }
+
+    .cp-value {
+      flex: 0 0 auto;
+      width: 38px;
+      text-align: right;
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.02em;
+    }
+
+    /* Toggle / checkbox */
+    .cp-toggle {
+      position: relative;
+      width: 32px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .cp-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .cp-toggle-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cp-toggle input:checked + .cp-toggle-track {
+      background: rgba(24,216,216,0.55);
+    }
+
+    .cp-toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.7);
+      transition: transform 0.15s, background 0.15s;
+      pointer-events: none;
+    }
+
+    .cp-toggle input:checked ~ .cp-toggle-thumb {
+      transform: translateX(14px);
+      background: #fff;
+    }
+
+    /* Select / dropdown */
+    .cp-select {
+      flex: 1;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: rgba(255,255,255,0.75);
+      font-size: 11px;
+      padding: 3px 6px;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .cp-select option {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .cp-select:focus {
+      border-color: rgba(24,216,216,0.4);
+    }
+
+    /* Color picker */
+    .cp-color-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .cp-color {
+      width: 28px;
+      height: 20px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+      padding: 0;
+      background: none;
+      flex-shrink: 0;
+    }
+
+    .cp-color-hex {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 5px;
+      color: rgba(255,255,255,0.6);
+      font-size: 10px;
+      font-family: inherit;
+      padding: 2px 5px;
+      outline: none;
+      width: 0;
+    }
+
+    .cp-color-hex:focus {
+      border-color: rgba(24,216,216,0.4);
+      color: #fff;
+    }
+
+    /* Section accent colors */
+    .cp-section[data-section="shape"] .cp-section-header.open { color: rgba(166,255,60,0.9); }
+    .cp-section[data-section="color"] .cp-section-header.open { color: rgba(24,216,216,0.9); }
+    .cp-section[data-section="motion"] .cp-section-header.open { color: rgba(255,154,31,0.9); }
+    .cp-section[data-section="lighting"] .cp-section-header.open { color: rgba(255,220,100,0.9); }
+    .cp-section[data-section="glow"] .cp-section-header.open { color: rgba(200,120,255,0.9); }
+    .cp-section[data-section="audio"] .cp-section-header.open { color: rgba(255,80,120,0.9); }
+    .cp-section[data-section="tunnel"] .cp-section-header.open { color: rgba(80,200,255,0.9); }
   </style>
 </head>
 <body>
@@ -1007,138 +1344,135 @@ body.mobileMode .mobilePanel.show {
 
   <div id="appShell">
     <div id="leftPanel">
+
+      <!-- Random & Re-roll -->
       <div class="panelBox rowGap">
-<button id="randomBtn">Random</button>
-<div id="devButtons" style="display:none;">
-  <button id="goodBtn">👍 Good</button>
-  <button id="badBtn">👎 Bad</button>
-</div>
-        <label for="presetNameInput">Preset Name</label>
-        <input id="presetNameInput" type="text" placeholder="My preset" />
+        <label>Generate</label>
+        <button id="randomBtn">⚄ Random</button>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="goodBtn" style="display:none;">👍</button>
+          <button id="badBtn" style="display:none;">👎</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="rerollShapeBtn2" onclick="rerollShape()">Shape</button>
+          <button id="rerollColorBtn2" onclick="rerollColor()">Color</button>
+          <button id="rerollMotionBtn2" onclick="rerollMotion()">Motion</button>
+          <button id="rerollFxBtn2" onclick="rerollFx()">FX</button>
+        </div>
+      </div>
 
-        <button id="savePresetBtn">Save Preset</button>
-        <button id="overwritePresetBtn">Overwrite Selected</button>
-
-        <label for="presetSelect">Load Preset</label>
-        <select id="presetSelect">
-          <option value="">No saved presets</option>
-        </select>
-
-        <button id="loadPresetBtn">Load Selected</button>
-        <button id="deletePresetBtn">Delete Selected</button>
-        <button id="exportPresetBtn">Export Preset JSON</button>
-        <button id="importPresetBtn">Import Preset JSON</button>
-        <button id="copyStateBtn">Copy State JSON</button>
-        <button id="pasteStateBtn">Apply State JSON</button>
-
-<textarea id="pasteStateBox"
-placeholder="Paste state JSON here"
-style="width:100%; height:90px;"></textarea>
-
+      <!-- Presets -->
+      <div class="panelBox rowGap">
+        <label>Presets</label>
+        <input id="presetNameInput" type="text" placeholder="Preset name…" />
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="savePresetBtn">Save</button>
+          <button id="overwritePresetBtn">Overwrite</button>
+        </div>
+        <select id="presetSelect"><option value="">No saved presets</option></select>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="loadPresetBtn">Load</button>
+          <button id="deletePresetBtn">Delete</button>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="exportPresetBtn">Export JSON</button>
+          <button id="importPresetBtn">Import JSON</button>
+        </div>
         <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;" />
       </div>
 
+      <!-- State -->
+      <div class="panelBox rowGap">
+        <label>State</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="copyStateBtn">Copy JSON</button>
+          <button id="pasteStateBtn">Apply JSON</button>
+        </div>
+        <textarea id="pasteStateBox" placeholder="Paste state JSON here…" style="height:72px;"></textarea>
+      </div>
+
+      <!-- Transport -->
       <div class="panelBox rowGap">
         <label>Transport</label>
         <div id="transportDisplay">Time 0.00s<br>State Play, 1.00x</div>
-        <div class="twoCol">
-          <button id="rewindBtn" type="button">Rewind</button>
-          <button id="playPauseBtn" type="button">Pause</button>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="rewindBtn">⏮ Rewind</button>
+          <button id="playPauseBtn">⏸ Pause</button>
         </div>
-        <div class="twoCol">
-          <button id="stepBackBtn" type="button">Step Back</button>
-          <button id="stepForwardBtn" type="button">Step Forward</button>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="stepBackBtn">◀ Step</button>
+          <button id="stepForwardBtn">Step ▶</button>
         </div>
-        <button id="fastForwardBtn" type="button">Fast Forward</button>
-        <label for="playbackSpeedSelect">Playback Speed</label>
+        <button id="fastForwardBtn">Fast Forward ⏭</button>
         <select id="playbackSpeedSelect">
-          <option value="0.25">0.25x</option>
-          <option value="0.5">0.5x</option>
-          <option value="1" selected>1x</option>
-          <option value="1.5">1.5x</option>
-          <option value="2">2x</option>
-          <option value="3">3x</option>
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.5">1.5×</option>
+          <option value="2">2×</option>
+          <option value="3">3×</option>
         </select>
       </div>
 
+      <!-- Quality & Playlist -->
       <div class="panelBox rowGap">
-        <label for="previewQualitySelect">Preview Quality</label>
+        <label>Preview</label>
         <select id="previewQualitySelect">
-          <option value="1">Ultra, 100%</option>
-          <option value="0.85">High, 85%</option>
-          <option value="0.7" selected>Medium, 70%</option>
-          <option value="0.5">Low, 50%</option>
-          <option value="0.35">Mobile, 35%</option>
+          <option value="1">Ultra — 100%</option>
+          <option value="0.85">High — 85%</option>
+          <option value="0.7" selected>Medium — 70%</option>
+          <option value="0.5">Low — 50%</option>
+          <option value="0.35">Mobile — 35%</option>
         </select>
-
         <button id="toggleFpsBtn" class="secondaryDark">Show FPS</button>
       </div>
 
+      <!-- Playlist -->
       <div class="panelBox rowGap">
-        <label for="playlistPresetSelect">Playlist Preset Source</label>
-        <select id="playlistPresetSelect">
-          <option value="">No saved presets</option>
-        </select>
-
-        <button id="playlistAddBtn" type="button">Add Selected Preset to Playlist</button>
-
-        <label for="playlistList">Preset Playlist</label>
-        <select id="playlistList" size="7"></select>
-
-        <div class="twoCol">
-          <button id="playlistRemoveBtn" type="button">Remove</button>
-          <button id="playlistClearBtn" type="button">Clear</button>
+        <label>Playlist</label>
+        <select id="playlistPresetSelect"><option value="">No saved presets</option></select>
+        <button id="playlistAddBtn">Add to Playlist</button>
+        <select id="playlistList" size="5" style="height:80px;"></select>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="playlistRemoveBtn">Remove</button>
+          <button id="playlistClearBtn">Clear</button>
         </div>
-
-        <div class="twoCol">
-          <button id="playlistUpBtn" type="button">Move Up</button>
-          <button id="playlistDownBtn" type="button">Move Down</button>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="playlistUpBtn">↑ Up</button>
+          <button id="playlistDownBtn">↓ Down</button>
         </div>
-
-        <label for="playlistIntervalInput">Switch Interval, Seconds</label>
+        <label>Interval (seconds)</label>
         <input id="playlistIntervalInput" type="number" min="1" max="600" step="0.5" value="8" />
-
-        <label for="playlistTransitionSelect">Transition</label>
         <select id="playlistTransitionSelect">
           <option value="cut" selected>Hard Cut</option>
           <option value="fade">Fade</option>
         </select>
-
-        <label for="playlistFadeDurationInput">Fade Duration, Seconds</label>
-        <input id="playlistFadeDurationInput" type="number" min="0.1" max="10" step="0.1" value="1.25" />
-
-        <button id="playlistAutoplayBtn" type="button" class="secondaryDark">Playlist Autoplay Off</button>
+        <input id="playlistFadeDurationInput" type="number" min="0.1" max="10" step="0.1" value="1.25" placeholder="Fade duration" />
+        <button id="playlistAutoplayBtn" class="secondaryDark">Playlist Autoplay Off</button>
       </div>
 
+      <!-- Export -->
       <div class="panelBox rowGap">
-        <label>Orientation</label>
-        <div class="twoCol">
-          <button id="orientHorizBtn" class="secondaryDark active">⬛ Horizontal</button>
-          <button id="orientVertBtn" class="secondaryDark">▮ Vertical</button>
+        <label>Export</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="orientHorizBtn" class="secondaryDark active">⬛ Horiz</button>
+          <button id="orientVertBtn" class="secondaryDark">▮ Vert</button>
         </div>
-
-        <label for="exportResSelect">Resolution</label>
         <select id="exportResSelect">
           <option value="1920x1080">1080p HD</option>
           <option value="3840x2160" selected>4K UHD</option>
         </select>
-
-        <label for="exportFpsSelect">Frame Rate</label>
         <select id="exportFpsSelect">
-          <option value="24">24 fps — Cinematic</option>
-          <option value="30">30 fps — Social / Broadcast</option>
-          <option value="60" selected>60 fps — Live Visuals</option>
+          <option value="24">24 fps</option>
+          <option value="30">30 fps</option>
+          <option value="60" selected>60 fps</option>
         </select>
-
-        <label for="exportCrfSelect">Quality</label>
         <select id="exportCrfSelect">
-          <option value="15">Lossless+ (CRF 15, largest)</option>
-          <option value="18" selected>Visually Lossless (CRF 18)</option>
-          <option value="23">High (CRF 23)</option>
-          <option value="28">Compact (CRF 28)</option>
+          <option value="15">Lossless+</option>
+          <option value="18" selected>Visually Lossless</option>
+          <option value="23">High</option>
+          <option value="28">Compact</option>
         </select>
-
-        <label for="durationSelect">Duration</label>
         <select id="durationSelect">
           <option value="5">5 sec</option>
           <option value="10" selected>10 sec</option>
@@ -1150,11 +1484,18 @@ style="width:100%; height:90px;"></textarea>
         </select>
       </div>
 
-      <button id="freezeBtn" class="freezeBtn">⏸ Freeze Animation</button>
-      <button id="exportStillBtn">Export Still (PNG)</button>
-      <button id="masterExportBtn">Master Export (MP4)</button>
-      <button id="keyboardHelpBtn">Keyboard Help</button>
-      <button id="fsToggleBtn">Enter Full Screen</button>
+      <!-- Actions -->
+      <div class="panelBox rowGap">
+        <label>Actions</label>
+        <button id="freezeBtn" class="freezeBtn">⏸ Freeze Animation</button>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="exportStillBtn">Still PNG</button>
+          <button id="masterExportBtn">Export MP4</button>
+        </div>
+        <button id="keyboardHelpBtn" class="secondaryDark">Keyboard Help</button>
+        <button id="fsToggleBtn" class="secondaryDark">Enter Full Screen</button>
+      </div>
+
     </div>
 
     <div id="canvasContainer">
@@ -1303,10 +1644,10 @@ style="width:100%; height:90px;"></textarea>
 
       <!-- Always-visible bottom buttons -->
       <div style="display:flex; gap:8px; margin-top:10px;">
-        <button id="easyPlayPauseBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">⏸ Pause</button>
-        <button id="easyPresetsBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">Presets</button>
-        <button id="easyTapBpmBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:12px; cursor:pointer;">Tap BPM</button>
-        <button id="easyInfiniteZoomBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:12px; cursor:pointer;">∞ Zoom</button>
+        <button id="easyPlayPauseBtn" type="button" class="easy-action-btn">⏸ Pause</button>
+        <button id="easyPresetsBtn" type="button" class="easy-action-btn">Presets</button>
+        <button id="easyTapBpmBtn" type="button" class="easy-action-btn">Tap BPM</button>
+        <button id="easyInfiniteZoomBtn" type="button" class="easy-action-btn">∞ Zoom</button>
       </div>
     </div>
 
@@ -1369,13 +1710,17 @@ style="width:100%; height:90px;"></textarea>
     </div>
     <div id="rightPanel">
       <div id="tapBpmContainer" style="padding:10px 8px 4px 8px;">
-        <button id="panelTapBpmBtn" style="width:100%; height:44px; border-radius:10px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.07); color:#fff; font-size:14px; font-weight:600; cursor:pointer; letter-spacing:0.03em;">Tap BPM — <span id="panelTapBpmVal">120</span></button>
+        <button id="panelTapBpmBtn" style="width:100%; height:38px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.6); font-size:10px; font-weight:700; font-family:'SF Mono',monospace; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer;">TAP BPM — <span id="panelTapBpmVal">120</span></button>
+      </div>
+      <div id="orbitTrapPresetsContainer" style="display:none; padding:8px 8px 4px 8px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:6px;">Orbit Trap Presets</div>
+        <div id="orbitTrapPresetSwatches" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
       </div>
       <div id="edgePresetsContainer" style="display:none; padding:8px 8px 4px 8px;">
         <div style="font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:6px;">Edge Presets</div>
         <div id="edgePresetSwatches" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
       </div>
-      <div id="gui"></div>
+      <div id="customPanel"></div>
     </div>
   </div>
 
@@ -1393,7 +1738,6 @@ style="width:100%; height:90px;"></textarea>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
   <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 
   <script id="fragmentShader" type="x-shader/x-fragment">
@@ -1551,7 +1895,16 @@ style="width:100%; height:90px;"></textarea>
     uniform float uInfiniteZoomOn;
     uniform float uInfiniteZoomPhase;
     uniform float uEdgeOnlyMode;
-    uniform float uEdgeOnlyFill;  // 0=black interior, 1=full surface color
+    uniform float uEdgeOnlyFill;
+
+    // Orbit trap coloring
+    uniform float uOrbitTrapOn;
+    uniform float uOrbitTrapMode;   // 0=ring, 1=sphere, 2=point, 3=plane, 4=bulb
+    uniform float uOrbitTrapScale;  // band frequency
+    uniform float uOrbitTrapSharpness; // edge hardness
+    uniform float uOrbitTrapBlend;  // 0=pure trap, 1=pure normal shading
+    uniform vec3  uOrbitTrapColorA;
+    uniform vec3  uOrbitTrapColorB;  // 0=black interior, 1=full surface color
     uniform float uTunnelStyle;
     uniform float uTunnelSpeed;
     uniform float uTunnelTwist;
@@ -1957,6 +2310,65 @@ float primitiveShape(vec3 pos) {
   return sdSphere(p, 0.9);
 }
     
+    // Returns orbit trap value 0..1 for surface coloring
+    float orbitTrap(vec3 pos) {
+      if (uShape != 0) return 0.5;
+
+      pos = rotationMatrix(uFractalRotation) * pos;
+      vec3 z = pos;
+      float minTrap = 1e10;
+      float r = 0.0;
+
+      for (int i = 0; i < 100; i++) {
+        if (i >= uIterations) break;
+        r = length(z);
+        if (r > uBailout) break;
+
+        // Sample trap distance based on mode
+        float trap = 1e10;
+        if (uOrbitTrapMode < 0.5) {
+          // Ring trap: distance to a torus in XY plane
+          float ringR = 0.85;
+          float torusDist = abs(length(z.xy) - ringR) + abs(z.z) * 0.5;
+          trap = torusDist;
+        } else if (uOrbitTrapMode < 1.5) {
+          // Sphere trap: distance to unit sphere surface
+          trap = abs(length(z) - 0.85);
+        } else if (uOrbitTrapMode < 2.5) {
+          // Point trap: distance to origin
+          trap = length(z);
+        } else if (uOrbitTrapMode < 3.5) {
+          // Plane trap: distance to XZ plane
+          trap = abs(z.y) * 0.5 + abs(length(z.xz) - 0.7) * 0.5;
+        } else {
+          // Bulb trap: min of multiple sphere traps at different positions
+          float t1 = abs(length(z) - 0.5);
+          float t2 = abs(length(z - vec3(0.3,0.0,0.0)) - 0.3);
+          float t3 = abs(length(z.xy) - 0.6);
+          trap = min(min(t1, t2), t3);
+        }
+        minTrap = min(minTrap, trap);
+
+        // Continue iteration
+        float safeR = max(r, 0.00001);
+        float theta = acos(z.z / safeR);
+        float phi = atan(z.y, z.x);
+        float zr = pow(safeR, uPower);
+        theta *= uPower;
+        phi *= uPower;
+        z = zr * vec3(sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)) + pos;
+      }
+
+      // Map trap distance to 0..1 with band frequency + sharpness
+      float scaled = minTrap * uOrbitTrapScale;
+      // Smooth bands using sin
+      float bands = 0.5 + 0.5 * sin(scaled * 3.14159265 * 2.0);
+      // Sharpness: push toward 0 or 1
+      float sharp = clamp(uOrbitTrapSharpness, 0.01, 0.99);
+      bands = smoothstep(0.5 - sharp * 0.5, 0.5 + sharp * 0.5, bands);
+      return clamp(bands, 0.0, 1.0);
+    }
+
         float mandelbulb(vec3 pos) {
   if (uShape != 0) {
     return primitiveShape(pos);
@@ -2356,15 +2768,24 @@ float primitiveShape(vec3 pos) {
           innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
         }
 
+        // Orbit trap coloring — computed at surface hit point
+        vec3 shadedFinal = shadedColor;
+        if (uOrbitTrapOn > 0.5) {
+          float trap = orbitTrap(pos);
+          vec3 trapColor = mix(uOrbitTrapColorA, uOrbitTrapColorB, trap);
+          // Modulate by light so it still has 3D depth
+          trapColor *= mix(0.2, 1.0, lightVal);
+          shadedFinal = mix(trapColor, shadedColor, uOrbitTrapBlend);
+        }
+
         if (uEdgeOnlyMode > 0.5) {
-          // Edge Only: surface color fades in with uEdgeOnlyFill (0=black, 1=full)
-          vec3 fillCol = (shadedColor + specular) * uEdgeOnlyFill;
+          vec3 fillCol = (shadedFinal + specular) * uEdgeOnlyFill;
           col = fillCol + glowLayer + innerGlow;
           if (lineMixAmt > 0.0) {
             col += lineColor * lineMixAmt;
           }
         } else {
-          col = shadedColor + specular + glowLayer + innerGlow;
+          col = shadedFinal + specular + glowLayer + innerGlow;
           if (lineMixAmt > 0.0) {
             col = mix(col, lineColor, clamp(lineMixAmt, 0.0, 1.0));
           }
@@ -2534,8 +2955,14 @@ float primitiveShape(vec3 pos) {
   </script>
 
   <script>
+    window.onerror = function(msg, src, line, col, err) {
+      const d = document.createElement('div');
+      d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff0000cc;color:#fff;padding:12px;font-size:13px;font-family:monospace;';
+      d.textContent = 'JS ERROR line ' + line + ': ' + msg;
+      document.body.appendChild(d);
+      return false;
+    };
     let navCamera, orthoCamera, scene, renderer, material, quad, clock;
-    let gui;
 
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
     const PLAYLIST_STORAGE_KEY = "fractalExplorerPlaylistV1";
@@ -2572,6 +2999,15 @@ float primitiveShape(vec3 pos) {
 
     let params = {
       flySpeed: 0.05,
+
+      orbitTrapOn: false,
+      orbitTrapMode: 0,
+      orbitTrapScale: 4.0,
+      orbitTrapSharpness: 0.7,
+      orbitTrapBlend: 0.0,
+      orbitTrapColorA: "#ffffff",
+      orbitTrapColorB: "#000000",
+
       edgeOnlyMode: false,
       edgeOnlyFill: 0.0,
       infiniteZoomOn: false,
@@ -2603,6 +3039,8 @@ float primitiveShape(vec3 pos) {
       musicReactGlowAmount: 1.0,
       musicReactColor: false,
       musicReactColorAmount: 0.5,
+      musicReactSpeed: false,
+      musicReactSpeedAmount: 0.5,
       musicReactPower: false,
       musicReactPowerAmount: 0.5,
       musicReactTwist: false,
@@ -3553,20 +3991,8 @@ function copyCurrentStateToClipboard() {
     }
 
     function refreshGuiDisplays() {
-      function updateFolder(folder) {
-        if (!folder) return;
-
-        if (folder.__controllers) {
-          folder.__controllers.forEach((c) => c.updateDisplay());
-        }
-
-        if (folder.__folders) {
-          Object.values(folder.__folders).forEach(updateFolder);
-        }
-      }
-
-      updateFolder(gui);
-
+      // Sync custom panel controls
+      if (typeof window._cpRefresh === "function") window._cpRefresh();
       if (rotXController) rotXController.updateDisplay();
       if (rotYController) rotYController.updateDisplay();
       if (rotZController) rotZController.updateDisplay();
@@ -4865,6 +5291,61 @@ bindTap(mobilePlayBtn, () => {
         row.appendChild(btn);
       });
     }
+    // Orbit trap presets
+    const ORBIT_TRAP_PRESETS = [
+      { name: "B&W Ring",   mode:0, scale:5,   sharp:0.82, blend:0.05, cA:"#ffffff", cB:"#111111" },
+      { name: "B&W Sphere", mode:1, scale:4,   sharp:0.78, blend:0.05, cA:"#e8e8e8", cB:"#0a0a0a" },
+      { name: "Gold Ring",  mode:0, scale:6,   sharp:0.75, blend:0.15, cA:"#ffd700", cB:"#1a0800" },
+      { name: "Neon Ring",  mode:0, scale:5,   sharp:0.80, blend:0.10, cA:"#00ffcc", cB:"#0a0020" },
+      { name: "Fire Bulb",  mode:4, scale:4,   sharp:0.65, blend:0.20, cA:"#ffdd00", cB:"#660000" },
+      { name: "Ice Sphere", mode:1, scale:3.5, sharp:0.70, blend:0.15, cA:"#aaeeff", cB:"#001133" },
+      { name: "Plane",      mode:3, scale:7,   sharp:0.85, blend:0.05, cA:"#ffffff", cB:"#222222" },
+      { name: "Soft Bulb",  mode:4, scale:3,   sharp:0.40, blend:0.30, cA:"#ff88ff", cB:"#002244" },
+    ];
+
+    function applyOrbitTrapPreset(p) {
+      params.orbitTrapOn        = true;
+      params.orbitTrapMode      = p.mode;
+      params.orbitTrapScale     = p.scale;
+      params.orbitTrapSharpness = p.sharp;
+      params.orbitTrapBlend     = p.blend;
+      params.orbitTrapColorA    = p.cA;
+      params.orbitTrapColorB    = p.cB;
+      refreshGuiDisplays();
+    }
+
+    function buildOrbitTrapPresets() {
+      const row = document.getElementById("orbitTrapPresetSwatches");
+      if (!row) return;
+      row.innerHTML = "";
+      ORBIT_TRAP_PRESETS.forEach(p => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.style.cssText = [
+          "flex:1 1 auto", "min-width:58px", "height:34px",
+          "border-radius:7px", "border:1px solid rgba(255,255,255,0.15)",
+          `background:linear-gradient(135deg,${p.cA},${p.cB})`,
+          "color:rgba(255,255,255,0.9)", "font-size:10px", "font-weight:700",
+          "cursor:pointer", "letter-spacing:0.03em",
+          "text-shadow:0 1px 3px rgba(0,0,0,0.9)"
+        ].join(";");
+        btn.textContent = p.name;
+        btn.addEventListener("click", () => applyOrbitTrapPreset(p));
+        row.appendChild(btn);
+      });
+    }
+    buildOrbitTrapPresets();
+
+    // Show orbit trap presets when orbitTrapOn is toggled
+    let _lastOrbitTrap = false;
+    setInterval(() => {
+      if (params.orbitTrapOn !== _lastOrbitTrap) {
+        _lastOrbitTrap = params.orbitTrapOn;
+        const c = document.getElementById("orbitTrapPresetsContainer");
+        if (c) c.style.display = params.orbitTrapOn ? "block" : "none";
+      }
+    }, 200);
+
     buildEdgePresets();
 
     // Easy dock Edge Only button
@@ -5749,6 +6230,14 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
           uInfiniteZoomPhase: { value: 0.0 },
           uEdgeOnlyMode:      { value: 0.0 },
           uEdgeOnlyFill:      { value: 0.0 },
+
+          uOrbitTrapOn:         { value: 0.0 },
+          uOrbitTrapMode:       { value: 0.0 },
+          uOrbitTrapScale:      { value: 4.0 },
+          uOrbitTrapSharpness:  { value: 0.7 },
+          uOrbitTrapBlend:      { value: 0.0 },
+          uOrbitTrapColorA:     { value: new THREE.Color("#ffffff") },
+          uOrbitTrapColorB:     { value: new THREE.Color("#000000") },
           uTunnelStyle:       { value: 0.0 },
           uTunnelSpeed:       { value: 0.5 },
           uTunnelTwist:       { value: 0.0 },
@@ -5767,227 +6256,491 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       layoutPreviewFrame();
       resizeRendererToPreviewFrame();
 
-      gui = new dat.GUI({ autoPlace: false, width: 320 });
-      document.getElementById("gui").appendChild(gui.domElement);
+      // ── Custom Panel Builder ────────────────────────────────────────────
+      try { (function buildCustomPanel() {
+        const container = document.getElementById("customPanel");
+        if (!container) return;
+        container.innerHTML = "";
+        const panel = document.createElement("div");
+        panel.className = "cp-panel";
+        container.appendChild(panel);
 
-      // ── TUNNEL ───────────────────────────────────────────────────────────
-      const tunnelF = gui.addFolder("Tunnel & Ring Settings");
-      tunnelF.add(params, "tunnelOn").name("Tunnel Mode On");
-      tunnelF.add(params, "tunnelStyle", { "Fractal Shell": 0, "Mandala": 1, "Warp Energy": 2 }).name("Tunnel Style");
-      tunnelF.add(params, "tunnelSpeed", 0.0, 4.0).name("Speed  (Tunnel + Mirror Rings)");
-      tunnelF.add(params, "tunnelTwist", -3.0, 3.0).name("Twist");
-      tunnelF.add(params, "tunnelLayers", 2.0, 20.0).step(1).name("Layer Count  (Tunnel)");
-      tunnelF.add(params, "tunnelLayerSpacing", 0.05, 2.0).name("Layer Spacing  (Both)");
-      tunnelF.add(params, "tunnelRadialCount", 1.0, 16.0).step(1).name("Mirror Folds  (Both)");
-      tunnelF.add(params, "tunnelZoom", 0.3, 8.0).name("Zoom  (Both)");
-      tunnelF.add(params, "tunnelMusicReact").name("Music Reactive");
-      tunnelF.close();
+        // Helper: format number for display
+        function fmt(v, decimals) {
+          if (typeof v === "boolean") return v ? "On" : "Off";
+          if (typeof v !== "number") return String(v);
+          return v.toFixed(decimals !== undefined ? decimals : 2);
+        }
 
-      // ── 1. SHAPE ─────────────────────────────────────────────────────────
-      const shapeF = gui.addFolder("Shape");
-      shapeF.add(params, "uShape", { Mandelbulb: 0, Sphere: 1, Cube: 2, Torus: 3 }).name("Base Shape");
-      shapeF.add(params, "uPower", 2, 100).name("Power");
-      shapeF.add(params, "uBailout", 0.01, 4.0).name("Bailout");
-      shapeF.add(params, "uIterations", 3, 20, 1).name("Iterations");
-      shapeF.add(params, "uSurfaceEpsilon", 0.0001, 0.01).name("Surface Detail");
+        // Create a collapsible section
+        function section(id, label, openByDefault) {
+          const sec = document.createElement("div");
+          sec.className = "cp-section";
+          sec.dataset.section = id;
 
-      shapeF.add(params, "symmetryMode", SYMMETRY_MODE_OPTIONS).name("Symmetry");
-      shapeF.add(params, "radialSegments", 3, 16, 1).name("Radial Segments");
-      shapeF.add(params, "symmetryStack").name("Stacked Transforms On");
+          const hdr = document.createElement("div");
+          hdr.className = "cp-section-header" + (openByDefault ? " open" : "");
+          hdr.innerHTML = `<span>${label}</span><span class="cp-section-arrow">▶</span>`;
+          sec.appendChild(hdr);
 
-      const stackF = shapeF.addFolder("Stacked Transforms");
-      stackF.add(params, "twistOn").name("Twist On");
-      stackF.add(params, "twistAmount", -6, 6).name("Twist Amount");
-      stackF.add(params, "twistAnimate").name("Twist Animate");
-      stackF.add(params, "twistAnimSpeed", 0, 5).name("Twist Anim Speed");
-      stackF.add(params, "twistAnimAmount", 0, 6).name("Twist Anim Amount");
-      stackF.add(params, "foldOn").name("Fold On");
-      stackF.add(params, "foldIterations", 1, 5, 1).name("Fold Iterations");
-      stackF.add(params, "tileOn").name("Tile On");
-      stackF.add(params, "tileAmount", 0.5, 8).name("Tile Amount");
-      stackF.add(params, "tileAnimate").name("Tile Animate");
-      stackF.add(params, "tileAnimSpeed", 0, 5).name("Tile Anim Speed");
-      stackF.add(params, "tileAnimAmount", 0, 6).name("Tile Anim Amount");
-      stackF.add(params, "polarOn").name("Polar Warp On");
-      stackF.add(params, "offsetOn").name("Offset On");
-      stackF.add(params, "offsetAmount", 0, 1.5).name("Offset Amount");
-      stackF.add(params, "offsetAnimate").name("Offset Animate");
-      stackF.add(params, "offsetAnimSpeed", 0, 5).name("Offset Anim Speed");
-      stackF.add(params, "offsetAnimAmount", 0, 1.5).name("Offset Anim Amount");
+          const body = document.createElement("div");
+          body.className = "cp-section-body" + (openByDefault ? " open" : "");
+          sec.appendChild(body);
 
-      rotXController = shapeF.add(params, "uFractalRotationX", 0, Math.PI * 2).name("Rotation X").listen();
-      rotYController = shapeF.add(params, "uFractalRotationY", 0, Math.PI * 2).name("Rotation Y").listen();
-      rotZController = shapeF.add(params, "uFractalRotationZ", 0, Math.PI * 2).name("Rotation Z").listen();
+          hdr.addEventListener("click", () => {
+            hdr.classList.toggle("open");
+            body.classList.toggle("open");
+          });
 
-      // ── 2. COLOR ─────────────────────────────────────────────────────────
-      const colorF = gui.addFolder("Color");
-      colorF.add(params, "paletteMode", { Base: 0, Contour: 1, Psychedelic: 2 }).name("Palette Mode");
-      colorF.add(params, "psyStyle", { Classic: 0, Hybrid: 1, Vivid: 2 }).name("Color Style");
-      colorF.addColor(params, "uColor").name("Base Color");
-      colorF.addColor(params, "psyColorA").name("Color A");
-      colorF.addColor(params, "psyColorB").name("Color B");
-      colorF.addColor(params, "psyColorC").name("Color C");
-      colorF.addColor(params, "psyColorD").name("Color D");
-      colorF.addColor(params, "warmColor").name("Warm Tone");
-      colorF.addColor(params, "coolColor").name("Cool Tone");
-      colorF.add(params, "psyMix", 0, 1.5).name("Color Mix");
-      colorF.add(params, "psyScale", 0.5, 20).name("Color Scale");
-      colorF.add(params, "psyFlow", 0, 4).name("Color Flow");
-      colorF.add(params, "psySpinStrength", 0, 6).name("Color Spin");
-      colorF.add(params, "ringScale", 0.5, 20).name("Ring Scale");
-      colorF.add(params, "ringStrength", 0, 1).name("Ring Strength");
-      colorF.add(params, "paletteCycle").name("Cycle Colors");
-      colorF.add(params, "paletteCycleSpeed", 0, 3).name("Cycle Speed");
-      colorF.add(params, "psyScaleCycle").name("Scale Cycle");
-      colorF.add(params, "psyScaleCycleSpeed", 0, 4).name("Scale Cycle Speed");
-      colorF.add(params, "psyScaleCycleAmount", 0, 10).name("Scale Cycle Amount");
-      colorF.add(params, "trippyMode").name("Trippy Mode");
-      colorF.add(params, "trippySpeed", 0, 10).step(0.1).name("Trippy Speed");
+          panel.appendChild(sec);
+          return body;
+        }
 
-      const gradF = colorF.addFolder("Grading");
-      gradF.add(params, "colorSaturation", 0, 2.5).name("Saturation");
-      gradF.add(params, "colorVibrance", 0, 2.5).name("Vibrance");
-      gradF.add(params, "paletteContrast", 0.5, 2.5).name("Palette Contrast");
-      gradF.add(params, "colorIntensity", 0.25, 2.5).name("Intensity");
-      gradF.add(params, "preserveHighlightColor").name("Preserve Highlights");
-      gradF.add(params, "colorBands", 0, 20).step(1).name("Color Bands");
-      gradF.add(params, "bandStrength", 0, 1).name("Band Strength");
+        // Create a collapsible sub-section inside a body
+        function subsection(parent, label, openByDefault) {
+          const sub = document.createElement("div");
+          sub.className = "cp-subsection";
 
-      const psyF = colorF.addFolder("Shader Style");
-      psyF.add(params, "psyShaderMode", { Lit: 0, Emissive: 1, Hybrid: 2 }).name("Shader Mode");
-      psyF.add(params, "psyEmission", 0, 3).name("Emission");
-      psyF.add(params, "psyDepthShade", 0, 1).name("Depth Shade");
-      psyF.add(params, "psyContrast", 0.5, 2.5).name("Contrast");
-      psyF.add(params, "psySaturation", 0.5, 2).name("Saturation");
-      psyF.add(params, "psyGlowOn").name("Internal Glow On");
-      psyF.add(params, "psyInternalGlow", 0, 1.5).name("Internal Glow");
-      psyF.add(params, "psyGlowThreshold", 0.3, 1).name("Glow Threshold");
+          const hdr = document.createElement("div");
+          hdr.className = "cp-subsection-header" + (openByDefault ? " open" : "");
+          hdr.innerHTML = `<span>${label}</span><span class="cp-section-arrow">▶</span>`;
+          sub.appendChild(hdr);
 
-      const patF = colorF.addFolder("Patterns");
-      patF.add(params, "patternMode", PATTERN_OPTIONS).name("Pattern");
-      patF.add(params, "patternStrength", 0, 2).name("Strength");
-      patF.add(params, "patternScale", 0.5, 20).name("Scale");
-      patF.add(params, "patternSpeed", 0, 5).name("Speed");
-      patF.add(params, "patternBlend", 0, 1.5).name("Blend");
+          const body = document.createElement("div");
+          body.className = "cp-subsection-body" + (openByDefault ? " open" : "");
+          sub.appendChild(body);
 
-      // ── 3. MOTION ────────────────────────────────────────────────────────
-      const motionF = gui.addFolder("Motion");
-      motionF.add(params, "powerAnimation").name("Power Anim On");
-      motionF.add(params, "powerAnimationSpeed", 0, 5).name("Power Anim Speed");
-      motionF.add(params, "powerMin", 2, 100).name("Power Min").listen();
-      motionF.add(params, "powerMax", 2, 100).name("Power Max").listen();
-      motionF.add(params, "autoRotateX").name("Rotate X On");
-      motionF.add(params, "rotateSpeedX", -2, 2).name("Rotate Speed X");
-      motionF.add(params, "autoRotateY").name("Rotate Y On");
-      motionF.add(params, "rotateSpeedY", -2, 2).name("Rotate Speed Y");
-      motionF.add(params, "autoRotateZ").name("Rotate Z On");
-      motionF.add(params, "rotateSpeedZ", -2, 2).name("Rotate Speed Z");
-      motionF.add(params, "zoomValue", MIN_ZOOM, MAX_ZOOM).name("Zoom").listen();
-      motionF.add(params, "cameraRotateOn").name("Cam Spin On");
-      motionF.add(params, "cameraRotateSpeed", -2.0, 2.0).name("Cam Spin Speed");
-      motionF.add(params, "breathingOn").name("Breathe On");
-      motionF.add(params, "breathingSpeed", 0.0, 3.0).name("Breathe Speed");
-      motionF.add(params, "breathingAmount", 0.0, 0.4).name("Breathe Amount");
-      motionF.add(params, "kaleidoscopeMode").name("Kaleidoscope On");
-      motionF.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
-      motionF.add(params, "infiniteZoomOn").name("Infinite Zoom");
-      motionF.add(params, "infiniteZoomSpeed", 0.05, 3.0).name("Zoom Speed");
+          hdr.addEventListener("click", () => {
+            hdr.classList.toggle("open");
+            body.classList.toggle("open");
+          });
 
-      // ── 4. LIGHTING ──────────────────────────────────────────────────────
-      const lightF = gui.addFolder("Lighting");
-      lightF.add(params, "lightIntensity", 0, 2).name("Intensity");
-      lightAzimuthController = lightF.add(params, "lightAzimuth", -Math.PI, Math.PI).name("Azimuth").listen();
-      lightElevationController = lightF.add(params, "lightElevation", -1.57, 1.57).name("Elevation").listen();
-      lightF.addColor(params, "lightColor").name("Light Color");
-      lightF.add(params, "shadowStrength", 0, 1.5).name("Shadow Strength");
-      lightF.addColor(params, "shadowTint").name("Shadow Tint");
-      lightF.add(params, "contrast", 0.3, 2.5).name("Contrast");
-      lightF.add(params, "midtoneLift", 0, 2).name("Midtone Lift");
-      lightF.add(params, "specularStrength", 0, 2.5).name("Specular");
-      lightF.add(params, "specularSize", 0.1, 3).name("Specular Size");
-      lightF.add(params, "ridgeAccent", 0, 2).name("Ridge Accent");
-      lightF.add(params, "cavityStrength", 0, 2).name("Cavity");
+          parent.appendChild(sub);
+          return body;
+        }
 
-      // ── 5. GLOW & FX ─────────────────────────────────────────────────────
-      const fxF = gui.addFolder("Glow & FX");
-      fxF.add(params, "edgeOnlyMode").name("Edge Only Mode");
-      fxF.add(params, "edgeOnlyFill", 0.0, 1.0).name("Edge Fill Opacity");
+        // Add a slider
+        function slider(parent, key, label, min, max, step, decimals) {
+          const row = document.createElement("div");
+          row.className = "cp-row";
 
-      const edgeGlowF = fxF.addFolder("Edge Glow");
-      edgeGlowF.add(params, "glowOn").name("On");
-      edgeGlowF.addColor(params, "glowColorA").name("Color A");
-      edgeGlowF.add(params, "glowAlphaA", 0, 1).name("Alpha A");
-      edgeGlowF.addColor(params, "glowColorB").name("Color B");
-      edgeGlowF.add(params, "glowAlphaB", 0, 1).name("Alpha B");
-      edgeGlowF.add(params, "glowStrength", 0, 2).name("Strength");
-      edgeGlowF.add(params, "glowWidth", 0.15, 4).name("Width");
-      edgeGlowF.add(params, "glowEmission", 0, 3).name("Emission");
-      edgeGlowF.add(params, "glowScroll").name("Scroll");
-      edgeGlowF.add(params, "glowScrollSpeed", 0, 3).name("Scroll Speed");
-      edgeGlowF.add(params, "glowReverse").name("Reverse");
+          const lbl = document.createElement("div");
+          lbl.className = "cp-label";
+          lbl.textContent = label;
 
-      const edgeLineF = fxF.addFolder("Edge Line");
-      edgeLineF.add(params, "lineOn").name("On");
-      edgeLineF.addColor(params, "lineColorA").name("Color A");
-      edgeLineF.add(params, "lineAlphaA", 0, 1).name("Alpha A");
-      edgeLineF.addColor(params, "lineColorB").name("Color B");
-      edgeLineF.add(params, "lineAlphaB", 0, 1).name("Alpha B");
-      edgeLineF.add(params, "lineStrength", 0, 2).name("Strength");
-      edgeLineF.add(params, "lineWidth", 0.1, 4).name("Width");
-      edgeLineF.add(params, "lineSoftness", 0, 1).name("Softness");
-      edgeLineF.add(params, "lineScroll").name("Scroll");
-      edgeLineF.add(params, "lineScrollSpeed", 0, 3).name("Scroll Speed");
-      edgeLineF.add(params, "lineReverse").name("Reverse");
+          const ctrl = document.createElement("div");
+          ctrl.className = "cp-control";
 
-      const innerGlowF = fxF.addFolder("Inner Glow");
-      innerGlowF.add(params, "innerGlowStrength", 0, 2).name("Strength");
-      innerGlowF.add(params, "innerGlowWidth", 0.1, 4).name("Width");
-      innerGlowF.addColor(params, "innerGlowColor").name("Color");
+          const inp = document.createElement("input");
+          inp.type = "range";
+          inp.className = "cp-slider";
+          inp.min = min; inp.max = max;
+          inp.step = step || (max - min) / 200;
+          inp.value = params[key];
 
-      const waveF = fxF.addFolder("Wave Distortion");
-      waveF.add(params, "waveDistortOn").name("On");
-      waveF.add(params, "waveDistortStrength", 0.0, 0.12).name("Strength");
-      waveF.add(params, "waveDistortScale", 0.5, 20.0).name("Scale");
-      waveF.add(params, "waveDistortSpeed", 0.0, 4.0).name("Speed");
-      waveF.add(params, "waveDistortDirection", -Math.PI, Math.PI).name("Direction");
+          const val = document.createElement("div");
+          val.className = "cp-value";
+          val.textContent = fmt(params[key], decimals);
 
-      const rippleF = fxF.addFolder("Ripple");
-      rippleF.add(params, "rippleOn").name("On");
-      rippleF.add(params, "rippleStrength", 0.0, 0.12).name("Strength");
-      rippleF.add(params, "rippleScale", 1.0, 24.0).name("Scale");
-      rippleF.add(params, "rippleSpeed", 0.0, 5.0).name("Speed");
-      rippleF.add(params, "rippleCenterX", -1.0, 1.0).name("Center X");
-      rippleF.add(params, "rippleCenterY", -1.0, 1.0).name("Center Y");
-      rippleF.add(params, "rippleMode", RIPPLE_MODE_OPTIONS).name("Mode");
+          inp.addEventListener("input", () => {
+            params[key] = parseFloat(inp.value);
+            val.textContent = fmt(params[key], decimals);
+          });
 
-      const chromaF = fxF.addFolder("Chromatic Aberration");
-      chromaF.add(params, "chromaticOn").name("On");
-      chromaF.add(params, "chromaticStrength", 0.0, 0.05).name("Strength");
-      chromaF.add(params, "chromaticEdgeBias", 0.0, 1.0).name("Edge Bias");
-      chromaF.add(params, "chromaticAnimated").name("Animated");
-      chromaF.add(params, "chromaticSpeed", 0.0, 4.0).name("Speed");
+          // Listen for external param changes (from random, presets etc)
+          inp._key = key;
+          inp._decimals = decimals;
+          inp._valEl = val;
+          cpSliders.push(inp);
 
-      // ── 6. AUDIO ─────────────────────────────────────────────────────────
-      const audioF = gui.addFolder("Audio Reactive");
-      audioF.add(params, "musicReact").name("Mic On");
-      audioF.add(params, "micSensitivity", 0, 5).name("Sensitivity");
-      audioF.add(params, "musicReactGlow").name("Glow Pulse");
-      audioF.add(params, "musicReactGlowAmount", 0, 2.0).name("Glow Pulse Amount");
-      audioF.add(params, "musicReactColor").name("Color React");
-      audioF.add(params, "musicReactColorAmount", 0, 2).name("Color React Amount");
-      audioF.add(params, "musicReactPower").name("Power React");
-      audioF.add(params, "musicReactPowerAmount", 0, 1.0).name("Power React Amount");
-      audioF.add(params, "musicReactTwist").name("Twist React");
-      audioF.add(params, "musicReactTwistAmount", 0, 3).name("Twist Amount");
-      audioF.add(params, "musicMatch").name("BPM Match");
+          ctrl.appendChild(inp);
+          ctrl.appendChild(val);
+          row.appendChild(lbl);
+          row.appendChild(ctrl);
+          parent.appendChild(row);
+          return inp;
+        }
 
-      // ── Open defaults ────────────────────────────────────────────────────
-      shapeF.open();
-      colorF.open();
-      motionF.open();
-      lightF.close();
-      fxF.close();
-      audioF.close();
+        // Add a toggle
+        function toggle(parent, key, label) {
+          const row = document.createElement("div");
+          row.className = "cp-row";
+
+          const lbl = document.createElement("div");
+          lbl.className = "cp-label";
+          lbl.textContent = label;
+
+          const ctrl = document.createElement("div");
+          ctrl.className = "cp-control";
+
+          const wrap = document.createElement("label");
+          wrap.className = "cp-toggle";
+
+          const inp = document.createElement("input");
+          inp.type = "checkbox";
+          inp.checked = !!params[key];
+
+          const track = document.createElement("div");
+          track.className = "cp-toggle-track";
+          const thumb = document.createElement("div");
+          thumb.className = "cp-toggle-thumb";
+
+          inp.addEventListener("change", () => { params[key] = inp.checked; });
+          inp._key = key;
+          cpToggles.push(inp);
+
+          wrap.appendChild(inp);
+          wrap.appendChild(track);
+          wrap.appendChild(thumb);
+          ctrl.appendChild(wrap);
+          row.appendChild(lbl);
+          row.appendChild(ctrl);
+          parent.appendChild(row);
+          return inp;
+        }
+
+        // Add a select dropdown
+        function select(parent, key, label, options) {
+          const row = document.createElement("div");
+          row.className = "cp-row";
+
+          const lbl = document.createElement("div");
+          lbl.className = "cp-label";
+          lbl.textContent = label;
+
+          const ctrl = document.createElement("div");
+          ctrl.className = "cp-control";
+
+          const sel = document.createElement("select");
+          sel.className = "cp-select";
+
+          Object.entries(options).forEach(([optLabel, optVal]) => {
+            const opt = document.createElement("option");
+            opt.value = optVal;
+            opt.textContent = optLabel;
+            if (params[key] == optVal) opt.selected = true;
+            sel.appendChild(opt);
+          });
+
+          sel.addEventListener("change", () => {
+            params[key] = isNaN(sel.value) ? sel.value : Number(sel.value);
+          });
+          sel._key = key;
+          cpSelects.push(sel);
+
+          ctrl.appendChild(sel);
+          row.appendChild(lbl);
+          row.appendChild(ctrl);
+          parent.appendChild(row);
+          return sel;
+        }
+
+        // Add a color picker
+        function color(parent, key, label) {
+          const row = document.createElement("div");
+          row.className = "cp-row";
+
+          const lbl = document.createElement("div");
+          lbl.className = "cp-label";
+          lbl.textContent = label;
+
+          const ctrl = document.createElement("div");
+          ctrl.className = "cp-control";
+
+          const wrap = document.createElement("div");
+          wrap.className = "cp-color-wrap";
+
+          const inp = document.createElement("input");
+          inp.type = "color";
+          inp.className = "cp-color";
+          // Convert params color to hex
+          const rawColor = params[key] || "#ffffff";
+          inp.value = rawColor.startsWith("#") ? rawColor.substring(0,7) : rawColor;
+
+          const hex = document.createElement("input");
+          hex.type = "text";
+          hex.className = "cp-color-hex";
+          hex.value = inp.value;
+          hex.maxLength = 7;
+
+          inp.addEventListener("input", () => {
+            params[key] = inp.value;
+            hex.value = inp.value;
+          });
+          hex.addEventListener("change", () => {
+            if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) {
+              params[key] = hex.value;
+              inp.value = hex.value;
+            }
+          });
+
+          inp._key = key;
+          inp._hexEl = hex;
+          cpColors.push(inp);
+
+          wrap.appendChild(inp);
+          wrap.appendChild(hex);
+          ctrl.appendChild(wrap);
+          row.appendChild(lbl);
+          row.appendChild(ctrl);
+          parent.appendChild(row);
+          return inp;
+        }
+
+        // Arrays to track all controls for syncFromParams
+        const cpSliders = [];
+        const cpToggles = [];
+        const cpSelects = [];
+        const cpColors  = [];
+
+        // Global sync function — call after random/preset load
+        window._cpRefresh = window.refreshGuiDisplays = function() {
+          cpSliders.forEach(inp => {
+            inp.value = params[inp._key];
+            if (inp._valEl) inp._valEl.textContent = fmt(params[inp._key], inp._decimals);
+          });
+          cpToggles.forEach(inp => { inp.checked = !!params[inp._key]; });
+          cpSelects.forEach(sel => { sel.value = params[sel._key]; });
+          cpColors.forEach(inp => {
+            const v = params[inp._key] || "#ffffff";
+            inp.value = v.startsWith("#") ? v.substring(0,7) : "#ffffff";
+            if (inp._hexEl) inp._hexEl.value = inp.value;
+          });
+        };
+
+        // ── TUNNEL & RING ────────────────────────────────────────────────
+        const tunnelB = section("tunnel", "Tunnel & Ring Settings", false);
+        toggle(tunnelB, "tunnelOn", "Tunnel On");
+        select(tunnelB, "tunnelStyle", "Tunnel Style", { "Fractal Shell":0, "Mandala":1, "Warp Energy":2 });
+        slider(tunnelB, "tunnelSpeed", "Speed", 0, 4, 0.01);
+        slider(tunnelB, "tunnelTwist", "Twist", -3, 3, 0.01);
+        slider(tunnelB, "tunnelLayers", "Layer Count", 2, 20, 1, 0);
+        slider(tunnelB, "tunnelLayerSpacing", "Layer Spacing", 0.05, 2, 0.01);
+        slider(tunnelB, "tunnelRadialCount", "Mirror Folds", 1, 16, 1, 0);
+        slider(tunnelB, "tunnelZoom", "Zoom", 0.3, 8, 0.01);
+        toggle(tunnelB, "tunnelMusicReact", "Music Reactive");
+
+        // ── SHAPE ────────────────────────────────────────────────────────
+        const shapeB = section("shape", "Shape", true);
+        select(shapeB, "uShape", "Base Shape", { "Mandelbulb":0, "Sphere":1, "Cube":2, "Torus":3 });
+        slider(shapeB, "uPower", "Power", 2, 20, 0.01);
+        slider(shapeB, "uBailout", "Bailout", 0.01, 4, 0.01);
+        slider(shapeB, "uIterations", "Iterations", 3, 20, 1, 0);
+        slider(shapeB, "uSurfaceEpsilon", "Surface Detail", 0.0001, 0.02, 0.0001, 4);
+        select(shapeB, "symmetryMode", "Symmetry", SYMMETRY_MODE_OPTIONS);
+        slider(shapeB, "radialSegments", "Radial Segments", 3, 16, 1, 0);
+        toggle(shapeB, "symmetryStack", "Stacked Transforms");
+
+        const stackB = subsection(shapeB, "Stacked Transforms", false);
+        toggle(stackB, "twistOn", "Twist On");
+        slider(stackB, "twistAmount", "Twist Amount", -6, 6, 0.01);
+        toggle(stackB, "twistAnimate", "Twist Animate");
+        slider(stackB, "twistAnimSpeed", "Twist Anim Speed", 0, 5, 0.01);
+        slider(stackB, "twistAnimAmount", "Twist Anim Amount", 0, 6, 0.01);
+        toggle(stackB, "foldOn", "Fold On");
+        slider(stackB, "foldIterations", "Fold Iterations", 1, 5, 1, 0);
+        toggle(stackB, "tileOn", "Tile On");
+        slider(stackB, "tileAmount", "Tile Amount", 0.5, 8, 0.01);
+        toggle(stackB, "tileAnimate", "Tile Animate");
+        slider(stackB, "tileAnimSpeed", "Tile Anim Speed", 0, 5, 0.01);
+        slider(stackB, "tileAnimAmount", "Tile Anim Amount", 0, 6, 0.01);
+        toggle(stackB, "polarOn", "Polar Warp");
+        toggle(stackB, "offsetOn", "Offset On");
+        slider(stackB, "offsetAmount", "Offset Amount", 0, 1.5, 0.01);
+        toggle(stackB, "offsetAnimate", "Offset Animate");
+        slider(stackB, "offsetAnimSpeed", "Offset Anim Speed", 0, 5, 0.01);
+        slider(stackB, "offsetAnimAmount", "Offset Anim Amount", 0, 1.5, 0.01);
+
+        // Rotation angles — these need .listen() equivalent
+        const rotXSlider = slider(shapeB, "uFractalRotationX", "Rotation X", 0, Math.PI*2, 0.001, 3);
+        const rotYSlider = slider(shapeB, "uFractalRotationY", "Rotation Y", 0, Math.PI*2, 0.001, 3);
+        const rotZSlider = slider(shapeB, "uFractalRotationZ", "Rotation Z", 0, Math.PI*2, 0.001, 3);
+        rotXController = { updateDisplay: () => { rotXSlider.value = params.uFractalRotationX; if(rotXSlider._valEl) rotXSlider._valEl.textContent = fmt(params.uFractalRotationX,3); }};
+        rotYController = { updateDisplay: () => { rotYSlider.value = params.uFractalRotationY; if(rotYSlider._valEl) rotYSlider._valEl.textContent = fmt(params.uFractalRotationY,3); }};
+        rotZController = { updateDisplay: () => { rotZSlider.value = params.uFractalRotationZ; if(rotZSlider._valEl) rotZSlider._valEl.textContent = fmt(params.uFractalRotationZ,3); }};
+
+        // ── COLOR ────────────────────────────────────────────────────────
+        const colorB = section("color", "Color", true);
+        select(colorB, "paletteMode", "Palette Mode", { "Base":0, "Contour":1, "Psychedelic":2 });
+        select(colorB, "psyStyle", "Color Style", { "Classic":0, "Hybrid":1, "Vivid":2 });
+        color(colorB, "uColor", "Base Color");
+        color(colorB, "psyColorA", "Color A");
+        color(colorB, "psyColorB", "Color B");
+        color(colorB, "psyColorC", "Color C");
+        color(colorB, "psyColorD", "Color D");
+        color(colorB, "warmColor", "Warm Tone");
+        color(colorB, "coolColor", "Cool Tone");
+        slider(colorB, "psyMix", "Color Mix", 0, 1.5, 0.01);
+        slider(colorB, "psyScale", "Color Scale", 0.5, 20, 0.01);
+        slider(colorB, "psyFlow", "Color Flow", 0, 4, 0.01);
+        slider(colorB, "psySpinStrength", "Color Spin", 0, 6, 0.01);
+        slider(colorB, "ringScale", "Ring Scale", 0.5, 20, 0.01);
+        slider(colorB, "ringStrength", "Ring Strength", 0, 1, 0.01);
+        toggle(colorB, "paletteCycle", "Cycle Colors");
+        slider(colorB, "paletteCycleSpeed", "Cycle Speed", 0, 3, 0.01);
+        toggle(colorB, "psyScaleCycle", "Scale Cycle");
+        slider(colorB, "psyScaleCycleSpeed", "Scale Cycle Speed", 0, 4, 0.01);
+        slider(colorB, "psyScaleCycleAmount", "Scale Cycle Amt", 0, 10, 0.01);
+        toggle(colorB, "trippyMode", "Trippy Mode");
+        slider(colorB, "trippySpeed", "Trippy Speed", 0, 10, 0.1);
+
+        const orbitB = subsection(colorB, "Orbit Trap", false);
+        toggle(orbitB, "orbitTrapOn", "Orbit Trap On");
+        select(orbitB, "orbitTrapMode", "Trap Shape", { "Ring":0, "Sphere":1, "Point":2, "Plane":3, "Bulb":4 });
+        slider(orbitB, "orbitTrapScale", "Band Frequency", 0.5, 20, 0.1);
+        slider(orbitB, "orbitTrapSharpness", "Band Sharpness", 0, 1, 0.01);
+        slider(orbitB, "orbitTrapBlend", "Blend w/ Normal", 0, 1, 0.01);
+        color(orbitB, "orbitTrapColorA", "Color A (inner)");
+        color(orbitB, "orbitTrapColorB", "Color B (outer)");
+
+        const gradB = subsection(colorB, "Grading", false);
+        slider(gradB, "colorSaturation", "Saturation", 0, 2.5, 0.01);
+        slider(gradB, "colorVibrance", "Vibrance", 0, 2.5, 0.01);
+        slider(gradB, "paletteContrast", "Palette Contrast", 0.5, 2.5, 0.01);
+        slider(gradB, "colorIntensity", "Intensity", 0.25, 2.5, 0.01);
+        toggle(gradB, "preserveHighlightColor", "Preserve Highlights");
+        slider(gradB, "colorBands", "Color Bands", 0, 20, 1, 0);
+        slider(gradB, "bandStrength", "Band Strength", 0, 1, 0.01);
+
+        const shaderStyleB = subsection(colorB, "Shader Style", false);
+        select(shaderStyleB, "psyShaderMode", "Shader Mode", { "Lit":0, "Emissive":1, "Hybrid":2 });
+        slider(shaderStyleB, "psyEmission", "Emission", 0, 3, 0.01);
+        slider(shaderStyleB, "psyDepthShade", "Depth Shade", 0, 1, 0.01);
+        slider(shaderStyleB, "psyContrast", "Contrast", 0.5, 2.5, 0.01);
+        slider(shaderStyleB, "psySaturation", "Saturation", 0.5, 2, 0.01);
+        toggle(shaderStyleB, "psyGlowOn", "Internal Glow");
+        slider(shaderStyleB, "psyInternalGlow", "Internal Glow Amt", 0, 1.5, 0.01);
+        slider(shaderStyleB, "psyGlowThreshold", "Glow Threshold", 0.3, 1, 0.01);
+
+        const patB = subsection(colorB, "Patterns", false);
+        select(patB, "patternMode", "Pattern", PATTERN_OPTIONS);
+        slider(patB, "patternStrength", "Strength", 0, 2, 0.01);
+        slider(patB, "patternScale", "Scale", 0.5, 20, 0.01);
+        slider(patB, "patternSpeed", "Speed", 0, 5, 0.01);
+        slider(patB, "patternBlend", "Blend", 0, 1.5, 0.01);
+
+        // ── MOTION ───────────────────────────────────────────────────────
+        const motionB = section("motion", "Motion", true);
+        toggle(motionB, "powerAnimation", "Power Anim");
+        slider(motionB, "powerAnimationSpeed", "Pwr Anim Speed", 0, 5, 0.01);
+        slider(motionB, "powerMin", "Power Min", 2, 100, 0.1);
+        slider(motionB, "powerMax", "Power Max", 2, 100, 0.1);
+        toggle(motionB, "autoRotateX", "Rotate X");
+        slider(motionB, "rotateSpeedX", "Rotate Speed X", -2, 2, 0.01);
+        toggle(motionB, "autoRotateY", "Rotate Y");
+        slider(motionB, "rotateSpeedY", "Rotate Speed Y", -2, 2, 0.01);
+        toggle(motionB, "autoRotateZ", "Rotate Z");
+        slider(motionB, "rotateSpeedZ", "Rotate Speed Z", -2, 2, 0.01);
+        slider(motionB, "zoomValue", "Zoom", 1, 6, 0.01);
+        toggle(motionB, "cameraRotateOn", "Cam Spin");
+        slider(motionB, "cameraRotateSpeed", "Cam Spin Speed", -2, 2, 0.01);
+        toggle(motionB, "breathingOn", "Breathe");
+        slider(motionB, "breathingSpeed", "Breathe Speed", 0, 3, 0.01);
+        slider(motionB, "breathingAmount", "Breathe Amount", 0, 0.4, 0.005);
+        toggle(motionB, "kaleidoscopeMode", "Kaleidoscope");
+        slider(motionB, "kaleidoscopeSpeed", "Kaleido Speed", 0, 5, 0.01);
+        toggle(motionB, "infiniteZoomOn", "Infinite Zoom");
+        slider(motionB, "infiniteZoomSpeed", "Zoom Speed", 0.05, 3, 0.05);
+
+        // Zoom controller (listen)
+        const zoomSliderEl = motionB.querySelector('[type=range]:last-of-type');
+
+        // ── LIGHTING ─────────────────────────────────────────────────────
+        const lightB = section("lighting", "Lighting", false);
+        slider(lightB, "lightIntensity", "Intensity", 0, 2, 0.01);
+
+        // Azimuth and elevation need listen controllers
+        const azEl = slider(lightB, "lightAzimuth", "Azimuth", -Math.PI, Math.PI, 0.01, 3);
+        const elEl = slider(lightB, "lightElevation", "Elevation", -1.57, 1.57, 0.01, 3);
+        lightAzimuthController   = { updateDisplay: () => { azEl.value = params.lightAzimuth; if(azEl._valEl) azEl._valEl.textContent = fmt(params.lightAzimuth,3); }};
+        lightElevationController = { updateDisplay: () => { elEl.value = params.lightElevation; if(elEl._valEl) elEl._valEl.textContent = fmt(params.lightElevation,3); }};
+
+        color(lightB, "lightColor", "Light Color");
+        slider(lightB, "shadowStrength", "Shadow Strength", 0, 1.5, 0.01);
+        color(lightB, "shadowTint", "Shadow Tint");
+        slider(lightB, "contrast", "Contrast", 0.3, 2.5, 0.01);
+        slider(lightB, "midtoneLift", "Midtone Lift", 0, 2, 0.01);
+        slider(lightB, "specularStrength", "Specular", 0, 2.5, 0.01);
+        slider(lightB, "specularSize", "Specular Size", 0.1, 3, 0.01);
+        slider(lightB, "ridgeAccent", "Ridge Accent", 0, 2, 0.01);
+        slider(lightB, "cavityStrength", "Cavity", 0, 2, 0.01);
+
+        // ── GLOW & FX ────────────────────────────────────────────────────
+        const fxB = section("glow", "Glow & FX", false);
+        toggle(fxB, "edgeOnlyMode", "Edge Only Mode");
+        slider(fxB, "edgeOnlyFill", "Edge Fill Opacity", 0, 1, 0.01);
+
+        const eGlowB = subsection(fxB, "Edge Glow", true);
+        toggle(eGlowB, "glowOn", "On");
+        color(eGlowB, "glowColorA", "Color A");
+        slider(eGlowB, "glowAlphaA", "Alpha A", 0, 1, 0.01);
+        color(eGlowB, "glowColorB", "Color B");
+        slider(eGlowB, "glowAlphaB", "Alpha B", 0, 1, 0.01);
+        slider(eGlowB, "glowStrength", "Strength", 0, 2, 0.01);
+        slider(eGlowB, "glowWidth", "Width", 0.15, 4, 0.01);
+        slider(eGlowB, "glowEmission", "Emission", 0, 3, 0.01);
+        toggle(eGlowB, "glowScroll", "Scroll");
+        slider(eGlowB, "glowScrollSpeed", "Scroll Speed", 0, 3, 0.01);
+        toggle(eGlowB, "glowReverse", "Reverse");
+
+        const eLineB = subsection(fxB, "Edge Line", false);
+        toggle(eLineB, "lineOn", "On");
+        color(eLineB, "lineColorA", "Color A");
+        slider(eLineB, "lineAlphaA", "Alpha A", 0, 1, 0.01);
+        color(eLineB, "lineColorB", "Color B");
+        slider(eLineB, "lineAlphaB", "Alpha B", 0, 1, 0.01);
+        slider(eLineB, "lineStrength", "Strength", 0, 2, 0.01);
+        slider(eLineB, "lineWidth", "Width", 0.1, 4, 0.01);
+        slider(eLineB, "lineSoftness", "Softness", 0, 1, 0.01);
+        toggle(eLineB, "lineScroll", "Scroll");
+        slider(eLineB, "lineScrollSpeed", "Scroll Speed", 0, 3, 0.01);
+        toggle(eLineB, "lineReverse", "Reverse");
+
+        const iGlowB = subsection(fxB, "Inner Glow", false);
+        slider(iGlowB, "innerGlowStrength", "Strength", 0, 2, 0.01);
+        slider(iGlowB, "innerGlowWidth", "Width", 0.1, 4, 0.01);
+        color(iGlowB, "innerGlowColor", "Color");
+
+        const waveB = subsection(fxB, "Wave Distortion", false);
+        toggle(waveB, "waveDistortOn", "On");
+        slider(waveB, "waveDistortStrength", "Strength", 0, 0.12, 0.001, 3);
+        slider(waveB, "waveDistortScale", "Scale", 0.5, 20, 0.1);
+        slider(waveB, "waveDistortSpeed", "Speed", 0, 4, 0.01);
+        slider(waveB, "waveDistortDirection", "Direction", -Math.PI, Math.PI, 0.01, 3);
+
+        const rippleB = subsection(fxB, "Ripple", false);
+        toggle(rippleB, "rippleOn", "On");
+        slider(rippleB, "rippleStrength", "Strength", 0, 0.12, 0.001, 3);
+        slider(rippleB, "rippleScale", "Scale", 1, 24, 0.1);
+        slider(rippleB, "rippleSpeed", "Speed", 0, 5, 0.01);
+        slider(rippleB, "rippleCenterX", "Center X", -1, 1, 0.01);
+        slider(rippleB, "rippleCenterY", "Center Y", -1, 1, 0.01);
+        select(rippleB, "rippleMode", "Mode", { "Radial":0, "Interference":1 });
+
+        const chromaB = subsection(fxB, "Chromatic", false);
+        toggle(chromaB, "chromaticOn", "On");
+        slider(chromaB, "chromaticStrength", "Strength", 0, 0.05, 0.001, 3);
+        slider(chromaB, "chromaticEdgeBias", "Edge Bias", 0, 1, 0.01);
+        toggle(chromaB, "chromaticAnimated", "Animated");
+        slider(chromaB, "chromaticSpeed", "Speed", 0, 4, 0.01);
+
+        // ── AUDIO REACTIVE ───────────────────────────────────────────────
+        const audioB = section("audio", "Audio Reactive", false);
+        toggle(audioB, "musicReact", "Mic On");
+        slider(audioB, "micSensitivity", "Sensitivity", 0, 5, 0.01);
+        toggle(audioB, "musicReactGlow", "Glow Pulse");
+        slider(audioB, "musicReactGlowAmount", "Glow Pulse Amt", 0, 2, 0.01);
+        toggle(audioB, "musicReactColor", "Color React");
+        slider(audioB, "musicReactColorAmount", "Color React Amt", 0, 2, 0.01);
+        toggle(audioB, "musicReactSpeed", "Speed React");
+        slider(audioB, "musicReactSpeedAmount", "Speed React Amt", 0, 3, 0.01);
+        toggle(audioB, "musicReactPower", "Power React");
+        slider(audioB, "musicReactPowerAmount", "Power React Amt", 0, 1, 0.01);
+        toggle(audioB, "musicReactTwist", "Twist React");
+        slider(audioB, "musicReactTwistAmount", "Twist React Amt", 0, 3, 0.01);
+        toggle(audioB, "musicMatch", "BPM Match");
+
+      })(); } catch(e) { console.error("Panel build failed:", e); }
 
       window.addEventListener("resize", () => {
         layoutPreviewFrame();
@@ -6209,6 +6962,13 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       material.uniforms.uEdgeOnlyMode.value = params.edgeOnlyMode ? 1.0 : 0.0;
       material.uniforms.uEdgeOnlyFill.value = params.edgeOnlyFill;
+      material.uniforms.uOrbitTrapOn.value        = params.orbitTrapOn ? 1.0 : 0.0;
+      material.uniforms.uOrbitTrapMode.value      = params.orbitTrapMode;
+      material.uniforms.uOrbitTrapScale.value     = params.orbitTrapScale;
+      material.uniforms.uOrbitTrapSharpness.value = params.orbitTrapSharpness;
+      material.uniforms.uOrbitTrapBlend.value     = params.orbitTrapBlend;
+      material.uniforms.uOrbitTrapColorA.value.set(params.orbitTrapColorA);
+      material.uniforms.uOrbitTrapColorB.value.set(params.orbitTrapColorB);
       material.uniforms.uGlowOn.value = params.glowOn ? 1.0 : 0.0;
       material.uniforms.uGlowColorA.value.set(params.glowColorA);
       material.uniforms.uGlowColorB.value.set(params.glowColorB);
