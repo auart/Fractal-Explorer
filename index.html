@@ -1167,6 +1167,10 @@ style="width:100%; height:90px;"></textarea>
     <div id="easyMenuPanel" class="easyDockPanel">
       <button id="easyRandomBtn" type="button">Random</button>
       <button id="easyToggleUiBtn" type="button">Toggle UI</button>
+      <button id="easyRollShapeBtn" type="button">Re-roll Shape</button>
+      <button id="easyRollColorBtn" type="button">Re-roll Color</button>
+      <button id="easyRollMotionBtn" type="button">Re-roll Motion</button>
+      <button id="easyRollFxBtn" type="button">Re-roll FX</button>
       <button id="easyShowFpsBtn" type="button">FPS</button>
       <button id="easyResetViewBtn" type="button">Reset View</button>
       <button id="easyVerticalModeBtn" type="button" style="grid-column: span 2;">⬛ Horizontal Mode</button>
@@ -1199,7 +1203,7 @@ style="width:100%; height:90px;"></textarea>
           <span class="easySliderLabel">Symmetry</span>
           <span class="easySliderValue" id="easySymmetryVal">None</span>
         </div>
-        <input id="easySymmetry" type="range" min="0" max="9" step="1" value="0" />
+        <input id="easySymmetry" type="range" min="0" max="11" step="1" value="0" />
       </div>
     </div>
 
@@ -1238,6 +1242,16 @@ style="width:100%; height:90px;"></textarea>
         </div>
         <input id="easyKaleidoscope" type="range" min="0" max="3" step="0.01" />
       </div>
+      <div class="easySliderRow" style="grid-column:span 2;">
+        <button id="easyEdgeOnlyBtn" type="button" style="width:100%; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); font-size:12px; font-weight:600; cursor:pointer; letter-spacing:0.04em;">Edge Only Mode</button>
+      </div>
+      <div class="easySliderRow" style="grid-column:span 2;">
+        <div class="easySliderHeader">
+          <span class="easySliderLabel">Fill Opacity</span>
+          <span class="easySliderValue" id="easyEdgeFillVal">0.00</span>
+        </div>
+        <input id="easyEdgeFill" type="range" min="0" max="1" step="0.01" value="0" />
+      </div>
     </div>
 
     <div id="easyPlayPanel" class="easyDockPanel" style="grid-template-rows: auto auto; grid-template-columns: 1fr;">
@@ -1275,16 +1289,24 @@ style="width:100%; height:90px;"></textarea>
             <div class="easyBipolarCenter"></div>
           </div>
         </div>
+        <div class="easySliderRow" style="grid-column:span 2;">
+          <div class="easySliderHeader">
+            <span class="easySliderLabel" style="color:rgba(24,216,216,0.7);">⚡ Energy</span>
+            <span class="easySliderValue" id="easyEnergyVal">0.50</span>
+          </div>
+          <input id="easyEnergy" type="range" min="0" max="1" step="0.01" value="0.5" />
+        </div>
       </div>
 
       <!-- Preset list — shown when presets are open, scrollable -->
-      <div id="easyPresetList" style="display:none; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;"></div>
+      <div id="easyPresetList" style="display:none; flex-direction:column; gap:6px; max-height:320px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.2) transparent;"></div>
 
       <!-- Always-visible bottom buttons -->
       <div style="display:flex; gap:8px; margin-top:10px;">
         <button id="easyPlayPauseBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">⏸ Pause</button>
         <button id="easyPresetsBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:13px; cursor:pointer;">Presets</button>
         <button id="easyTapBpmBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:12px; cursor:pointer;">Tap BPM</button>
+        <button id="easyInfiniteZoomBtn" type="button" style="flex:1; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.07); color:#fff; font-size:12px; cursor:pointer;">∞ Zoom</button>
       </div>
     </div>
 
@@ -1346,8 +1368,12 @@ style="width:100%; height:90px;"></textarea>
       <button id="mobilePlayBtn" type="button">Play</button>
     </div>
     <div id="rightPanel">
-      <div id="tapBpmContainer" style="display:none; padding:10px 8px 4px 8px;">
+      <div id="tapBpmContainer" style="padding:10px 8px 4px 8px;">
         <button id="panelTapBpmBtn" style="width:100%; height:44px; border-radius:10px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.07); color:#fff; font-size:14px; font-weight:600; cursor:pointer; letter-spacing:0.03em;">Tap BPM — <span id="panelTapBpmVal">120</span></button>
+      </div>
+      <div id="edgePresetsContainer" style="display:none; padding:8px 8px 4px 8px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:6px;">Edge Presets</div>
+        <div id="edgePresetSwatches" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
       </div>
       <div id="gui"></div>
     </div>
@@ -1520,6 +1546,19 @@ style="width:100%; height:90px;"></textarea>
 
     uniform float uScreenRotateAngle;
     uniform float uVerticalMode;
+    uniform float uTunnelOn;
+    uniform float uTunnelT;
+    uniform float uInfiniteZoomOn;
+    uniform float uInfiniteZoomPhase;
+    uniform float uEdgeOnlyMode;
+    uniform float uEdgeOnlyFill;  // 0=black interior, 1=full surface color
+    uniform float uTunnelStyle;
+    uniform float uTunnelSpeed;
+    uniform float uTunnelTwist;
+    uniform float uTunnelLayers;
+    uniform float uTunnelLayerSpacing;
+    uniform float uTunnelRadialCount;
+    uniform float uTunnelZoom;
 
     vec2 rotate2d(vec2 v, float a) {
       float c = cos(a);
@@ -1637,6 +1676,89 @@ style="width:100%; height:90px;"></textarea>
         float r = length(uv);
         float a = atan(uv.y, uv.x) / 3.14159265;
         return vec2(a, r - 0.5);
+      }
+
+      // Mode 10: Tunnel Zoom — endless fractal zoom tunnel as a symmetry mode
+      // Applies log-zoom + mirror-fold UV warp so the existing fractal renders inside a tunnel
+      if (m < 10.5) {
+        float dist  = length(uv);
+        float angle = atan(uv.y, uv.x);
+
+        // Mirror folds — split and flip radial symmetry (controlled by Tunnel Mirror Folds)
+        float folds     = max(1.0, uTunnelRadialCount);
+        float foldAngle = 3.14159265 / folds;
+        float wrapped   = mod(angle + 3.14159265, foldAngle * 2.0) - foldAngle;
+        float mirrored  = abs(wrapped); // fold into one sector
+
+        // Log-zoom: map radial distance to tunnel depth
+        // This creates the endless zoom illusion
+        float zoom        = max(0.3, uTunnelZoom);
+        float tunnelDepth = -log2(max(dist / zoom, 0.00001));
+        float scrolled    = tunnelDepth + uTunnelT;
+        float layerSpacing= max(0.1, uTunnelLayerSpacing);
+        float layerF      = scrolled / layerSpacing;
+        float layerFrac   = fract(layerF);
+
+        // Twist: rotate mirrored angle slightly per layer depth
+        float twist = uTunnelTwist * 0.15;
+        float twistedAngle = mirrored + layerFrac * twist;
+
+        // Reconstruct UV in folded tunnel space
+        // Map depth fraction → radial distance in fractal space (0..1)
+        float fracR = layerFrac; // 0=far wall, 1=near wall
+        // Invert: near wall (frac→1) maps to small radius = zoomed into fractal center
+        // This is the "outside edge folded inward" — the fractal boundary wraps the wall
+        float invertedR = 1.0 - fracR;
+
+        vec2 tunnelUV = vec2(cos(twistedAngle), sin(twistedAngle)) * invertedR;
+        return tunnelUV;
+      }
+
+      // Mode 11: Concentric Mirror Rings — fractal reflected into nested circles,
+      // each ring flipped inside-out (r → 1/r inversion), scrolling outward from center.
+      // Outside edge of fractal becomes the inner wall of each ring — infinite layers.
+      if (m < 11.5) {
+        float r     = length(uv);
+        float angle = atan(uv.y, uv.x);
+
+        // Mirror folds around the ring — use Tunnel Mirror Folds control
+        float folds = max(1.0, uTunnelRadialCount);
+        float fa    = 3.14159265 / folds;
+        float wa    = mod(angle + 3.14159265, fa * 2.0) - fa;
+        angle       = abs(wa); // folded into one sector
+
+        // Zoom + scroll: log-space the radius so rings appear evenly spaced
+        // and slide outward continuously using tunnel speed/time
+        float zoom  = max(0.2, uTunnelZoom);
+        float speed = uTunnelT;             // pre-computed scrolled time
+        float sp    = max(0.05, uTunnelLayerSpacing);
+
+        // Map r to log depth, add scroll
+        float depth  = log2(max(r / zoom, 0.00001));
+        float shifted = depth - speed;     // slides outward as time increases
+
+        // Which ring layer are we in?
+        float layerF   = shifted / sp;
+        float layerIdx = floor(layerF);
+        float layerFrac= fract(layerF);    // 0=inner edge, 1=outer edge of this ring
+
+        // Every other layer gets flipped (inverted r) — this is the inside-out mirror effect
+        // Even layers: normal fractal (center=center)
+        // Odd layers:  inverted fractal (outside edge faces inward)
+        float flip = mod(layerIdx, 2.0);
+
+        // Remap frac to a 0..1 radius within the ring
+        // then invert for odd layers
+        float ringR = flip < 0.5 ? layerFrac : (1.0 - layerFrac);
+
+        // Add small twist per layer for the corkscrew feel
+        float twist  = uTunnelTwist * layerIdx * 0.12;
+        float tAngle = angle + twist;
+
+        // Reconstruct UV in fractal space
+        // ringR 0=center of fractal, 1=edge — maps into unit circle
+        vec2 newUV = vec2(cos(tAngle), sin(tAngle)) * ringR;
+        return newUV;
       }
 
       return uv;
@@ -2234,9 +2356,18 @@ float primitiveShape(vec3 pos) {
           innerGlow = uInnerGlowColor * innerMask * uInnerGlowStrength;
         }
 
-        col = shadedColor + specular + glowLayer + innerGlow;
-        if (lineMixAmt > 0.0) {
-          col = mix(col, lineColor, clamp(lineMixAmt, 0.0, 1.0));
+        if (uEdgeOnlyMode > 0.5) {
+          // Edge Only: surface color fades in with uEdgeOnlyFill (0=black, 1=full)
+          vec3 fillCol = (shadedColor + specular) * uEdgeOnlyFill;
+          col = fillCol + glowLayer + innerGlow;
+          if (lineMixAmt > 0.0) {
+            col += lineColor * lineMixAmt;
+          }
+        } else {
+          col = shadedColor + specular + glowLayer + innerGlow;
+          if (lineMixAmt > 0.0) {
+            col = mix(col, lineColor, clamp(lineMixAmt, 0.0, 1.0));
+          }
         }
       }
 
@@ -2244,13 +2375,144 @@ float primitiveShape(vec3 pos) {
       return clamp(col, 0.0, 1.0);
     }
 
+
+    // ── TUNNEL RENDERER ────────────────────────────────────────────────────
+
+    // 2D mandelbulb cross-section — smooth escape value 0..1
+    float mb2D(vec2 uv, float pw, float sz) {
+      vec3 c = vec3(uv * 0.85, sz);
+      vec3 z = c;
+      for (int i = 0; i < 12; i++) {
+        float r = length(z);
+        if (r > 2.0) return clamp(float(i) / 12.0, 0.0, 1.0);
+        float th = acos(clamp(z.z / max(r, 0.00001), -1.0, 1.0));
+        float ph = atan(z.y, z.x);
+        float rp  = pow(r, pw);
+        z = rp * vec3(sin(th*pw)*cos(ph*pw), sin(th*pw)*sin(ph*pw), cos(th*pw)) + c;
+      }
+      return 0.0;
+    }
+
+    vec3 tunnelPalette(float t) {
+      t = fract(t);
+      float cp = uPaletteCycle > 0.5 ? iTime * uPaletteCycleSpeed * 0.08 : 0.0;
+      t = fract(t + cp);
+      if (t < 0.333) return mix(uPsyColorA, uPsyColorB, t * 3.0);
+      if (t < 0.667) return mix(uPsyColorB, uPsyColorC, (t - 0.333) * 3.0);
+      return mix(uPsyColorC, uPsyColorD, (t - 0.667) * 3.0);
+    }
+
+    vec3 renderTunnel(vec2 uv) {
+      uv.x *= iResolution.x / iResolution.y;
+
+      float T    = uTunnelT;           // scrolling time, already speed-scaled
+      float dist = length(uv);
+      float ang  = atan(uv.y, uv.x);
+
+      // Mirror folds — crack open the fractal radially
+      float folds = max(1.0, uTunnelRadialCount);
+      float fa    = 3.14159265 / folds;
+      float wa    = mod(ang + 3.14159265, fa * 2.0) - fa;
+      float ma    = abs(wa);           // folded angle 0..fa
+
+      float pw    = max(2.0, uPower);
+      float zoom  = max(0.2, uTunnelZoom);
+      float sp    = max(0.05, uTunnelLayerSpacing);
+      int   N     = int(clamp(uTunnelLayers, 2.0, 20.0));
+
+      vec3  col   = vec3(0.0);
+
+      // Accumulate N layers. Each layer is a concentric shell at a different
+      // log-spaced radius. We step through them from far to near.
+      for (int li = 0; li < 20; li++) {
+        if (li >= N) break;
+
+        float lf   = float(li);
+
+        // Shell radius in screen space — log-spaced so they look evenly spaced
+        // Scrolling phase: T mod sp maps which shell is "currently passing"
+        float phase     = mod(T, sp);
+        float shellDist = zoom * exp2(-(lf * sp + phase));
+
+        // How close is this pixel to the shell ring?
+        float ringDist  = abs(dist - shellDist);
+        float thickness = shellDist * 0.06;
+        float ringMask  = 1.0 - smoothstep(0.0, thickness, ringDist);
+
+        // Fill mask — inside the ring
+        float fillMask  = dist < shellDist ? 1.0 : 0.0;
+        float fillFade  = smoothstep(0.0, shellDist, shellDist - dist) * 0.4;
+
+        // Depth fade — far shells dimmer
+        float dfade = 1.0 - lf / float(N);
+        dfade = max(0.02, dfade * dfade);
+
+        // Fractal UV: map folded angle + normalized ring distance into 2D space
+        // Each shell samples the fractal at a slightly different scale & power
+        float layerScale = 1.0 / max(0.01, shellDist * 2.0);
+        layerScale = clamp(layerScale, 0.3, 8.0);
+        float layerPow  = pw + lf * uTunnelTwist * 0.25;
+        float sliceZ    = sin(lf * 0.55 + T * 0.04) * 0.55;
+
+        // UV inside fractal: use folded angle + dist normalized to this shell
+        vec2 fUV = vec2(cos(ma), sin(ma)) * clamp(dist / max(0.001, shellDist), 0.0, 1.5);
+
+        float esc = mb2D(fUV * layerScale * 0.5, layerPow, sliceZ);
+
+        // Edge: numerical gradient for fractal boundary trace
+        float e  = 0.04;
+        float ex = mb2D((fUV + vec2(e, 0.0)) * layerScale * 0.5, layerPow, sliceZ);
+        float ey = mb2D((fUV + vec2(0.0, e)) * layerScale * 0.5, layerPow, sliceZ);
+        float edge = clamp(length(vec2(ex - esc, ey - esc)) / e * 0.5, 0.0, 1.0);
+
+        float invEsc = 1.0 - esc;
+
+        float palT = fract(esc * 0.6 + lf * 0.13 + T * 0.03);
+
+        // Fill interior with fractal colors
+        col += tunnelPalette(palT) * invEsc * fillMask * fillFade * dfade;
+
+        // Ring edge — bright fractal boundary
+        col += tunnelPalette(fract(palT + 0.2)) * edge * ringMask * dfade * 2.0;
+
+        // Glow
+        if (uGlowOn > 0.5) {
+          col += mix(uGlowColorA, uGlowColorB, fract(palT + 0.5))
+                 * edge * ringMask * dfade * uGlowStrength;
+        }
+      }
+
+      // Bright center
+      float core = 1.0 - smoothstep(0.0, 0.02 * zoom, dist);
+      col += mix(uPsyColorA, uPsyColorB, fract(T * 0.08)) * core * 3.0;
+
+      // Vignette
+      col *= 1.0 - smoothstep(0.6 * zoom, 1.5 * zoom, dist);
+
+      return clamp(col * uLightIntensity, 0.0, 1.0);
+    }
+
+
     void main() {
       vec2 screenUv = (gl_FragCoord.xy / iResolution.xy) * 2.0 - 1.0;
       vec2 distortedUv = applyPostDistortion(screenUv);
 
       vec3 col;
 
-      if (uChromaticOn > 0.5 && uChromaticStrength > 0.00001) {
+      if (uTunnelOn > 0.5) {
+        col = renderTunnel(screenUv);
+
+      } else if (uInfiniteZoomOn > 0.5) {
+        float phase  = uInfiniteZoomPhase;
+        float scaleA = pow(0.5, phase);
+        float scaleB = pow(0.5, phase - 1.0);
+        float fadeB  = smoothstep(0.3, 1.0, phase);
+        float fadeA  = 1.0 - smoothstep(0.7, 1.0, phase);
+        vec3 colA = renderScene(distortedUv * scaleA);
+        vec3 colB = renderScene(distortedUv * scaleB);
+        col = colA * fadeA + colB * fadeB;
+
+      } else if (uChromaticOn > 0.5 && uChromaticStrength > 0.00001) {
         float edge = clamp(length(screenUv), 0.0, 1.41421356) / 1.41421356;
         float edgeWeight = mix(1.0, pow(edge, 1.0 + uChromaticEdgeBias * 4.0), clamp(uChromaticEdgeBias, 0.0, 1.0));
         vec2 dir = normalize(screenUv + vec2(0.0001, 0.0002));
@@ -2260,9 +2522,9 @@ float primitiveShape(vec3 pos) {
 
         vec3 colR = renderScene(distortedUv + chromaOffset);
         vec3 colG = renderScene(distortedUv);
-        vec3 colB = renderScene(distortedUv - chromaOffset);
+        vec3 colB2 = renderScene(distortedUv - chromaOffset);
 
-        col = vec3(colR.r, colG.g, colB.b);
+        col = vec3(colR.r, colG.g, colB2.b);
       } else {
         col = renderScene(distortedUv);
       }
@@ -2310,6 +2572,20 @@ float primitiveShape(vec3 pos) {
 
     let params = {
       flySpeed: 0.05,
+      edgeOnlyMode: false,
+      edgeOnlyFill: 0.0,
+      infiniteZoomOn: false,
+      infiniteZoomSpeed: 0.5,
+
+      tunnelOn: false,
+      tunnelStyle: 0,
+      tunnelSpeed: 0.5,
+      tunnelTwist: 0.0,
+      tunnelLayers: 8.0,
+      tunnelLayerSpacing: 1.0,
+      tunnelRadialCount: 8.0,
+      tunnelZoom: 2.5,
+      tunnelMusicReact: true,
 
       uPower: 8.0,
       uBailout: 1.5,
@@ -2510,6 +2786,7 @@ float primitiveShape(vec3 pos) {
       "musicReactSpeed", "musicReactSpeedAmount",
       "musicReactPower", "musicReactPowerAmount",
       "musicReactTwist", "musicReactTwistAmount",
+      "tunnelMusicReact",
       "tapBpm"
     ]);
     const PRESET_KEYS = Object.keys(params).filter(k => !AUDIO_KEYS.has(k));
@@ -2545,7 +2822,9 @@ float primitiveShape(vec3 pos) {
       "Diagonal Mirror": 6,
       "Radial (Kaleidoscope)": 7,
       "Tiling": 8,
-      "Polar (Tunnel)": 9
+      "Polar": 9,
+      "Tunnel Zoom": 10,
+      "Mirror Rings": 11
     };
 
     const RIPPLE_MODE_OPTIONS = {
@@ -3103,6 +3382,47 @@ function randomizeFromGoodSeed() {
   syncEasyDockControlsFromParams();
   syncMobileControlsFromParams();
 }
+    // ── Targeted re-roll functions ──────────────────────────────────────────
+    function rerollShape() {
+      if (!BUILT_IN_GOOD_PRESETS.length) return;
+      normalizeRandomTypes();
+      mutateStructure();
+      mutateTransforms();
+      normalizeRandomTypes();
+      refreshGuiDisplays();
+      syncEasyDockControlsFromParams();
+      syncMobileControlsFromParams();
+    }
+
+    function rerollColor() {
+      normalizeRandomTypes();
+      randomizePaletteLight();
+      mutateVisualsLight();
+      normalizeRandomTypes();
+      refreshGuiDisplays();
+      syncEasyDockControlsFromParams();
+      syncMobileControlsFromParams();
+    }
+
+    function rerollMotion() {
+      normalizeRandomTypes();
+      mutateMotion();
+      normalizeRandomTypes();
+      refreshGuiDisplays();
+      syncEasyDockControlsFromParams();
+      syncMobileControlsFromParams();
+    }
+
+    function rerollFx() {
+      normalizeRandomTypes();
+      mutateFxRare();
+      mutateVisualsLight();
+      normalizeRandomTypes();
+      refreshGuiDisplays();
+      syncEasyDockControlsFromParams();
+      syncMobileControlsFromParams();
+    }
+
     function togglePanels() {
       document.body.classList.toggle("panelsHidden");
       layoutPreviewFrame();
@@ -3320,6 +3640,8 @@ function copyCurrentStateToClipboard() {
       };
 
       savePresetsToStorage(presets);
+      // Capture thumbnail after a short delay so the current frame is rendered
+      setTimeout(() => saveThumbnail(trimmed, capturePresetThumbnail()), 80);
       refreshPresetSelect();
       presetSelect.value = trimmed;
       playlistPresetSelect.value = trimmed;
@@ -3355,6 +3677,7 @@ function copyCurrentStateToClipboard() {
 
       const presets = loadPresetsFromStorage();
       delete presets[selected];
+      deleteThumbnail(selected);
       savePresetsToStorage(presets);
       params.playlist = params.playlist.filter((name) => name !== selected);
       savePlaylistState();
@@ -3409,6 +3732,7 @@ function copyCurrentStateToClipboard() {
       };
 
       savePresetsToStorage(presets);
+      setTimeout(() => saveThumbnail(finalName, capturePresetThumbnail()), 80);
       refreshPresetSelect();
       presetSelect.value = finalName;
       playlistPresetSelect.value = finalName;
@@ -3856,6 +4180,16 @@ bindTap(mobilePlayBtn, () => {
 
     if (easyRandomBtn) easyRandomBtn.addEventListener("click", () => randomBtn.click());
 
+    // Targeted re-roll buttons
+    const easyRollShapeBtn  = document.getElementById("easyRollShapeBtn");
+    const easyRollColorBtn  = document.getElementById("easyRollColorBtn");
+    const easyRollMotionBtn = document.getElementById("easyRollMotionBtn");
+    const easyRollFxBtn     = document.getElementById("easyRollFxBtn");
+    if (easyRollShapeBtn)  easyRollShapeBtn.addEventListener("click",  rerollShape);
+    if (easyRollColorBtn)  easyRollColorBtn.addEventListener("click",  rerollColor);
+    if (easyRollMotionBtn) easyRollMotionBtn.addEventListener("click", rerollMotion);
+    if (easyRollFxBtn)     easyRollFxBtn.addEventListener("click",     rerollFx);
+
     if (easyToggleUiBtn) {
       easyToggleUiBtn.addEventListener("click", () => {
         document.body.classList.toggle("panelsHidden");
@@ -3952,7 +4286,7 @@ bindTap(mobilePlayBtn, () => {
         input: easySymmetry,
         valueEl: document.getElementById("easySymmetryVal"),
         format: v => {
-          const names = ["None","H Mirror","V Mirror","Dual Mirror","Quad Mirror","Square Mirror","Diagonal","Radial","Tiling","Polar"];
+          const names = ["None","H Mirror","V Mirror","Dual Mirror","Quad Mirror","Square Mirror","Diagonal","Radial","Tiling","Polar","Tunnel Zoom","Mirror Rings"];
           return names[Math.round(v)] || "None";
         },
         getParam: () => params.symmetryMode,
@@ -4049,6 +4383,18 @@ bindTap(mobilePlayBtn, () => {
         sl.input.value = v;
         if (sl.valueEl) sl.valueEl.textContent = sl.format(v);
       });
+      // Sync energy slider back to neutral when preset loads
+      const energyEl = document.getElementById("easyEnergy");
+      const energyValEl = document.getElementById("easyEnergyVal");
+      if (energyEl) energyEl.value = 0.5;
+      if (energyValEl) energyValEl.textContent = "0.50";
+      energyBaseValues = null; // reset base so next drag captures fresh values
+
+      // Sync edge fill slider
+      const efSlider = document.getElementById("easyEdgeFill");
+      const efVal = document.getElementById("easyEdgeFillVal");
+      if (efSlider) efSlider.value = params.edgeOnlyFill || 0;
+      if (efVal) efVal.textContent = (params.edgeOnlyFill || 0).toFixed(2);
       // Update power label based on animation state
       const lbl = document.getElementById("easyPowerLabel");
       if (lbl) lbl.textContent = params.powerAnimation ? "Power (center)" : "Power";
@@ -4180,6 +4526,119 @@ bindTap(mobilePlayBtn, () => {
       });
     }
 
+    // ─── Energy slider ────────────────────────────────────────────────────
+    // Scales all motion intensity proportionally from current values.
+    // Stored as a multiplier; 0.5 = neutral (no change), 0=still, 1=maximum.
+    let energyBaseValues = null;  // captured when user starts dragging
+
+    const easyEnergy    = document.getElementById("easyEnergy");
+    const easyEnergyVal = document.getElementById("easyEnergyVal");
+
+    function captureEnergyBase() {
+      energyBaseValues = {
+        powerAnimationSpeed: params.powerAnimationSpeed || 0.5,
+        rotateSpeedX: params.rotateSpeedX || 0.5,
+        rotateSpeedY: params.rotateSpeedY || 1.0,
+        rotateSpeedZ: params.rotateSpeedZ || 0.75,
+        cameraRotateSpeed: params.cameraRotateSpeed || 0.3,
+        breathingAmount: params.breathingAmount || 0.08,
+        breathingSpeed: params.breathingSpeed || 0.5,
+        paletteCycleSpeed: params.paletteCycleSpeed || 0.5,
+        psyFlow: params.psyFlow || 0.7,
+        glowScrollSpeed: params.glowScrollSpeed || 0.3,
+        lineScrollSpeed: params.lineScrollSpeed || 0.3,
+      };
+    }
+
+    function applyEnergy(level) {
+      if (!energyBaseValues) captureEnergyBase();
+      // level 0.5 = neutral (base values unchanged)
+      // level 0 = everything at minimum / off
+      // level 1 = everything at 2x base
+      const mult = level * 2.0; // 0→0, 0.5→1.0, 1→2.0
+
+      const b = energyBaseValues;
+
+      // Motion on/off based on whether level > 0
+      const on = level > 0.02;
+      if (params.autoRotateX || params.autoRotateY || params.autoRotateZ) {
+        params.rotateSpeedX = b.rotateSpeedX * mult;
+        params.rotateSpeedY = b.rotateSpeedY * mult;
+        params.rotateSpeedZ = b.rotateSpeedZ * mult;
+      }
+      if (params.powerAnimation) {
+        params.powerAnimationSpeed = Math.max(0.01, b.powerAnimationSpeed * mult);
+      }
+      if (params.cameraRotateOn) {
+        params.cameraRotateSpeed = Math.sign(b.cameraRotateSpeed) * Math.abs(b.cameraRotateSpeed) * mult;
+      }
+      if (params.breathingOn) {
+        params.breathingAmount = Math.min(0.4, b.breathingAmount * mult);
+        params.breathingSpeed  = Math.min(3.0, b.breathingSpeed * mult);
+      }
+      // Color cycle speed
+      params.paletteCycleSpeed = Math.min(3.0, b.paletteCycleSpeed * mult);
+      params.psyFlow = Math.min(4.0, b.psyFlow * mult);
+
+      // Glow/line scroll speed
+      if (params.glowScroll) params.glowScrollSpeed = Math.min(3.0, b.glowScrollSpeed * mult);
+      if (params.lineScroll) params.lineScrollSpeed = Math.min(3.0, b.lineScrollSpeed * mult);
+
+      refreshGuiDisplays();
+      if (easyEnergyVal) easyEnergyVal.textContent = level.toFixed(2);
+    }
+
+    if (easyEnergy) {
+      easyEnergy.addEventListener("pointerdown", () => {
+        captureEnergyBase(); // snapshot current values when you grab the slider
+      });
+      easyEnergy.addEventListener("input", (e) => {
+        applyEnergy(parseFloat(e.target.value));
+      });
+    }
+
+    // ─── Thumbnail capture ─────────────────────────────────────────────────
+    const THUMBNAIL_STORAGE_KEY = "fractalExplorerThumbnailsV1";
+
+    function capturePresetThumbnail() {
+      try {
+        // Render to a small offscreen canvas
+        const src = renderer.domElement;
+        const thumb = document.createElement("canvas");
+        const SIZE = 120;
+        thumb.width  = SIZE;
+        thumb.height = Math.round(SIZE / (src.width / src.height));
+        const ctx = thumb.getContext("2d");
+        ctx.drawImage(src, 0, 0, thumb.width, thumb.height);
+        return thumb.toDataURL("image/jpeg", 0.75);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveThumbnail(name, dataUrl) {
+      if (!dataUrl) return;
+      try {
+        const thumbs = JSON.parse(localStorage.getItem(THUMBNAIL_STORAGE_KEY) || "{}");
+        thumbs[name] = dataUrl;
+        localStorage.setItem(THUMBNAIL_STORAGE_KEY, JSON.stringify(thumbs));
+      } catch(e) {}
+    }
+
+    function loadThumbnails() {
+      try {
+        return JSON.parse(localStorage.getItem(THUMBNAIL_STORAGE_KEY) || "{}");
+      } catch(e) { return {}; }
+    }
+
+    function deleteThumbnail(name) {
+      try {
+        const thumbs = loadThumbnails();
+        delete thumbs[name];
+        localStorage.setItem(THUMBNAIL_STORAGE_KEY, JSON.stringify(thumbs));
+      } catch(e) {}
+    }
+
     // ─── Easy Presets panel ───────────────────────────────────────────────
     const easyPresetsBtn   = document.getElementById("easyPresetsBtn");
     const easyPresetList   = document.getElementById("easyPresetList");
@@ -4189,8 +4648,9 @@ bindTap(mobilePlayBtn, () => {
     function buildEasyPresetList() {
       if (!easyPresetList) return;
       easyPresetList.innerHTML = "";
-      const presets = loadPresetsFromStorage();
-      const names = Object.keys(presets).sort((a, b) => a.localeCompare(b));
+      const presets   = loadPresetsFromStorage();
+      const thumbs    = loadThumbnails();
+      const names     = Object.keys(presets).sort((a, b) => a.localeCompare(b));
       if (!names.length) {
         const msg = document.createElement("div");
         msg.textContent = "No saved presets yet";
@@ -4198,11 +4658,47 @@ bindTap(mobilePlayBtn, () => {
         easyPresetList.appendChild(msg);
         return;
       }
+      // Switch to grid layout for thumbnails
+      easyPresetList.style.display = "grid";
+      easyPresetList.style.gridTemplateColumns = "1fr 1fr";
+      easyPresetList.style.gap = "6px";
       names.forEach(name => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = name;
-        btn.addEventListener("click", () => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.style.cssText = [
+          "display:flex", "flex-direction:column", "align-items:stretch",
+          "border-radius:10px", "border:1px solid rgba(255,255,255,0.1)",
+          "background:rgba(255,255,255,0.05)", "cursor:pointer",
+          "overflow:hidden", "padding:0", "text-align:left",
+          "transition:border-color 0.12s, background 0.12s"
+        ].join(";");
+
+        if (thumbs[name]) {
+          const img = document.createElement("img");
+          img.src = thumbs[name];
+          img.style.cssText = "width:100%; aspect-ratio:16/9; object-fit:cover; display:block;";
+          card.appendChild(img);
+        } else {
+          // Placeholder gradient using palette colors from preset
+          const ph = document.createElement("div");
+          ph.style.cssText = "width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,#18d8d8,#a6ff3c); opacity:0.3;";
+          card.appendChild(ph);
+        }
+
+        const label = document.createElement("div");
+        label.textContent = name;
+        label.style.cssText = "padding:5px 8px; font-size:11px; color:rgba(255,255,255,0.85); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+        card.appendChild(label);
+
+        card.addEventListener("mouseenter", () => {
+          card.style.borderColor = "rgba(24,216,216,0.35)";
+          card.style.background  = "rgba(24,216,216,0.08)";
+        });
+        card.addEventListener("mouseleave", () => {
+          card.style.borderColor = "rgba(255,255,255,0.1)";
+          card.style.background  = "rgba(255,255,255,0.05)";
+        });
+        card.addEventListener("click", () => {
           const p = presets[name];
           if (p && p.values) {
             applyPresetData(p.values);
@@ -4210,15 +4706,15 @@ bindTap(mobilePlayBtn, () => {
             syncEasyDockControlsFromParams();
           }
         });
-        easyPresetList.appendChild(btn);
+        easyPresetList.appendChild(card);
       });
     }
 
     function openEasyPresets() {
       easyPresetsOpen = true;
-      buildEasyPresetList();
+      buildEasyPresetList(); // sets display to grid internally
       if (easyPlaySliders) easyPlaySliders.style.display = "none";
-      if (easyPresetList)  { easyPresetList.style.display = "flex"; }
+      if (easyPresetList)  { easyPresetList.style.display = "grid"; }
       if (easyPresetsBtn)  {
         easyPresetsBtn.textContent = "Exit Presets";
         easyPresetsBtn.style.background = "rgba(24,216,216,0.15)";
@@ -4244,6 +4740,147 @@ bindTap(mobilePlayBtn, () => {
         easyPresetsOpen ? closeEasyPresets() : openEasyPresets();
       });
     }
+
+    // ─── Edge Presets ─────────────────────────────────────────────────────
+    const EDGE_PRESETS = [
+      { name: "Neon",    glowA: "#00ffff", glowB: "#ff00ff", lineA: "#ffffff", lineB: "#00ffff",
+        glowStr: 1.4, glowW: 1.8, glowEmit: 1.2, lineStr: 1.0, lineW: 0.4, lineSoft: 0.15,
+        glowAlpA: 1.0, glowAlpB: 0.6, lineAlpA: 1.0, lineAlpB: 0.8,
+        glowScroll: true, lineScroll: false, swatchGrad: "linear-gradient(135deg,#00ffff,#ff00ff)" },
+      { name: "Fire",    glowA: "#ff4400", glowB: "#ffdd00", lineA: "#ff8800", lineB: "#ffff00",
+        glowStr: 1.6, glowW: 2.2, glowEmit: 1.8, lineStr: 0.9, lineW: 0.5, lineSoft: 0.25,
+        glowAlpA: 1.0, glowAlpB: 0.5, lineAlpA: 1.0, lineAlpB: 0.7,
+        glowScroll: true, lineScroll: true, swatchGrad: "linear-gradient(135deg,#ff4400,#ffdd00)" },
+      { name: "Ice",     glowA: "#00ccff", glowB: "#ffffff", lineA: "#aaeeff", lineB: "#ffffff",
+        glowStr: 1.0, glowW: 2.5, glowEmit: 0.8, lineStr: 0.8, lineW: 0.3, lineSoft: 0.4,
+        glowAlpA: 0.9, glowAlpB: 1.0, lineAlpA: 0.8, lineAlpB: 1.0,
+        glowScroll: false, lineScroll: false, swatchGrad: "linear-gradient(135deg,#00ccff,#ffffff)" },
+      { name: "Void",    glowA: "#4400ff", glowB: "#aa00ff", lineA: "#6600ff", lineB: "#ff00ff",
+        glowStr: 1.2, glowW: 3.0, glowEmit: 2.0, lineStr: 0.7, lineW: 0.25, lineSoft: 0.5,
+        glowAlpA: 1.0, glowAlpB: 0.4, lineAlpA: 0.9, lineAlpB: 0.6,
+        glowScroll: false, lineScroll: false, swatchGrad: "linear-gradient(135deg,#4400ff,#aa00ff)" },
+      { name: "Plasma",  glowA: "#ff0088", glowB: "#8800ff", lineA: "#ff00cc", lineB: "#00ffff",
+        glowStr: 1.5, glowW: 2.0, glowEmit: 1.5, lineStr: 1.1, lineW: 0.35, lineSoft: 0.2,
+        glowAlpA: 1.0, glowAlpB: 0.7, lineAlpA: 1.0, lineAlpB: 0.9,
+        glowScroll: true, lineScroll: true, swatchGrad: "linear-gradient(135deg,#ff0088,#8800ff)" },
+      { name: "Ghost",   glowA: "#ffffff", glowB: "#88ffee", lineA: "#ffffff", lineB: "#aaffee",
+        glowStr: 0.6, glowW: 3.5, glowEmit: 0.4, lineStr: 0.5, lineW: 0.2, lineSoft: 0.65,
+        glowAlpA: 0.7, glowAlpB: 0.3, lineAlpA: 0.5, lineAlpB: 0.25,
+        glowScroll: false, lineScroll: false, swatchGrad: "linear-gradient(135deg,#ffffff44,#88ffee88)" },
+      { name: "Acid",    glowA: "#aaff00", glowB: "#ff8800", lineA: "#ccff00", lineB: "#ffff00",
+        glowStr: 1.3, glowW: 1.5, glowEmit: 1.4, lineStr: 1.2, lineW: 0.45, lineSoft: 0.1,
+        glowAlpA: 1.0, glowAlpB: 0.8, lineAlpA: 1.0, lineAlpB: 1.0,
+        glowScroll: true, lineScroll: false, swatchGrad: "linear-gradient(135deg,#aaff00,#ff8800)" },
+      { name: "Aurora",  glowA: "#00ff88", glowB: "#0044ff", lineA: "#00ffcc", lineB: "#aa00ff",
+        glowStr: 1.1, glowW: 2.8, glowEmit: 1.0, lineStr: 0.8, lineW: 0.3, lineSoft: 0.35,
+        glowAlpA: 1.0, glowAlpB: 0.6, lineAlpA: 0.9, lineAlpB: 0.7,
+        glowScroll: true, lineScroll: true, swatchGrad: "linear-gradient(135deg,#00ff88,#0044ff)" },
+    ];
+
+    function applyEdgePreset(p) {
+      params.edgeOnlyMode  = true;
+      params.glowOn        = true;
+      params.lineOn        = true;
+      params.glowColorA    = p.glowA;
+      params.glowColorB    = p.glowB;
+      params.glowAlphaA    = p.glowAlpA;
+      params.glowAlphaB    = p.glowAlpB;
+      params.glowStrength  = p.glowStr;
+      params.glowWidth     = p.glowW;
+      params.glowEmission  = p.glowEmit;
+      params.glowScroll    = p.glowScroll;
+      params.lineColorA    = p.lineA;
+      params.lineColorB    = p.lineB;
+      params.lineAlphaA    = p.lineAlpA;
+      params.lineAlphaB    = p.lineAlpB;
+      params.lineStrength  = p.lineStr;
+      params.lineWidth     = p.lineW;
+      params.lineSoftness  = p.lineSoft;
+      params.lineScroll    = p.lineScroll;
+      refreshGuiDisplays();
+      syncEasyDockControlsFromParams();
+    }
+
+    function buildEdgePresets() {
+      const container = document.getElementById("edgePresetsContainer");
+      const row = document.getElementById("edgePresetSwatches");
+      if (!row) return;
+      row.innerHTML = "";
+      EDGE_PRESETS.forEach(p => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.title = p.name;
+        btn.style.cssText = [
+          "flex: 1 1 auto",
+          "min-width: 52px",
+          "height: 36px",
+          "border-radius: 8px",
+          "border: 1px solid rgba(255,255,255,0.15)",
+          "background: " + p.swatchGrad,
+          "color: rgba(255,255,255,0.9)",
+          "font-size: 10px",
+          "font-weight: 700",
+          "letter-spacing: 0.04em",
+          "cursor: pointer",
+          "text-shadow: 0 1px 3px rgba(0,0,0,0.8)",
+          "transition: transform 0.1s, box-shadow 0.1s"
+        ].join(";");
+        btn.textContent = p.name;
+        btn.addEventListener("mouseenter", () => { btn.style.transform = "scale(1.06)"; btn.style.boxShadow = "0 0 10px rgba(255,255,255,0.25)"; });
+        btn.addEventListener("mouseleave", () => { btn.style.transform = ""; btn.style.boxShadow = ""; });
+        btn.addEventListener("click", () => applyEdgePreset(p));
+        row.appendChild(btn);
+      });
+    }
+    buildEdgePresets();
+
+    // Easy dock Edge Only button
+    const easyEdgeOnlyBtn = document.getElementById("easyEdgeOnlyBtn");
+    function updateEdgeOnlyBtn() {
+      if (!easyEdgeOnlyBtn) return;
+      if (params.edgeOnlyMode) {
+        easyEdgeOnlyBtn.textContent = "Edge Only  ON";
+        easyEdgeOnlyBtn.style.background = "rgba(166,255,60,0.18)";
+        easyEdgeOnlyBtn.style.borderColor = "rgba(166,255,60,0.5)";
+        easyEdgeOnlyBtn.style.color = "#a6ff3c";
+      } else {
+        easyEdgeOnlyBtn.textContent = "Edge Only Mode";
+        easyEdgeOnlyBtn.style.background = "rgba(255,255,255,0.06)";
+        easyEdgeOnlyBtn.style.borderColor = "rgba(255,255,255,0.12)";
+        easyEdgeOnlyBtn.style.color = "rgba(255,255,255,0.7)";
+      }
+    }
+    // Easy edge fill slider
+    const easyEdgeFill = document.getElementById("easyEdgeFill");
+    const easyEdgeFillVal = document.getElementById("easyEdgeFillVal");
+    if (easyEdgeFill) {
+      easyEdgeFill.addEventListener("input", (e) => {
+        params.edgeOnlyFill = parseFloat(e.target.value);
+        if (easyEdgeFillVal) easyEdgeFillVal.textContent = params.edgeOnlyFill.toFixed(2);
+      });
+    }
+
+    if (easyEdgeOnlyBtn) {
+      easyEdgeOnlyBtn.addEventListener("click", () => {
+        params.edgeOnlyMode = !params.edgeOnlyMode;
+        updateEdgeOnlyBtn();
+        const c = document.getElementById("edgePresetsContainer");
+        if (c) c.style.display = params.edgeOnlyMode ? "block" : "none";
+        refreshGuiDisplays();
+      });
+    }
+    updateEdgeOnlyBtn();
+
+    // Show edge presets panel when edgeOnlyMode is toggled via GUI
+    // We observe param changes via a simple interval check since dat.GUI doesn't emit events
+    let _lastEdgeMode = false;
+    setInterval(() => {
+      if (params.edgeOnlyMode !== _lastEdgeMode) {
+        _lastEdgeMode = params.edgeOnlyMode;
+        const c = document.getElementById("edgePresetsContainer");
+        if (c) c.style.display = params.edgeOnlyMode ? "block" : "none";
+      }
+    }, 200);
 
     // ─── Tap BPM ──────────────────────────────────────────────────────────
     function handleTap() {
@@ -4284,14 +4921,36 @@ bindTap(mobilePlayBtn, () => {
     if (easyTapBpmBtn) easyTapBpmBtn.addEventListener("click", handleTap);
     if (panelTapBpmBtn) panelTapBpmBtn.addEventListener("click", handleTap);
 
+    // Infinite zoom toggle
+    const easyInfiniteZoomBtn = document.getElementById("easyInfiniteZoomBtn");
+    function updateInfiniteZoomBtn() {
+      if (!easyInfiniteZoomBtn) return;
+      if (params.infiniteZoomOn) {
+        easyInfiniteZoomBtn.textContent = "∞ Zoom ON";
+        easyInfiniteZoomBtn.style.background = "rgba(24,216,216,0.18)";
+        easyInfiniteZoomBtn.style.borderColor = "rgba(24,216,216,0.5)";
+        easyInfiniteZoomBtn.style.color = "#18d8d8";
+      } else {
+        easyInfiniteZoomBtn.textContent = "∞ Zoom";
+        easyInfiniteZoomBtn.style.background = "rgba(255,255,255,0.07)";
+        easyInfiniteZoomBtn.style.borderColor = "rgba(255,255,255,0.12)";
+        easyInfiniteZoomBtn.style.color = "#fff";
+      }
+    }
+    if (easyInfiniteZoomBtn) {
+      easyInfiniteZoomBtn.addEventListener("click", () => {
+        params.infiniteZoomOn = !params.infiniteZoomOn;
+        updateInfiniteZoomBtn();
+      });
+    }
+    updateInfiniteZoomBtn();
+
     // Show/hide the panel tap button when Audio Reactive folder opens
     // We do this by observing the audioF folder's open state after GUI is built
     // (dat.GUI doesn't have a native event — we poll on folder click instead)
     const audioFolderTitle = document.querySelector("#gui .dg");
     // Wire via mutation or just show it always since it's compact
     const tapBpmContainer = document.getElementById("tapBpmContainer");
-    if (tapBpmContainer) tapBpmContainer.style.display = "block";
-
 
     syncMobileControlsFromParams();
     syncEasyDockControlsFromParams();
@@ -5048,18 +5707,47 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
           uChromaticSpeed: { value: params.chromaticSpeed },
 
           uScreenRotateAngle: { value: 0.0 },
-          uVerticalMode: { value: 0.0 }
+          uVerticalMode: { value: 0.0 },
+
+          uTunnelOn:          { value: 0.0 },
+          uTunnelT:           { value: 0.0 },
+          uInfiniteZoomOn:    { value: 0.0 },
+          uInfiniteZoomPhase: { value: 0.0 },
+          uEdgeOnlyMode:      { value: 0.0 },
+          uEdgeOnlyFill:      { value: 0.0 },
+          uTunnelStyle:       { value: 0.0 },
+          uTunnelSpeed:       { value: 0.5 },
+          uTunnelTwist:       { value: 0.0 },
+          uTunnelLayers:      { value: 8.0 },
+          uTunnelLayerSpacing:{ value: 1.0 },
+          uTunnelRadialCount: { value: 6.0 },
+          uTunnelZoom:        { value: 2.5 }
         }
       });
 
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
 
+
+
       layoutPreviewFrame();
       resizeRendererToPreviewFrame();
 
       gui = new dat.GUI({ autoPlace: false, width: 320 });
       document.getElementById("gui").appendChild(gui.domElement);
+
+      // ── TUNNEL ───────────────────────────────────────────────────────────
+      const tunnelF = gui.addFolder("Tunnel & Ring Settings");
+      tunnelF.add(params, "tunnelOn").name("Tunnel Mode On");
+      tunnelF.add(params, "tunnelStyle", { "Fractal Shell": 0, "Mandala": 1, "Warp Energy": 2 }).name("Tunnel Style");
+      tunnelF.add(params, "tunnelSpeed", 0.0, 4.0).name("Speed  (Tunnel + Mirror Rings)");
+      tunnelF.add(params, "tunnelTwist", -3.0, 3.0).name("Twist");
+      tunnelF.add(params, "tunnelLayers", 2.0, 20.0).step(1).name("Layer Count  (Tunnel)");
+      tunnelF.add(params, "tunnelLayerSpacing", 0.05, 2.0).name("Layer Spacing  (Both)");
+      tunnelF.add(params, "tunnelRadialCount", 1.0, 16.0).step(1).name("Mirror Folds  (Both)");
+      tunnelF.add(params, "tunnelZoom", 0.3, 8.0).name("Zoom  (Both)");
+      tunnelF.add(params, "tunnelMusicReact").name("Music Reactive");
+      tunnelF.close();
 
       // ── 1. SHAPE ─────────────────────────────────────────────────────────
       const shapeF = gui.addFolder("Shape");
@@ -5167,6 +5855,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       motionF.add(params, "breathingAmount", 0.0, 0.4).name("Breathe Amount");
       motionF.add(params, "kaleidoscopeMode").name("Kaleidoscope On");
       motionF.add(params, "kaleidoscopeSpeed", 0, 5).name("Kaleidoscope Speed");
+      motionF.add(params, "infiniteZoomOn").name("Infinite Zoom");
+      motionF.add(params, "infiniteZoomSpeed", 0.05, 3.0).name("Zoom Speed");
 
       // ── 4. LIGHTING ──────────────────────────────────────────────────────
       const lightF = gui.addFolder("Lighting");
@@ -5185,6 +5875,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       // ── 5. GLOW & FX ─────────────────────────────────────────────────────
       const fxF = gui.addFolder("Glow & FX");
+      fxF.add(params, "edgeOnlyMode").name("Edge Only Mode");
+      fxF.add(params, "edgeOnlyFill", 0.0, 1.0).name("Edge Fill Opacity");
 
       const edgeGlowF = fxF.addFolder("Edge Glow");
       edgeGlowF.add(params, "glowOn").name("On");
@@ -5377,6 +6069,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         effectiveZoom = clampZoom(params.zoomValue + breathOffset);
       }
 
+      // Infinite zoom is now shader-based — no camera change needed
+
       navCamera.position.set(0, 0, effectiveZoom);
       navCamera.quaternion.set(0, 0, 0, 1);
 
@@ -5452,6 +6146,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
       material.uniforms.uRidgeAccent.value = params.ridgeAccent;
       material.uniforms.uCavityStrength.value = params.cavityStrength;
 
+      material.uniforms.uEdgeOnlyMode.value = params.edgeOnlyMode ? 1.0 : 0.0;
+      material.uniforms.uEdgeOnlyFill.value = params.edgeOnlyFill;
       material.uniforms.uGlowOn.value = params.glowOn ? 1.0 : 0.0;
       material.uniforms.uGlowColorA.value.set(params.glowColorA);
       material.uniforms.uGlowColorB.value.set(params.glowColorB);
@@ -5558,6 +6254,28 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
 
       material.uniforms.uScreenRotateAngle.value = screenRotateAngle;
       material.uniforms.uVerticalMode.value = isVerticalMode ? 1.0 : 0.0;
+
+      // Tunnel uniforms
+      const tunnelSpeedFinal = params.tunnelSpeed *
+        (params.tunnelMusicReact && params.musicReact && micEnabled
+          ? (1.0 + sensitiveAvg * params.micSensitivity * 2.0)
+          : 1.0);
+      // Infinite zoom — shader-side UV crossfade
+      const izPhase = params.infiniteZoomOn
+        ? (t * params.infiniteZoomSpeed * 0.2) % 1.0
+        : 0.0;
+      material.uniforms.uInfiniteZoomOn.value    = params.infiniteZoomOn ? 1.0 : 0.0;
+      material.uniforms.uInfiniteZoomPhase.value = izPhase;
+
+      material.uniforms.uTunnelOn.value          = params.tunnelOn ? 1.0 : 0.0;
+      material.uniforms.uTunnelT.value           = shaderTime * tunnelSpeedFinal;
+      material.uniforms.uTunnelStyle.value       = params.tunnelStyle;
+      material.uniforms.uTunnelSpeed.value       = tunnelSpeedFinal;
+      material.uniforms.uTunnelTwist.value       = params.tunnelTwist;
+      material.uniforms.uTunnelLayers.value      = params.tunnelLayers;
+      material.uniforms.uTunnelLayerSpacing.value= params.tunnelLayerSpacing;
+      material.uniforms.uTunnelRadialCount.value = params.tunnelRadialCount;
+      material.uniforms.uTunnelZoom.value        = params.tunnelZoom;
 
       if (!isBusyExport && !params.breathingOn) {
         if ((keys["ArrowUp"] || keys["w"] || keys["W"]) && !isTypingContext()) navCamera.translateZ(-params.flySpeed);
