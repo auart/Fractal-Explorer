@@ -380,11 +380,12 @@ body.mobileMode #easyDock {
       position: fixed;
       inset: 0;
       z-index: 500;
-      background: rgba(0, 0, 0, 0.82);
-      backdrop-filter: blur(6px);
+      background: rgba(0, 0, 0, 0.0);
       display: none;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
+      padding-bottom: 40px;
+      pointer-events: none;
     }
 
     #exportOverlay.show {
@@ -392,27 +393,36 @@ body.mobileMode #easyDock {
     }
 
     #exportCard {
-      width: min(92vw, 460px);
-      padding: 32px 28px;
-      background: rgba(10, 10, 10, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 18px;
+      width: min(92vw, 480px);
+      padding: 20px 24px;
+      background: rgba(0, 0, 0, 0.88);
+      border: 1px solid rgba(24,216,216,0.2);
+      border-radius: 4px;
       color: #fff;
       text-align: center;
       box-sizing: border-box;
+      pointer-events: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 40px rgba(24,216,216,0.06);
     }
 
     #exportCard h2 {
-      margin: 0 0 6px 0;
-      font-size: 20px;
-      font-weight: 600;
+      margin: 0 0 4px 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #18d8d8;
     }
 
     #exportStatusText {
-      font-size: 13px;
-      color: rgba(255,255,255,0.6);
-      margin: 0 0 20px 0;
-      min-height: 18px;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.4);
+      margin: 0 0 12px 0;
+      min-height: 14px;
+      text-transform: uppercase;
     }
 
     #exportProgressTrack {
@@ -433,30 +443,39 @@ body.mobileMode #easyDock {
     }
 
     #exportPercent {
-      font-size: 36px;
+      font-size: 28px;
       font-weight: 700;
-      margin: 14px 0 4px 0;
+      margin: 8px 0 2px 0;
       letter-spacing: -0.02em;
+      color: #18d8d8;
     }
 
     #exportTimeRemaining {
-      font-size: 12px;
-      color: rgba(255,255,255,0.45);
-      margin: 0 0 24px 0;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.3);
+      margin: 0 0 14px 0;
     }
 
     #exportCancelBtn {
-      padding: 10px 28px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.06);
-      color: #fff;
-      font-size: 14px;
+      padding: 7px 20px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,80,80,0.3);
+      background: rgba(255,80,80,0.08);
+      color: rgba(255,100,100,0.8);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-family: 'SF Mono', 'Fira Code', monospace;
       cursor: pointer;
+      transition: all 0.1s;
     }
 
     #exportCancelBtn:hover {
-      background: rgba(255,255,255,0.12);
+      background: rgba(255,80,80,0.18);
+      border-color: rgba(255,80,80,0.5);
+      color: #ff6060;
     }
 
     #transportDisplay {
@@ -1464,7 +1483,12 @@ body.mobileMode .mobilePanel.show {
           <button id="exportPresetBtn">Export JSON</button>
           <button id="importPresetBtn">Import JSON</button>
         </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="exportAllPresetsBtn">Export All</button>
+          <button id="importAllPresetsBtn">Import All</button>
+        </div>
         <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;" />
+        <input id="importAllPresetsInput" type="file" accept=".json,application/json" style="display:none;" />
       </div>
 
       <!-- State -->
@@ -1578,6 +1602,7 @@ body.mobileMode .mobilePanel.show {
           <button id="exportStillBtn">Still PNG</button>
           <button id="masterExportBtn">Export MP4</button>
         </div>
+        <button id="playlistExportBtn">Export Playlist (MP4 × each)</button>
         <button id="keyboardHelpBtn" class="secondaryDark">Keyboard Help</button>
         <button id="fsToggleBtn" class="secondaryDark">Enter Full Screen</button>
       </div>
@@ -4254,6 +4279,118 @@ function copyCurrentStateToClipboard() {
       presetNameInput.value = finalName;
     }
 
+    // ── Export All Presets (bundle) ──────────────────────────────────────
+    function exportAllPresets() {
+      const presets = loadPresetsFromStorage();
+      const thumbs  = loadThumbnails();
+      const names   = Object.keys(presets);
+
+      if (!names.length) {
+        alert("No presets to export.");
+        return;
+      }
+
+      const bundle = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        count: names.length,
+        presets: presets,
+        thumbnails: thumbs
+      };
+
+      const json = JSON.stringify(bundle, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      const ts   = new Date().toISOString().replace(/[:T]/g,'-').slice(0,16);
+      a.href     = url;
+      a.download = `fractal-presets-all_${names.length}-presets_${ts}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+
+    // ── Import All Presets (bundle) ───────────────────────────────────────
+    async function importAllPresets(file) {
+      try {
+        const text   = await file.text();
+        const bundle = JSON.parse(text);
+
+        if (!bundle.presets || typeof bundle.presets !== "object") {
+          alert("Invalid bundle file — no presets found.");
+          return;
+        }
+
+        const incoming  = bundle.presets;
+        const inThumbns = bundle.thumbnails || {};
+        const names     = Object.keys(incoming);
+
+        if (!names.length) {
+          alert("Bundle contains no presets.");
+          return;
+        }
+
+        // Ask: merge or replace?
+        const existing = Object.keys(loadPresetsFromStorage());
+        let mode = "merge";
+        if (existing.length > 0) {
+          const choice = confirm(
+            `Import ${names.length} preset(s)?
+
+` +
+            `OK = Merge with your ${existing.length} existing preset(s)
+` +
+            `Cancel = Replace all existing presets`
+          );
+          mode = choice ? "merge" : "replace";
+        }
+
+        // Load existing or start fresh
+        const current = mode === "merge" ? loadPresetsFromStorage() : {};
+        const currentThumbs = mode === "merge" ? loadThumbnails() : {};
+
+        // Handle name conflicts in merge mode
+        let importedCount = 0;
+        names.forEach(name => {
+          let finalName = name;
+          let i = 2;
+          while (mode === "merge" && current[finalName]) {
+            finalName = `${name} (${i++})`;
+          }
+          current[finalName] = incoming[name];
+          if (inThumbns[name]) currentThumbs[finalName] = inThumbns[name];
+          importedCount++;
+        });
+
+        savePresetsToStorage(current);
+        localStorage.setItem(THUMBNAIL_STORAGE_KEY, JSON.stringify(currentThumbs));
+        refreshPresetSelect();
+        buildEasyPresetList();
+
+        alert(`✓ Imported ${importedCount} preset(s) successfully.`);
+      } catch (err) {
+        alert("Failed to import bundle: " + err.message);
+      }
+    }
+
+    // Wire buttons
+    const exportAllPresetsBtn  = document.getElementById("exportAllPresetsBtn");
+    const importAllPresetsBtn  = document.getElementById("importAllPresetsBtn");
+    const importAllPresetsInput= document.getElementById("importAllPresetsInput");
+
+    if (exportAllPresetsBtn) {
+      exportAllPresetsBtn.addEventListener("click", exportAllPresets);
+    }
+    if (importAllPresetsBtn) {
+      importAllPresetsBtn.addEventListener("click", () => importAllPresetsInput.click());
+    }
+    if (importAllPresetsInput) {
+      importAllPresetsInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) await importAllPresets(file);
+        importAllPresetsInput.value = "";
+      });
+    }
+
     function savePlaylistState() {
       const data = {
         playlist: params.playlist.slice(),
@@ -4489,7 +4626,10 @@ function copyCurrentStateToClipboard() {
 
     savePresetBtn.addEventListener("click", () => savePresetByName(presetNameInput.value, false));
 
-randomBtn.addEventListener("click", randomizeFromGoodSeed);
+randomBtn.addEventListener("click", () => {
+      timelineTime = 0;
+      randomizeFromGoodSeed();
+    });
 goodBtn.addEventListener("click", recordGood);
 badBtn.addEventListener("click", recordBad);
     overwritePresetBtn.addEventListener("click", () => {
@@ -5936,7 +6076,11 @@ let lastTapTime = 0;
       if (masterExportBtn) masterExportBtn.disabled = true;
       if (exportStillBtn)  exportStillBtn.disabled  = true;
       if (freezeBtn)       freezeBtn.disabled       = true;
+      // Hide panels but keep canvas visible — shows live frame like Blender
+      document.body.classList.add("panelsHidden");
+      closeEasyDockPanels();
       setRenderResolution(width, height);
+      layoutPreviewFrame();
     }
 
     function endOfflineRender() {
@@ -5944,7 +6088,11 @@ let lastTapTime = 0;
       if (masterExportBtn) masterExportBtn.disabled = false;
       if (exportStillBtn)  exportStillBtn.disabled  = false;
       if (freezeBtn)       freezeBtn.disabled       = false;
+      // Restore panels
+      document.body.classList.remove("panelsHidden");
       restorePreviewResolution();
+      layoutPreviewFrame();
+      resizeRendererToPreviewFrame();
       updateTransportDisplay();
       hideExportOverlay();
     }
@@ -6002,6 +6150,66 @@ let lastTapTime = 0;
     }
 
     // ─── Master Export ────────────────────────────────────────────────────
+    // ── Playlist Export ───────────────────────────────────────────────────
+    // Renders each preset in the playlist as a separate MP4 file
+    async function playlistExport() {
+      if (!params.playlist || params.playlist.length === 0) {
+        alert("No presets in playlist. Add presets to the playlist first.");
+        return;
+      }
+
+      const [w, h] = exportResSelect.value.split("x").map(Number);
+      const fps    = parseInt(exportFpsSelect.value, 10);
+      const crf    = parseInt(exportCrfSelect.value, 10);
+      const durSec = parseInt(durationSelect.value, 10);
+
+      // Confirm before starting a long batch
+      const totalMin = Math.round(params.playlist.length * durSec / 60 * 100) / 100;
+      const ok = confirm(
+        `Export ${params.playlist.length} presets × ${durSec}s each?
+` +
+        `Total content: ~${totalMin} minutes
+
+` +
+        `Files will download one at a time as each finishes.`
+      );
+      if (!ok) return;
+
+      for (let pi = 0; pi < params.playlist.length; pi++) {
+        const name = params.playlist[pi];
+        const presets = loadPresetsFromStorage();
+        if (!presets[name] || !presets[name].values) continue;
+
+        // Load this preset
+        applyPresetData(presets[name].values);
+        presetNameInput.value = name;
+        timelineTime = 0; // always start from t=0 per preset
+        await yieldToBrowser();
+        await yieldToBrowser(); // two yields to let the render settle
+
+        // Show which preset we're on in the overlay title
+        showExportOverlay(`Exporting ${pi + 1}/${params.playlist.length}: ${name}`);
+
+        // Build filename for this preset
+        const slug = name.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const ts   = new Date().toISOString().replace(/[:T]/g,'-').slice(0,19);
+        const fn   = `${slug}_${w}x${h}_${fps}fps_${durSec}s_${ts}.mp4`;
+
+        await masterExport({ width: w, height: h, fps, crf, durSec, filenameOverride: fn });
+
+        if (exportCancelled) break;
+      }
+
+      // Restore original state
+      hideExportOverlay();
+      syncEasyDockControlsFromParams();
+    }
+
+    const playlistExportBtn = document.getElementById("playlistExportBtn");
+    if (playlistExportBtn) {
+      playlistExportBtn.addEventListener("click", playlistExport);
+    }
+
     if (masterExportBtn) {
       masterExportBtn.addEventListener("click", async () => {
         const [w, h] = exportResSelect.value.split("x").map(Number);
@@ -6012,12 +6220,22 @@ let lastTapTime = 0;
       });
     }
 
-    async function masterExport({ width, height, fps, crf, durSec }) {
+    async function masterExport({ width, height, fps, crf, durSec, filenameOverride }) {
       const totalFrames    = durSec * fps;
       const exportStartTime= timelineTime;
       const isVert         = isVerticalMode;
       const orient         = isVert ? "vertical" : "horizontal";
-      const filename       = `fractal-${width}x${height}-${fps}fps-${durSec}s.mp4`;
+      // Smart filename: presetname_WxH_fps_duration_timestamp
+      let filename;
+      if (filenameOverride) {
+        filename = filenameOverride;
+      } else {
+        const presetSlug = (presetNameInput && presetNameInput.value.trim())
+          ? presetNameInput.value.trim().replace(/[^a-zA-Z0-9_-]/g, '_')
+          : 'fractal';
+        const ts = new Date().toISOString().replace(/[:T]/g,'-').slice(0,19);
+        filename = `${presetSlug}_${width}x${height}_${fps}fps_${durSec}s_${ts}.mp4`;
+      }
       const digits         = 5; // frame00001.png
 
       showExportOverlay("Master Export");
