@@ -600,81 +600,164 @@ body.mobileMode #easyDock {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.78);
-      backdrop-filter: blur(4px);
+      background: #000;
+    }
+
+    /* Animated fractal-like background grid */
+    #startOverlay::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(24,216,216,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(24,216,216,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      animation: gridPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
     }
 
     #startCard {
-      width: min(92vw, 520px);
-      padding: 36px 30px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(8, 8, 8, 0.88);
+      position: relative;
+      z-index: 1;
+      width: min(92vw, 480px);
+      padding: 48px 40px 40px;
+      border: 1px solid rgba(24,216,216,0.2);
+      background: rgba(0,0,0,0.92);
       color: white;
       text-align: center;
       box-sizing: border-box;
-      border-radius: 20px;
+      border-radius: 4px;
       backdrop-filter: blur(20px);
+      box-shadow: 0 0 80px rgba(24,216,216,0.08), inset 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    /* Corner accents */
+    #startCard::before, #startCard::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-color: #18d8d8;
+      border-style: solid;
+      opacity: 0.6;
+    }
+    #startCard::before {
+      top: -1px; left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+    #startCard::after {
+      bottom: -1px; right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    #startEyebrow {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #18d8d8;
+      margin: 0 0 20px 0;
+      opacity: 0.8;
     }
 
     #startCard h1 {
-      margin: 0 0 10px 0;
-      font-size: 38px;
-      line-height: 1.1;
-      letter-spacing: 0.02em;
+      margin: 0 0 8px 0;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 36px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
       font-weight: 700;
+      color: #fff;
+    }
+
+    #startCard h1 span {
       background: linear-gradient(135deg, #18d8d8, #a6ff3c);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    #startCard p {
-      margin: 0 0 22px 0;
-      font-size: 15px;
-      line-height: 1.5;
-      color: rgba(255, 255, 255, 0.55);
+    #startTagline {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.25);
+      margin: 0 0 36px 0;
+      text-transform: uppercase;
+    }
+
+    #startDivider {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #18d8d8, transparent);
+      margin: 0 auto 32px;
+    }
+
+    #startMicPrompt {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin: 0 0 14px 0;
     }
 
     .startButtons {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 8px;
     }
 
     .startButtons button {
       width: 100%;
-      padding: 14px 16px;
-      font-size: 15px;
+      padding: 13px 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       cursor: pointer;
-      border-radius: 12px;
+      border-radius: 4px;
       box-sizing: border-box;
-      transition: background 0.12s, border-color 0.12s;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.1);
-      color: #fff;
+      transition: all 0.15s;
+      border: 1px solid rgba(24,216,216,0.35);
+      background: rgba(24,216,216,0.08);
+      color: #18d8d8;
     }
 
     .startButtons button:hover {
-      background: rgba(255,255,255,0.18);
+      background: rgba(24,216,216,0.15);
+      border-color: rgba(24,216,216,0.6);
+      box-shadow: 0 0 20px rgba(24,216,216,0.1);
     }
 
     .startButtons button.secondary {
       background: transparent;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.3);
       border-color: rgba(255,255,255,0.1);
     }
 
     .startButtons button.secondary:hover {
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.6);
+      border-color: rgba(255,255,255,0.2);
+      box-shadow: none;
     }
 
     #startStatus {
-      margin-top: 14px;
-      min-height: 20px;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.45);
+      margin-top: 16px;
+      min-height: 18px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: rgba(24,216,216,0.6);
+      text-transform: uppercase;
     }
 
     #keyboardHelpOverlay {
@@ -1315,11 +1398,14 @@ body.mobileMode .mobilePanel.show {
 <body>
   <div id="startOverlay">
     <div id="startCard">
-      <h1>Fractal Explorer</h1>
-      <p>Choose how you want to start. You can use live microphone input for audio reactivity, or continue without it.</p>
+      <p id="startEyebrow">Fractal Explorer</p>
+      <h1>Visual<br><span>Synthesis</span></h1>
+      <p id="startTagline">Real-time 3D Fractal Renderer</p>
+      <div id="startDivider"></div>
+      <p id="startMicPrompt">Audio Input</p>
       <div class="startButtons">
-        <button id="enterWithMicBtn">Start with Microphone</button>
-        <button id="enterWithoutMicBtn" class="secondary">Start without Microphone</button>
+        <button id="enterWithMicBtn">Enable Microphone</button>
+        <button id="enterWithoutMicBtn" class="secondary">Continue Without Audio</button>
       </div>
       <div id="startStatus"></div>
     </div>
@@ -1354,10 +1440,10 @@ body.mobileMode .mobilePanel.show {
           <button id="badBtn" style="display:none;">👎</button>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-          <button id="rerollShapeBtn2" onclick="rerollShape()">Shape</button>
-          <button id="rerollColorBtn2" onclick="rerollColor()">Color</button>
-          <button id="rerollMotionBtn2" onclick="rerollMotion()">Motion</button>
-          <button id="rerollFxBtn2" onclick="rerollFx()">FX</button>
+          <button id="rerollShapeBtn2">Shape</button>
+          <button id="rerollColorBtn2">Color</button>
+          <button id="rerollMotionBtn2">Motion</button>
+          <button id="rerollFxBtn2">FX</button>
         </div>
       </div>
 
@@ -4615,6 +4701,15 @@ bindTap(mobilePlayBtn, () => {
     const easyRollMotionBtn = document.getElementById("easyRollMotionBtn");
     const easyRollFxBtn     = document.getElementById("easyRollFxBtn");
     if (easyRollShapeBtn)  easyRollShapeBtn.addEventListener("click",  rerollShape);
+    // Left panel re-roll buttons
+    const lpRollShape  = document.getElementById("rerollShapeBtn2");
+    const lpRollColor  = document.getElementById("rerollColorBtn2");
+    const lpRollMotion = document.getElementById("rerollMotionBtn2");
+    const lpRollFx     = document.getElementById("rerollFxBtn2");
+    if (lpRollShape)  lpRollShape.addEventListener("click",  rerollShape);
+    if (lpRollColor)  lpRollColor.addEventListener("click",  rerollColor);
+    if (lpRollMotion) lpRollMotion.addEventListener("click", rerollMotion);
+    if (lpRollFx)     lpRollFx.addEventListener("click",     rerollFx);
     if (easyRollColorBtn)  easyRollColorBtn.addEventListener("click",  rerollColor);
     if (easyRollMotionBtn) easyRollMotionBtn.addEventListener("click", rerollMotion);
     if (easyRollFxBtn)     easyRollFxBtn.addEventListener("click",     rerollFx);
@@ -6058,11 +6153,13 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
     }
 
     function init() {
+      console.log("[init] starting");
       renderer = new THREE.WebGLRenderer({
         antialias: true,
         preserveDrawingBuffer: true
       });
 
+      console.log("[init] renderer ready");
       document.getElementById("previewFrame").appendChild(renderer.domElement);
 
       navCamera = new THREE.PerspectiveCamera(75, getPreviewAspect(), 0.1, 1000);
@@ -6248,10 +6345,10 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         }
       });
 
+      console.log("[init] material ready");
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
-
-
+      console.log("[init] scene ready");
 
       layoutPreviewFrame();
       resizeRendererToPreviewFrame();
@@ -6740,7 +6837,8 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         slider(audioB, "musicReactTwistAmount", "Twist React Amt", 0, 3, 0.01);
         toggle(audioB, "musicMatch", "BPM Match");
 
-      })(); } catch(e) { console.error("Panel build failed:", e); }
+      })(); } catch(e) { console.error("[init] Panel build failed:", e); }
+      console.log("[init] complete");
 
       window.addEventListener("resize", () => {
         layoutPreviewFrame();
