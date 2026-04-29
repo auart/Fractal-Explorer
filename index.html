@@ -1464,7 +1464,12 @@ body.mobileMode .mobilePanel.show {
           <button id="exportPresetBtn">Export JSON</button>
           <button id="importPresetBtn">Import JSON</button>
         </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+          <button id="exportAllPresetsBtn">Export All</button>
+          <button id="importAllPresetsBtn">Import All</button>
+        </div>
         <input id="importPresetInput" type="file" accept=".json,application/json" style="display:none;" />
+        <input id="importAllPresetsInput" type="file" accept=".json,application/json" style="display:none;" />
       </div>
 
       <!-- State -->
@@ -3043,13 +3048,7 @@ float primitiveShape(vec3 pos) {
   </script>
 
   <script>
-    window.onerror = function(msg, src, line, col, err) {
-      const d = document.createElement('div');
-      d.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff0000cc;color:#fff;padding:12px;font-size:13px;font-family:monospace;';
-      d.textContent = 'JS ERROR line ' + line + ': ' + msg;
-      document.body.appendChild(d);
-      return false;
-    };
+
     let navCamera, orthoCamera, scene, renderer, material, quad, clock;
 
     const PRESET_STORAGE_KEY = "fractalExplorerPresetsV1";
@@ -3662,7 +3661,6 @@ function toggleEasyDockPanel(panelEl) {
       playlistState.isFading = false;
       updateTransportDisplay();
     }
-const DEV_MODE = true;
     
     const BUILT_IN_GOOD_PRESETS = [];
 
@@ -3688,7 +3686,8 @@ const DEV_MODE = true;
     console.warn('Could not load good seeds - random will be limited');
   }
 
-  // Fetch starter presets from external JSON
+  // Fetch starter presets from external JSON — merges on every load
+  // Uses a version key so it only re-merges when the file changes
   async function loadStarterPresets() {
     const urls = [
       'starter-presets.json',
@@ -3697,19 +3696,32 @@ const DEV_MODE = true;
     for (const url of urls) {
       try {
         const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.presets && Object.keys(data.presets).length > 0) {
-            const existing = loadPresetsFromStorage();
-            // Only load if user has no presets yet
-            if (Object.keys(existing).length === 0) {
-              savePresetsToStorage(data.presets);
-              refreshPresetSelect();
-              console.log('Loaded starter presets');
-            }
-            return;
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (!data.presets || !Object.keys(data.presets).length) continue;
+
+        // Check version — skip if already loaded this version
+        const versionKey = 'fractalStarterVersion';
+        const loadedVersion = localStorage.getItem(versionKey);
+        const currentVersion = String(data.version || '') + '_' + String(Object.keys(data.presets).length);
+        if (loadedVersion === currentVersion) return; // already up to date
+
+        // Merge starter presets without overwriting existing ones
+        const existing = loadPresetsFromStorage();
+        let added = 0;
+        Object.entries(data.presets).forEach(([name, preset]) => {
+          if (!existing[name]) {
+            existing[name] = preset;
+            added++;
           }
+        });
+        if (added > 0) {
+          savePresetsToStorage(existing);
+          refreshPresetSelect();
+          buildEasyPresetList();
         }
+        localStorage.setItem(versionKey, currentVersion);
+        return;
       } catch(e) {}
     }
   }
@@ -4305,6 +4317,65 @@ function copyCurrentStateToClipboard() {
       playlistPresetSelect.value = finalName;
       presetNameInput.value = finalName;
     }
+
+    // Export All Presets
+    function exportAllPresets() {
+      const presets = loadPresetsFromStorage();
+      const thumbs  = loadThumbnails();
+      const names   = Object.keys(presets);
+      if (!names.length) { alert("No presets to export."); return; }
+      const bundle = { version:1, exportedAt:new Date().toISOString(), count:names.length, presets, thumbnails:thumbs };
+      const blob = new Blob([JSON.stringify(bundle,null,2)], {type:"application/json"});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      const ts   = new Date().toISOString().replace(/[:T]/g,"-").slice(0,16);
+      a.href = url; a.download = `fractal-presets-all_${names.length}-presets_${ts}.json`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+
+    // Import All Presets
+    async function importAllPresets(file) {
+      try {
+        const bundle = JSON.parse(await file.text());
+        if (!bundle.presets || typeof bundle.presets !== "object") { alert("Invalid bundle."); return; }
+        const incoming = bundle.presets;
+        const inThumbs = bundle.thumbnails || {};
+        const names = Object.keys(incoming);
+        if (!names.length) { alert("Bundle contains no presets."); return; }
+        const existing = Object.keys(loadPresetsFromStorage());
+        let mode = "merge";
+        if (existing.length > 0) {
+          mode = confirm(`Import ${names.length} preset(s)?
+
+OK = Merge with ${existing.length} existing
+Cancel = Replace all`) ? "merge" : "replace";
+        }
+        const current = mode === "merge" ? loadPresetsFromStorage() : {};
+        const currentThumbs = mode === "merge" ? loadThumbnails() : {};
+        names.forEach(name => {
+          let finalName = name, i = 2;
+          while (mode === "merge" && current[finalName]) finalName = `${name} (${i++})`;
+          current[finalName] = incoming[name];
+          if (inThumbs[name]) currentThumbs[finalName] = inThumbs[name];
+        });
+        savePresetsToStorage(current);
+        localStorage.setItem(THUMBNAIL_STORAGE_KEY, JSON.stringify(currentThumbs));
+        refreshPresetSelect();
+        buildEasyPresetList();
+        alert("Imported " + names.length + " preset(s).");
+      } catch(err) { alert("Failed: " + err.message); }
+    }
+
+    const exportAllPresetsBtn   = document.getElementById("exportAllPresetsBtn");
+    const importAllPresetsBtn   = document.getElementById("importAllPresetsBtn");
+    const importAllPresetsInput = document.getElementById("importAllPresetsInput");
+    if (exportAllPresetsBtn) exportAllPresetsBtn.addEventListener("click", exportAllPresets);
+    if (importAllPresetsBtn) importAllPresetsBtn.addEventListener("click", () => importAllPresetsInput.click());
+    if (importAllPresetsInput) importAllPresetsInput.addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) await importAllPresets(file);
+      importAllPresetsInput.value = "";
+    });
 
     function savePlaylistState() {
       const data = {
@@ -6373,13 +6444,11 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
     }
 
     function init() {
-      console.log("[init] starting");
       renderer = new THREE.WebGLRenderer({
         antialias: true,
         preserveDrawingBuffer: true
       });
 
-      console.log("[init] renderer ready");
       document.getElementById("previewFrame").appendChild(renderer.domElement);
 
       navCamera = new THREE.PerspectiveCamera(75, getPreviewAspect(), 0.1, 1000);
@@ -6565,16 +6634,14 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         }
       });
 
-      console.log("[init] material ready");
       quad = new THREE.Mesh(geometry, material);
       scene.add(quad);
-      console.log("[init] scene ready");
 
       layoutPreviewFrame();
       resizeRendererToPreviewFrame();
 
       // -- Custom Panel Builder --------------------------------------------
-      try { (function buildCustomPanel() {
+      (function buildCustomPanel() {
         const container = document.getElementById("customPanel");
         if (!container) return;
         container.innerHTML = "";
@@ -7057,8 +7124,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         slider(audioB, "musicReactTwistAmount", "Twist React Amt", 0, 3, 0.01);
         toggle(audioB, "musicMatch", "BPM Match");
 
-      })(); } catch(e) { console.error("[init] Panel build failed:", e); }
-      console.log("[init] complete");
+      })();
 
       window.addEventListener("resize", () => {
         layoutPreviewFrame();
