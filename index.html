@@ -3717,6 +3717,14 @@ function toggleEasyDockPanel(panelEl) {
         });
         if (added > 0) {
           savePresetsToStorage(existing);
+          // Also merge thumbnails if included in bundle
+          if (data.thumbnails) {
+            const currentThumbs = loadThumbnails();
+            Object.entries(data.thumbnails).forEach(([name, thumb]) => {
+              if (!currentThumbs[name]) currentThumbs[name] = thumb;
+            });
+            localStorage.setItem(THUMBNAIL_STORAGE_KEY, JSON.stringify(currentThumbs));
+          }
           refreshPresetSelect();
           buildEasyPresetList();
         }
@@ -4624,6 +4632,7 @@ badBtn.addEventListener("click", recordBad);
       }
 
       savePresetByName(selected, true);
+      setTimeout(() => saveThumbnail(selected, capturePresetThumbnail()), 80);
     });
 
     loadPresetBtn.addEventListener("click", loadSelectedPreset);
