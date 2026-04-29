@@ -3968,6 +3968,17 @@ function randomizeFromGoodSeed() {
   mutateFxRare();
   randomizePaletteLight();
 
+  // Always cap speeds
+  params.rotateSpeedX = Math.max(-0.5, Math.min(0.5, params.rotateSpeedX));
+  params.rotateSpeedY = Math.max(-0.5, Math.min(0.5, params.rotateSpeedY));
+  params.rotateSpeedZ = Math.max(-0.4, Math.min(0.4, params.rotateSpeedZ));
+  params.cameraRotateSpeed = Math.max(-0.4, Math.min(0.4, params.cameraRotateSpeed));
+  params.breathingSpeed = Math.min(0.6, params.breathingSpeed);
+  params.paletteCycleSpeed = Math.min(0.8, params.paletteCycleSpeed);
+  params.psyFlow = Math.min(1.0, params.psyFlow);
+  transportBaseSpeed = Math.min(1.0, transportBaseSpeed);
+  params.playbackSpeed = transportBaseSpeed;
+
   normalizeRandomTypes();
   refreshGuiDisplays();
   syncEasyDockControlsFromParams();
@@ -3975,23 +3986,45 @@ function randomizeFromGoodSeed() {
 }
     // -- Targeted re-roll functions ------------------------------------------
 
-    // Color cycles through ROYGBV palettes in order
+    // Color cycles through palettes in order
     let colorCycleIndex = 0;
     const ROYGBV_PALETTES = [
-      { name:"Red",    a:"#ff0000", b:"#ff4444", c:"#cc0000", d:"#ff6666", warm:"#ff2200", cool:"#cc0033" },
-      { name:"Orange", a:"#ff6600", b:"#ff9900", c:"#ff4400", d:"#ffaa00", warm:"#ff6600", cool:"#cc3300" },
-      { name:"Yellow", a:"#ffdd00", b:"#ffff00", c:"#ffaa00", d:"#ffffaa", warm:"#ffcc00", cool:"#aaaa00" },
-      { name:"Green",  a:"#00cc00", b:"#66ff44", c:"#009900", d:"#aaffaa", warm:"#66ff00", cool:"#006600" },
-      { name:"Blue",   a:"#0044ff", b:"#0099ff", c:"#0022cc", d:"#44ccff", warm:"#0066ff", cool:"#001188" },
-      { name:"Violet", a:"#8800ff", b:"#cc44ff", c:"#5500cc", d:"#dd88ff", warm:"#aa00ff", cool:"#4400aa" },
+      // ROYGBV
+      { name:"Red",         a:"#ff0000", b:"#ff4444", c:"#cc0000", d:"#ff6666", warm:"#ff2200", cool:"#cc0033" },
+      { name:"Orange",      a:"#ff6600", b:"#ff9900", c:"#ff4400", d:"#ffaa00", warm:"#ff6600", cool:"#cc3300" },
+      { name:"Yellow",      a:"#ffdd00", b:"#ffff00", c:"#ffaa00", d:"#ffffaa", warm:"#ffcc00", cool:"#aaaa00" },
+      { name:"Green",       a:"#00cc00", b:"#66ff44", c:"#009900", d:"#aaffaa", warm:"#66ff00", cool:"#006600" },
+      { name:"Blue",        a:"#0044ff", b:"#0099ff", c:"#0022cc", d:"#44ccff", warm:"#0066ff", cool:"#001188" },
+      { name:"Violet",      a:"#8800ff", b:"#cc44ff", c:"#5500cc", d:"#dd88ff", warm:"#aa00ff", cool:"#4400aa" },
+      // Rainbow
+      { name:"Rainbow",     a:"#ff0000", b:"#ffdd00", c:"#00cc00", d:"#0044ff", warm:"#ff6600", cool:"#0044ff" },
+      { name:"Rainbow 2",   a:"#ff00aa", b:"#ffdd00", c:"#00ffaa", d:"#0088ff", warm:"#ff6600", cool:"#00aaff" },
+      { name:"Spectrum",    a:"#ff0055", b:"#ff9900", c:"#00ff88", d:"#8800ff", warm:"#ff6600", cool:"#0088ff" },
+      // Warm
+      { name:"Sunset",      a:"#ff4400", b:"#ff8800", c:"#ffcc00", d:"#ff0055", warm:"#ff6600", cool:"#cc0033" },
+      { name:"Ember",       a:"#ff2200", b:"#ff6600", c:"#ffaa00", d:"#cc1100", warm:"#ff4400", cool:"#aa2200" },
+      { name:"Desert",      a:"#ff9966", b:"#ffcc88", c:"#cc6633", d:"#ffddaa", warm:"#ff8844", cool:"#884422" },
+      // Cool
+      { name:"Ocean",       a:"#0044ff", b:"#00ccff", c:"#0022aa", d:"#44eeff", warm:"#00aaff", cool:"#001188" },
+      { name:"Arctic",      a:"#00ccff", b:"#aaeeff", c:"#0088cc", d:"#cceeff", warm:"#44ccff", cool:"#0044aa" },
+      { name:"Midnight",    a:"#0011aa", b:"#0044ff", c:"#220066", d:"#0088cc", warm:"#0055cc", cool:"#000044" },
+      // Neon
+      { name:"Neon Cyber",  a:"#00ffcc", b:"#ff00ff", c:"#00ff00", d:"#ff0088", warm:"#ff00aa", cool:"#00ffcc" },
+      { name:"Neon Hot",    a:"#ff00ff", b:"#ff0088", c:"#ff6600", d:"#ffff00", warm:"#ff3300", cool:"#ff00ff" },
+      { name:"Neon Ice",    a:"#00ffff", b:"#0088ff", c:"#00ff88", d:"#ffffff", warm:"#00ffaa", cool:"#0044ff" },
+      { name:"Neon Rave",   a:"#ff00ff", b:"#00ffff", c:"#ff6600", d:"#00ff00", warm:"#ff6600", cool:"#00ffff" },
+      // Pastel
+      { name:"Pastel Soft", a:"#ffaacc", b:"#aaccff", c:"#ccffaa", d:"#ffccaa", warm:"#ffbbaa", cool:"#aabbff" },
+      { name:"Pastel Dream",a:"#ddaaff", b:"#aaffdd", c:"#ffddaa", d:"#aaddff", warm:"#ffccbb", cool:"#bbaaff" },
+      { name:"Pastel Dusk", a:"#ffbbdd", b:"#bbddff", c:"#ddffbb", d:"#ffddbb", warm:"#ffccaa", cool:"#aaccff" },
     ];
 
     function rerollShape() {
-      normalizeRandomTypes();
-      mutateStructure();
-      mutateTransforms();
-      // Cycle through symmetry modes 0-9 in order
+      // Only cycle symmetry mode — never touch the actual fractal shape
       params.symmetryMode = (Number(params.symmetryMode) + 1) % 10;
+      if (Number(params.symmetryMode) === 7) {
+        params.radialSegments = Math.floor(Math.random() * 5) + 4; // 4-8
+      }
       normalizeRandomTypes();
       refreshGuiDisplays();
       syncEasyDockControlsFromParams();
