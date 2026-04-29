@@ -1417,13 +1417,13 @@ body.mobileMode .mobilePanel.show {
       <h2>Keyboard Help</h2>
       <ul>
         <li>Space = toggle UI panels</li>
-        <li>J = rewind</li>
-        <li>K = play/pause</li>
-        <li>L = fast forward</li>
-        <li>W / A / S / D = move camera</li>
-        <li>Q / E = move camera up/down</li>
+        <li>P or K = play / pause</li>
+        <li>] = speed up</li>
+        <li>[ = slow down</li>
+        <li>R = random</li>
         <li>Mouse drag = rotate fractal</li>
-        <li>Pinch = zoom on touch devices</li>
+        <li>W / A / S / D = move camera</li>
+        <li>Q / E = move camera up / down</li>
       </ul>
     </div>
   </div>
@@ -6928,18 +6928,6 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
           });
         };
 
-        // -- TUNNEL & RING ------------------------------------------------
-        const tunnelB = section("tunnel", "Tunnel & Ring Settings", false);
-        toggle(tunnelB, "tunnelOn", "Tunnel On");
-        select(tunnelB, "tunnelStyle", "Tunnel Style", { "Fractal Shell":0, "Mandala":1, "Warp Energy":2 });
-        slider(tunnelB, "tunnelSpeed", "Speed", 0, 4, 0.01);
-        slider(tunnelB, "tunnelTwist", "Twist", -3, 3, 0.01);
-        slider(tunnelB, "tunnelLayers", "Layer Count", 2, 20, 1, 0);
-        slider(tunnelB, "tunnelLayerSpacing", "Layer Spacing", 0.05, 2, 0.01);
-        slider(tunnelB, "tunnelRadialCount", "Mirror Folds", 1, 16, 1, 0);
-        slider(tunnelB, "tunnelZoom", "Zoom", 0.3, 8, 0.01);
-        toggle(tunnelB, "tunnelMusicReact", "Music Reactive");
-
         // -- SHAPE --------------------------------------------------------
         const shapeB = section("shape", "Shape", true);
         select(shapeB, "uShape", "Base Shape", { "Mandelbulb":0, "Sphere":1, "Cube":2, "Torus":3 });
@@ -6971,7 +6959,18 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         slider(stackB, "offsetAnimSpeed", "Offset Anim Speed", 0, 5, 0.01);
         slider(stackB, "offsetAnimAmount", "Offset Anim Amount", 0, 1.5, 0.01);
 
-        // Rotation angles — these need .listen() equivalent
+        const tunnelB = subsection(shapeB, "Tunnel & Ring", false);
+        toggle(tunnelB, "tunnelOn", "Tunnel On");
+        select(tunnelB, "tunnelStyle", "Tunnel Style", { "Fractal Shell":0, "Mandala":1, "Warp Energy":2 });
+        slider(tunnelB, "tunnelSpeed", "Speed", 0, 4, 0.01);
+        slider(tunnelB, "tunnelTwist", "Twist", -3, 3, 0.01);
+        slider(tunnelB, "tunnelLayers", "Layer Count", 2, 20, 1, 0);
+        slider(tunnelB, "tunnelLayerSpacing", "Layer Spacing", 0.05, 2, 0.01);
+        slider(tunnelB, "tunnelRadialCount", "Mirror Folds", 1, 16, 1, 0);
+        slider(tunnelB, "tunnelZoom", "Zoom", 0.3, 8, 0.01);
+        toggle(tunnelB, "tunnelMusicReact", "Music Reactive");
+
+        // Rotation angles
         const rotXSlider = slider(shapeB, "uFractalRotationX", "Rotation X", 0, Math.PI*2, 0.001, 3);
         const rotYSlider = slider(shapeB, "uFractalRotationY", "Rotation Y", 0, Math.PI*2, 0.001, 3);
         const rotZSlider = slider(shapeB, "uFractalRotationZ", "Rotation Z", 0, Math.PI*2, 0.001, 3);
@@ -6979,67 +6978,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         rotYController = { updateDisplay: () => { rotYSlider.value = params.uFractalRotationY; if(rotYSlider._valEl) rotYSlider._valEl.textContent = fmt(params.uFractalRotationY,3); }};
         rotZController = { updateDisplay: () => { rotZSlider.value = params.uFractalRotationZ; if(rotZSlider._valEl) rotZSlider._valEl.textContent = fmt(params.uFractalRotationZ,3); }};
 
-        // -- COLOR --------------------------------------------------------
-        const colorB = section("color", "Color", true);
-        select(colorB, "paletteMode", "Palette Mode", { "Base":0, "Contour":1, "Psychedelic":2 });
-        select(colorB, "psyStyle", "Color Style", { "Classic":0, "Hybrid":1, "Vivid":2 });
-        color(colorB, "uColor", "Base Color");
-        color(colorB, "psyColorA", "Color A");
-        color(colorB, "psyColorB", "Color B");
-        color(colorB, "psyColorC", "Color C");
-        color(colorB, "psyColorD", "Color D");
-        color(colorB, "warmColor", "Warm Tone");
-        color(colorB, "coolColor", "Cool Tone");
-        slider(colorB, "psyMix", "Color Mix", 0, 1.5, 0.01);
-        slider(colorB, "psyScale", "Color Scale", 0.5, 20, 0.01);
-        slider(colorB, "psyFlow", "Color Flow", 0, 4, 0.01);
-        slider(colorB, "psySpinStrength", "Color Spin", 0, 6, 0.01);
-        slider(colorB, "ringScale", "Ring Scale", 0.5, 20, 0.01);
-        slider(colorB, "ringStrength", "Ring Strength", 0, 1, 0.01);
-        toggle(colorB, "paletteCycle", "Cycle Colors");
-        slider(colorB, "paletteCycleSpeed", "Cycle Speed", 0, 3, 0.01);
-        toggle(colorB, "psyScaleCycle", "Scale Cycle");
-        slider(colorB, "psyScaleCycleSpeed", "Scale Cycle Speed", 0, 4, 0.01);
-        slider(colorB, "psyScaleCycleAmount", "Scale Cycle Amt", 0, 10, 0.01);
-        toggle(colorB, "trippyMode", "Trippy Mode");
-        slider(colorB, "trippySpeed", "Trippy Speed", 0, 10, 0.1);
-
-        const orbitB = subsection(colorB, "Orbit Trap", false);
-        toggle(orbitB, "orbitTrapOn", "Orbit Trap On");
-        select(orbitB, "orbitTrapMode", "Trap Shape", { "Ring":0, "Sphere":1, "Point":2, "Plane":3, "Bulb":4 });
-        slider(orbitB, "orbitTrapScale", "Band Frequency", 0.5, 20, 0.1);
-        slider(orbitB, "orbitTrapSharpness", "Band Sharpness", 0, 1, 0.01);
-        slider(orbitB, "orbitTrapBlend", "Blend w/ Normal", 0, 1, 0.01);
-        color(orbitB, "orbitTrapColorA", "Color A (inner)");
-        color(orbitB, "orbitTrapColorB", "Color B (outer)");
-
-        const gradB = subsection(colorB, "Grading", false);
-        slider(gradB, "colorSaturation", "Saturation", 0, 2.5, 0.01);
-        slider(gradB, "colorVibrance", "Vibrance", 0, 2.5, 0.01);
-        slider(gradB, "paletteContrast", "Palette Contrast", 0.5, 2.5, 0.01);
-        slider(gradB, "colorIntensity", "Intensity", 0.25, 2.5, 0.01);
-        toggle(gradB, "preserveHighlightColor", "Preserve Highlights");
-        slider(gradB, "colorBands", "Color Bands", 0, 20, 1, 0);
-        slider(gradB, "bandStrength", "Band Strength", 0, 1, 0.01);
-
-        const shaderStyleB = subsection(colorB, "Shader Style", false);
-        select(shaderStyleB, "psyShaderMode", "Shader Mode", { "Lit":0, "Emissive":1, "Hybrid":2 });
-        slider(shaderStyleB, "psyEmission", "Emission", 0, 3, 0.01);
-        slider(shaderStyleB, "psyDepthShade", "Depth Shade", 0, 1, 0.01);
-        slider(shaderStyleB, "psyContrast", "Contrast", 0.5, 2.5, 0.01);
-        slider(shaderStyleB, "psySaturation", "Saturation", 0.5, 2, 0.01);
-        toggle(shaderStyleB, "psyGlowOn", "Internal Glow");
-        slider(shaderStyleB, "psyInternalGlow", "Internal Glow Amt", 0, 1.5, 0.01);
-        slider(shaderStyleB, "psyGlowThreshold", "Glow Threshold", 0.3, 1, 0.01);
-
-        const patB = subsection(colorB, "Patterns", false);
-        select(patB, "patternMode", "Pattern", PATTERN_OPTIONS);
-        slider(patB, "patternStrength", "Strength", 0, 2, 0.01);
-        slider(patB, "patternScale", "Scale", 0.5, 20, 0.01);
-        slider(patB, "patternSpeed", "Speed", 0, 5, 0.01);
-        slider(patB, "patternBlend", "Blend", 0, 1.5, 0.01);
-
-        // -- MOTION ------------------------------------------------------─
+        // -- MOTION ------------------------------------------------------
         const motionB = section("motion", "Motion", true);
         toggle(motionB, "powerAnimation", "Power Anim");
         slider(motionB, "powerAnimationSpeed", "Pwr Anim Speed", 0, 5, 0.01);
@@ -7062,19 +7001,71 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         toggle(motionB, "infiniteZoomOn", "Infinite Zoom");
         slider(motionB, "infiniteZoomSpeed", "Zoom Speed", 0.05, 3, 0.05);
 
-        // Zoom controller (listen)
-        const zoomSliderEl = motionB.querySelector('[type=range]:last-of-type');
+        // -- COLOR --------------------------------------------------------
+        const colorB = section("color", "Color", false);
+        select(colorB, "paletteMode", "Palette Mode", { "Base":0, "Contour":1, "Psychedelic":2 });
+        select(colorB, "psyStyle", "Color Style", { "Classic":0, "Hybrid":1, "Vivid":2 });
+        color(colorB, "uColor", "Base Color");
+        color(colorB, "psyColorA", "Color A");
+        color(colorB, "psyColorB", "Color B");
+        color(colorB, "psyColorC", "Color C");
+        color(colorB, "psyColorD", "Color D");
+        color(colorB, "warmColor", "Warm Tone");
+        color(colorB, "coolColor", "Cool Tone");
+        slider(colorB, "psyMix", "Color Mix", 0, 1.5, 0.01);
+        slider(colorB, "psyScale", "Color Scale", 0.5, 20, 0.01);
+        slider(colorB, "psyFlow", "Color Flow", 0, 4, 0.01);
+        slider(colorB, "psySpinStrength", "Color Spin", 0, 6, 0.01);
+        slider(colorB, "ringScale", "Ring Scale", 0.5, 20, 0.01);
+        slider(colorB, "ringStrength", "Ring Strength", 0, 1, 0.01);
+        toggle(colorB, "paletteCycle", "Cycle Colors");
+        slider(colorB, "paletteCycleSpeed", "Cycle Speed", 0, 3, 0.01);
+        toggle(colorB, "psyScaleCycle", "Scale Cycle");
+        slider(colorB, "psyScaleCycleSpeed", "Scale Cycle Speed", 0, 4, 0.01);
+        slider(colorB, "psyScaleCycleAmount", "Scale Cycle Amt", 0, 10, 0.01);
 
-        // -- LIGHTING ----------------------------------------------------─
+        const colorFxB = subsection(colorB, "Color FX", false);
+        slider(colorFxB, "colorSaturation", "Saturation", 0, 2.5, 0.01);
+        slider(colorFxB, "colorVibrance", "Vibrance", 0, 2.5, 0.01);
+        slider(colorFxB, "paletteContrast", "Palette Contrast", 0.5, 2.5, 0.01);
+        slider(colorFxB, "colorIntensity", "Intensity", 0.25, 2.5, 0.01);
+        toggle(colorFxB, "preserveHighlightColor", "Preserve Highlights");
+        slider(colorFxB, "colorBands", "Color Bands", 0, 20, 1, 0);
+        slider(colorFxB, "bandStrength", "Band Strength", 0, 1, 0.01);
+        select(colorFxB, "psyShaderMode", "Shader Mode", { "Lit":0, "Emissive":1, "Hybrid":2 });
+        slider(colorFxB, "psyEmission", "Emission", 0, 3, 0.01);
+        slider(colorFxB, "psyDepthShade", "Depth Shade", 0, 1, 0.01);
+        slider(colorFxB, "psyContrast", "Contrast", 0.5, 2.5, 0.01);
+        slider(colorFxB, "psySaturation", "Saturation", 0.5, 2, 0.01);
+        toggle(colorFxB, "psyGlowOn", "Internal Glow");
+        slider(colorFxB, "psyInternalGlow", "Internal Glow Amt", 0, 1.5, 0.01);
+        slider(colorFxB, "psyGlowThreshold", "Glow Threshold", 0.3, 1, 0.01);
+        toggle(colorFxB, "trippyMode", "Trippy Mode");
+        slider(colorFxB, "trippySpeed", "Trippy Speed", 0, 10, 0.1);
+
+        const orbitB = subsection(colorB, "Orbit Trap", false);
+        toggle(orbitB, "orbitTrapOn", "Orbit Trap On");
+        select(orbitB, "orbitTrapMode", "Trap Shape", { "Ring":0, "Sphere":1, "Point":2, "Plane":3, "Bulb":4 });
+        slider(orbitB, "orbitTrapScale", "Band Frequency", 0.5, 20, 0.1);
+        slider(orbitB, "orbitTrapSharpness", "Band Sharpness", 0, 1, 0.01);
+        slider(orbitB, "orbitTrapBlend", "Blend w/ Normal", 0, 1, 0.01);
+        color(orbitB, "orbitTrapColorA", "Color A (inner)");
+        color(orbitB, "orbitTrapColorB", "Color B (outer)");
+
+        const patB = subsection(colorB, "Patterns", false);
+        select(patB, "patternMode", "Pattern", PATTERN_OPTIONS);
+        slider(patB, "patternStrength", "Strength", 0, 2, 0.01);
+        slider(patB, "patternScale", "Scale", 0.5, 20, 0.01);
+        slider(patB, "patternSpeed", "Speed", 0, 5, 0.01);
+        slider(patB, "patternBlend", "Blend", 0, 1.5, 0.01);
+
+        // -- LIGHTING ----------------------------------------------------
         const lightB = section("lighting", "Lighting", false);
         slider(lightB, "lightIntensity", "Intensity", 0, 2, 0.01);
-
-        // Azimuth and elevation need listen controllers
         const azEl = slider(lightB, "lightAzimuth", "Azimuth", -Math.PI, Math.PI, 0.01, 3);
         const elEl = slider(lightB, "lightElevation", "Elevation", -1.57, 1.57, 0.01, 3);
         lightAzimuthController   = { updateDisplay: () => { azEl.value = params.lightAzimuth; if(azEl._valEl) azEl._valEl.textContent = fmt(params.lightAzimuth,3); }};
         lightElevationController = { updateDisplay: () => { elEl.value = params.lightElevation; if(elEl._valEl) elEl._valEl.textContent = fmt(params.lightElevation,3); }};
-
         color(lightB, "lightColor", "Light Color");
         slider(lightB, "shadowStrength", "Shadow Strength", 0, 1.5, 0.01);
         color(lightB, "shadowTint", "Shadow Tint");
@@ -7144,6 +7135,7 @@ frame.style.top = `${(ch - fh) * 0.5}px`;
         toggle(chromaB, "chromaticAnimated", "Animated");
         slider(chromaB, "chromaticSpeed", "Speed", 0, 4, 0.01);
 
+        // -- AUDIO REACTIVE ----------------------------------------------
         // -- AUDIO REACTIVE ----------------------------------------------─
         const audioB = section("audio", "Audio Reactive", false);
         toggle(audioB, "musicReact", "Mic On");
