@@ -3876,22 +3876,26 @@ function mutateTransforms() {
 
 function mutateMotion() {
   if (chance(0.35)) params.powerAnimation = mutateBoolean(!!params.powerAnimation, 0.30);
-  if (chance(0.40)) params.powerAnimationSpeed = mutateNumber(Number(params.powerAnimationSpeed), 0.2, 0.0, 1.0);
+  if (chance(0.40)) params.powerAnimationSpeed = mutateNumber(Number(params.powerAnimationSpeed), 0.2, 0.0, 0.6);
 
   if (chance(0.35)) params.autoRotateX = mutateBoolean(!!params.autoRotateX, 0.30);
   if (chance(0.35)) params.autoRotateY = mutateBoolean(!!params.autoRotateY, 0.30);
   if (chance(0.25)) params.autoRotateZ = mutateBoolean(!!params.autoRotateZ, 0.25);
 
-  if (chance(0.40)) params.rotateSpeedX = mutateNumber(Number(params.rotateSpeedX), 0.12, -0.8, 0.8);
-  if (chance(0.40)) params.rotateSpeedY = mutateNumber(Number(params.rotateSpeedY), 0.12, -0.8, 0.8);
-  if (chance(0.30)) params.rotateSpeedZ = mutateNumber(Number(params.rotateSpeedZ), 0.12, -0.8, 0.8);
+  if (chance(0.40)) params.rotateSpeedX = mutateNumber(Number(params.rotateSpeedX), 0.1, -0.5, 0.5);
+  if (chance(0.40)) params.rotateSpeedY = mutateNumber(Number(params.rotateSpeedY), 0.1, -0.5, 0.5);
+  if (chance(0.30)) params.rotateSpeedZ = mutateNumber(Number(params.rotateSpeedZ), 0.1, -0.4, 0.4);
 
   if (chance(0.15)) params.cameraRotateOn = mutateBoolean(!!params.cameraRotateOn, 0.35);
-  if (chance(0.18)) params.cameraRotateSpeed = mutateNumber(Number(params.cameraRotateSpeed), 0.12, -0.8, 0.8);
+  if (chance(0.18)) params.cameraRotateSpeed = mutateNumber(Number(params.cameraRotateSpeed), 0.08, -0.4, 0.4);
 
   if (chance(0.10)) params.breathingOn = mutateBoolean(!!params.breathingOn, 0.35);
-  if (chance(0.15)) params.breathingSpeed = mutateNumber(Number(params.breathingSpeed), 0.15, 0.0, 1.2);
-  if (chance(0.15)) params.breathingAmount = mutateNumber(Number(params.breathingAmount), 0.03, 0.0, 0.16);
+  if (chance(0.15)) params.breathingSpeed = mutateNumber(Number(params.breathingSpeed), 0.1, 0.0, 0.6);
+  if (chance(0.15)) params.breathingAmount = mutateNumber(Number(params.breathingAmount), 0.02, 0.0, 0.1);
+
+  // Never let playback speed go above 1
+  transportBaseSpeed = Math.min(1.0, transportBaseSpeed);
+  params.playbackSpeed = transportBaseSpeed;
 }
 
 function mutateVisualsLight() {
@@ -3970,11 +3974,24 @@ function randomizeFromGoodSeed() {
   syncMobileControlsFromParams();
 }
     // -- Targeted re-roll functions ------------------------------------------
+
+    // Color cycles through ROYGBV palettes in order
+    let colorCycleIndex = 0;
+    const ROYGBV_PALETTES = [
+      { name:"Red",    a:"#ff0000", b:"#ff4444", c:"#cc0000", d:"#ff6666", warm:"#ff2200", cool:"#cc0033" },
+      { name:"Orange", a:"#ff6600", b:"#ff9900", c:"#ff4400", d:"#ffaa00", warm:"#ff6600", cool:"#cc3300" },
+      { name:"Yellow", a:"#ffdd00", b:"#ffff00", c:"#ffaa00", d:"#ffffaa", warm:"#ffcc00", cool:"#aaaa00" },
+      { name:"Green",  a:"#00cc00", b:"#66ff44", c:"#009900", d:"#aaffaa", warm:"#66ff00", cool:"#006600" },
+      { name:"Blue",   a:"#0044ff", b:"#0099ff", c:"#0022cc", d:"#44ccff", warm:"#0066ff", cool:"#001188" },
+      { name:"Violet", a:"#8800ff", b:"#cc44ff", c:"#5500cc", d:"#dd88ff", warm:"#aa00ff", cool:"#4400aa" },
+    ];
+
     function rerollShape() {
-      if (!BUILT_IN_GOOD_PRESETS.length) return;
       normalizeRandomTypes();
       mutateStructure();
       mutateTransforms();
+      // Cycle through symmetry modes 0-9 in order
+      params.symmetryMode = (Number(params.symmetryMode) + 1) % 10;
       normalizeRandomTypes();
       refreshGuiDisplays();
       syncEasyDockControlsFromParams();
@@ -3982,9 +3999,15 @@ function randomizeFromGoodSeed() {
     }
 
     function rerollColor() {
-      normalizeRandomTypes();
-      randomizePaletteLight();
-      mutateVisualsLight();
+      const pal = ROYGBV_PALETTES[colorCycleIndex % ROYGBV_PALETTES.length];
+      colorCycleIndex++;
+      params.paletteMode = 2;
+      params.psyColorA = pal.a;
+      params.psyColorB = pal.b;
+      params.psyColorC = pal.c;
+      params.psyColorD = pal.d;
+      params.warmColor = pal.warm;
+      params.coolColor = pal.cool;
       normalizeRandomTypes();
       refreshGuiDisplays();
       syncEasyDockControlsFromParams();
@@ -3992,18 +4015,63 @@ function randomizeFromGoodSeed() {
     }
 
     function rerollMotion() {
-      normalizeRandomTypes();
-      mutateMotion();
+      // Toggle through rotation axes and randomize speed
+      const axes = [
+        { x:true,  y:false, z:false },
+        { x:false, y:true,  z:false },
+        { x:false, y:false, z:true  },
+        { x:true,  y:true,  z:false },
+        { x:true,  y:false, z:true  },
+        { x:false, y:true,  z:true  },
+        { x:true,  y:true,  z:true  },
+      ];
+      const ax = choice(axes);
+      params.autoRotateX = ax.x;
+      params.autoRotateY = ax.y;
+      params.autoRotateZ = ax.z;
+      params.rotateSpeedX = rand(0.1, 0.8) * (chance(0.3) ? -1 : 1);
+      params.rotateSpeedY = rand(0.1, 0.8) * (chance(0.3) ? -1 : 1);
+      params.rotateSpeedZ = rand(0.1, 0.5) * (chance(0.3) ? -1 : 1);
+      params.breathingOn = chance(0.4);
+      params.breathingSpeed = rand(0.1, 0.6);
+      params.breathingAmount = rand(0.02, 0.1);
+      params.cameraRotateOn = chance(0.3);
+      params.cameraRotateSpeed = rand(0.05, 0.3) * (chance(0.5) ? -1 : 1);
       normalizeRandomTypes();
       refreshGuiDisplays();
       syncEasyDockControlsFromParams();
       syncMobileControlsFromParams();
     }
 
+    // FX cycles through preset effect combos
+    let fxCycleIndex = 0;
+    const FX_CYCLES = [
+      { name:"Clean",    wave:false, ripple:false, chroma:false },
+      { name:"Chroma",   wave:false, ripple:false, chroma:true,  chromaStr:0.008, chromaEdge:0.85, chromaAnim:true,  chromaSpd:0.8 },
+      { name:"Ripple",   wave:false, ripple:true,  chroma:false, rippleStr:0.025, rippleScl:10,    rippleSpd:1.2, rippleMode:0 },
+      { name:"Wave",     wave:true,  ripple:false, chroma:false, waveStr:0.02,    waveScl:5,       waveSpd:0.65 },
+      { name:"Interference", wave:false, ripple:true, chroma:false, rippleStr:0.03, rippleScl:12, rippleSpd:0.8, rippleMode:1 },
+      { name:"Wave+Chroma",  wave:true,  ripple:false, chroma:true, waveStr:0.015, chromaStr:0.006, chromaAnim:true, chromaSpd:1.0 },
+      { name:"Full FX",  wave:true,  ripple:true,  chroma:true,  waveStr:0.015, rippleStr:0.02, chromaStr:0.005, chromaAnim:true },
+    ];
+
     function rerollFx() {
-      normalizeRandomTypes();
-      mutateFxRare();
-      mutateVisualsLight();
+      const fx = FX_CYCLES[fxCycleIndex % FX_CYCLES.length];
+      fxCycleIndex++;
+      params.waveDistortOn = !!fx.wave;
+      params.rippleOn      = !!fx.ripple;
+      params.chromaticOn   = !!fx.chroma;
+      if (fx.waveStr)    params.waveDistortStrength = fx.waveStr;
+      if (fx.waveScl)    params.waveDistortScale    = fx.waveScl;
+      if (fx.waveSpd)    params.waveDistortSpeed    = fx.waveSpd;
+      if (fx.rippleStr)  params.rippleStrength      = fx.rippleStr;
+      if (fx.rippleScl)  params.rippleScale         = fx.rippleScl;
+      if (fx.rippleSpd)  params.rippleSpeed         = fx.rippleSpd;
+      if (fx.rippleMode !== undefined) params.rippleMode = fx.rippleMode;
+      if (fx.chromaStr)  params.chromaticStrength   = fx.chromaStr;
+      if (fx.chromaEdge !== undefined) params.chromaticEdgeBias = fx.chromaEdge;
+      if (fx.chromaAnim !== undefined) params.chromaticAnimated = fx.chromaAnim;
+      if (fx.chromaSpd)  params.chromaticSpeed      = fx.chromaSpd;
       normalizeRandomTypes();
       refreshGuiDisplays();
       syncEasyDockControlsFromParams();
