@@ -1524,6 +1524,7 @@ body.mobileMode .mobilePanel.show {
       <button id="playlistDownBtn" style="display:none;"></button>
       <button id="playlistAutoplayBtn" style="display:none;"></button>
       <div id="transportDisplay" style="display:none;"></div>
+      <button id="freezeBtn" style="display:none;"></button>
       <button id="rewindBtn" style="display:none;"></button>
       <button id="fastForwardBtn" style="display:none;"></button>
       <button id="stepBackBtn" style="display:none;"></button>
@@ -1565,7 +1566,7 @@ body.mobileMode .mobilePanel.show {
       <!-- Actions -->
       <div class="panelBox rowGap">
         <label>Actions</label>
-        <button id="freezeBtn" class="freezeBtn">⏸ Freeze Animation</button>
+
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
           <button id="exportStillBtn">Still PNG</button>
           <button id="masterExportBtn">Export MP4</button>
@@ -4653,6 +4654,7 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
 
     playPauseBtn.addEventListener("click", () => {
       setTransportPlaying(!transportPlaying);
+      playPauseBtn.textContent = transportPlaying ? "⏸ Pause" : "▶ Play";
     });
 
     // Speed slider
@@ -5733,9 +5735,34 @@ bindTap(mobilePlayBtn, () => {
         return;
       }
 
-      if (key === "k" || key === "K") {
+      if (key === "k" || key === "K" || key === "p" || key === "P") {
         e.preventDefault();
         setTransportPlaying(!transportPlaying);
+        if (playPauseBtn) playPauseBtn.textContent = transportPlaying ? "⏸ Pause" : "▶ Play";
+        return;
+      }
+
+      if (key === "]") {
+        e.preventDefault();
+        transportBaseSpeed = Math.min(3, Math.round((transportBaseSpeed + 0.25) * 100) / 100);
+        params.playbackSpeed = transportBaseSpeed;
+        const sl = document.getElementById("playbackSpeedSlider");
+        const vl = document.getElementById("playbackSpeedVal");
+        if (sl) sl.value = transportBaseSpeed;
+        if (vl) vl.textContent = transportBaseSpeed.toFixed(2) + "x";
+        updateTransportDisplay();
+        return;
+      }
+
+      if (key === "[") {
+        e.preventDefault();
+        transportBaseSpeed = Math.max(0.05, Math.round((transportBaseSpeed - 0.25) * 100) / 100);
+        params.playbackSpeed = transportBaseSpeed;
+        const sl = document.getElementById("playbackSpeedSlider");
+        const vl = document.getElementById("playbackSpeedVal");
+        if (sl) sl.value = transportBaseSpeed;
+        if (vl) vl.textContent = transportBaseSpeed.toFixed(2) + "x";
+        updateTransportDisplay();
         return;
       }
 
