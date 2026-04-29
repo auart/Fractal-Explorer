@@ -1485,27 +1485,20 @@ body.mobileMode .mobilePanel.show {
       <!-- Transport -->
       <div class="panelBox rowGap">
         <label>Transport</label>
-        <div id="transportDisplay">Time 0.00s<br>State Play, 1.00x</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-          <button id="rewindBtn">⏮ Rewind</button>
-          <button id="playPauseBtn">⏸ Pause</button>
+        <button id="playPauseBtn">⏸ Pause</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.3); white-space:nowrap;">Speed</span>
+          <input id="playbackSpeedSlider" type="range" min="0.05" max="3" step="0.05" value="1"
+            style="-webkit-appearance:none; flex:1; height:3px; border-radius:999px; background:rgba(255,255,255,0.12); outline:none; cursor:pointer;">
+          <span id="playbackSpeedVal" style="font-size:10px; color:rgba(255,255,255,0.55); min-width:28px; text-align:right;">1×</span>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-          <button id="stepBackBtn">◀ Step</button>
-          <button id="stepForwardBtn">Step ▶</button>
-        </div>
-        <button id="fastForwardBtn">Fast Forward ⏭</button>
-        <select id="playbackSpeedSelect">
-          <option value="0.25">0.25×</option>
-          <option value="0.5">0.5×</option>
+        <!-- hidden selects kept for JS compatibility -->
+        <select id="playbackSpeedSelect" style="display:none;">
           <option value="1" selected>1×</option>
-          <option value="1.5">1.5×</option>
-          <option value="2">2×</option>
-          <option value="3">3×</option>
         </select>
       </div>
 
-      <!-- Quality & Playlist -->
+      <!-- Quality -->
       <div class="panelBox rowGap">
         <label>Preview</label>
         <select id="previewQualitySelect">
@@ -1518,29 +1511,22 @@ body.mobileMode .mobilePanel.show {
         <button id="toggleFpsBtn" class="secondaryDark">Show FPS</button>
       </div>
 
-      <!-- Playlist -->
-      <div class="panelBox rowGap">
-        <label>Playlist</label>
-        <select id="playlistPresetSelect"><option value="">No saved presets</option></select>
-        <button id="playlistAddBtn">Add to Playlist</button>
-        <select id="playlistList" size="5" style="height:80px;"></select>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-          <button id="playlistRemoveBtn">Remove</button>
-          <button id="playlistClearBtn">Clear</button>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-          <button id="playlistUpBtn">↑ Up</button>
-          <button id="playlistDownBtn">↓ Down</button>
-        </div>
-        <label>Interval (seconds)</label>
-        <input id="playlistIntervalInput" type="number" min="1" max="600" step="0.5" value="8" />
-        <select id="playlistTransitionSelect">
-          <option value="cut" selected>Hard Cut</option>
-          <option value="fade">Fade</option>
-        </select>
-        <input id="playlistFadeDurationInput" type="number" min="0.1" max="10" step="0.1" value="1.25" placeholder="Fade duration" />
-        <button id="playlistAutoplayBtn" class="secondaryDark">Playlist Autoplay Off</button>
-      </div>
+      <!-- Playlist hidden but kept for JS compatibility -->
+      <select id="playlistPresetSelect" style="display:none;"></select>
+      <select id="playlistList" style="display:none;"></select>
+      <input id="playlistIntervalInput" type="number" value="8" style="display:none;" />
+      <select id="playlistTransitionSelect" style="display:none;"><option value="cut">cut</option></select>
+      <input id="playlistFadeDurationInput" type="number" value="1.25" style="display:none;" />
+      <button id="playlistAddBtn" style="display:none;"></button>
+      <button id="playlistRemoveBtn" style="display:none;"></button>
+      <button id="playlistClearBtn" style="display:none;"></button>
+      <button id="playlistUpBtn" style="display:none;"></button>
+      <button id="playlistDownBtn" style="display:none;"></button>
+      <button id="playlistAutoplayBtn" style="display:none;"></button>
+      <button id="rewindBtn" style="display:none;"></button>
+      <button id="fastForwardBtn" style="display:none;"></button>
+      <button id="stepBackBtn" style="display:none;"></button>
+      <button id="stepForwardBtn" style="display:none;"></button>
 
       <!-- Export -->
       <div class="panelBox rowGap">
@@ -4667,6 +4653,19 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
     playPauseBtn.addEventListener("click", () => {
       setTransportPlaying(!transportPlaying);
     });
+
+    // Speed slider
+    const playbackSpeedSlider = document.getElementById("playbackSpeedSlider");
+    const playbackSpeedVal    = document.getElementById("playbackSpeedVal");
+    if (playbackSpeedSlider) {
+      playbackSpeedSlider.addEventListener("input", () => {
+        const v = parseFloat(playbackSpeedSlider.value);
+        transportBaseSpeed = v;
+        params.playbackSpeed = v;
+        if (playbackSpeedVal) playbackSpeedVal.textContent = v.toFixed(2) + "x";
+        updateTransportDisplay();
+      });
+    }
 
     rewindBtn.addEventListener("mousedown", () => {
       transportShuttle = -1;
