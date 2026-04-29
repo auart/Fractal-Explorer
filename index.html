@@ -5770,6 +5770,18 @@ bindTap(mobilePlayBtn, () => {
       }
       // Keep only last 8 taps for rolling average
       if (tapTimes.length > 8) tapTimes = tapTimes.slice(-8);
+      // Sync overall speed to BPM — 120 BPM = 1.0x, scales proportionally, capped at 1.0
+      if (tapTimes.length >= 2) {
+        const newSpeed = Math.min(1.0, tapBpmValue / 120.0);
+        transportBaseSpeed = newSpeed;
+        params.playbackSpeed = newSpeed;
+        const sl = document.getElementById("playbackSpeedSlider");
+        const vl = document.getElementById("playbackSpeedVal");
+        if (sl) sl.value = newSpeed;
+        if (vl) vl.textContent = newSpeed.toFixed(2) + "x";
+        updateTransportDisplay();
+      }
+
       // Update displays
       updateTapBpmDisplay();
     }
