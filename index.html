@@ -1445,6 +1445,23 @@ body.mobileMode .mobilePanel.show {
           <button id="rerollMotionBtn2">Motion</button>
           <button id="rerollFxBtn2">FX</button>
         </div>
+        <button id="playPauseBtn">⏸ Pause</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.3); white-space:nowrap;">Speed</span>
+          <input id="playbackSpeedSlider" type="range" min="0.05" max="1" step="0.05" value="1"
+            style="-webkit-appearance:none; flex:1; height:3px; border-radius:999px; background:rgba(255,255,255,0.12); outline:none; cursor:pointer;">
+          <span id="playbackSpeedVal" style="font-size:10px; color:rgba(255,255,255,0.55); min-width:28px; text-align:right;">1×</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.3); white-space:nowrap;">Zoom</span>
+          <input id="leftZoomSlider" type="range" min="1" max="6" step="0.01" value="2.2"
+            style="-webkit-appearance:none; flex:1; height:3px; border-radius:999px; background:rgba(255,255,255,0.12); outline:none; cursor:pointer;">
+          <span id="leftZoomVal" style="font-size:10px; color:rgba(255,255,255,0.55); min-width:28px; text-align:right;">2.20</span>
+        </div>
+        <!-- hidden selects kept for JS compatibility -->
+        <select id="playbackSpeedSelect" style="display:none;">
+          <option value="1" selected>1×</option>
+        </select>
       </div>
 
       <!-- Presets -->
@@ -1482,21 +1499,7 @@ body.mobileMode .mobilePanel.show {
         <textarea id="pasteStateBox" placeholder="Paste state JSON here…" style="height:72px;"></textarea>
       </div>
 
-      <!-- Transport -->
-      <div class="panelBox rowGap">
-        <label>Transport</label>
-        <button id="playPauseBtn">⏸ Pause</button>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.3); white-space:nowrap;">Speed</span>
-          <input id="playbackSpeedSlider" type="range" min="0.05" max="3" step="0.05" value="1"
-            style="-webkit-appearance:none; flex:1; height:3px; border-radius:999px; background:rgba(255,255,255,0.12); outline:none; cursor:pointer;">
-          <span id="playbackSpeedVal" style="font-size:10px; color:rgba(255,255,255,0.55); min-width:28px; text-align:right;">1×</span>
-        </div>
-        <!-- hidden selects kept for JS compatibility -->
-        <select id="playbackSpeedSelect" style="display:none;">
-          <option value="1" selected>1×</option>
-        </select>
-      </div>
+
 
       <!-- Quality -->
       <div class="panelBox rowGap">
@@ -4770,6 +4773,25 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
         updateTransportDisplay();
       });
     }
+
+    // Left panel zoom slider
+    const leftZoomSlider = document.getElementById("leftZoomSlider");
+    const leftZoomVal    = document.getElementById("leftZoomVal");
+    if (leftZoomSlider) {
+      leftZoomSlider.addEventListener("input", () => {
+        const v = parseFloat(leftZoomSlider.value);
+        params.zoomValue = clampZoom(v);
+        if (leftZoomVal) leftZoomVal.textContent = v.toFixed(2);
+      });
+    }
+
+    // Keep left zoom slider in sync when preset loads
+    const _origRefreshGui = window._cpRefresh;
+    window._cpRefresh = function() {
+      if (_origRefreshGui) _origRefreshGui();
+      if (leftZoomSlider) leftZoomSlider.value = params.zoomValue;
+      if (leftZoomVal) leftZoomVal.textContent = (params.zoomValue || 2.2).toFixed(2);
+    };
 
     rewindBtn.addEventListener("mousedown", () => {
       transportShuttle = -1;
