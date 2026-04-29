@@ -3979,8 +3979,13 @@ function randomizeFromGoodSeed() {
   params.breathingSpeed = Math.min(0.6, params.breathingSpeed);
   params.paletteCycleSpeed = Math.min(0.8, params.paletteCycleSpeed);
   params.psyFlow = Math.min(1.0, params.psyFlow);
-  transportBaseSpeed = Math.min(1.0, transportBaseSpeed);
-  params.playbackSpeed = transportBaseSpeed;
+  // Reset playback speed to 1x on every random
+  transportBaseSpeed = 1.0;
+  params.playbackSpeed = 1.0;
+  const _rsl = document.getElementById("playbackSpeedSlider");
+  const _rvl = document.getElementById("playbackSpeedVal");
+  if (_rsl) _rsl.value = 1.0;
+  if (_rvl) _rvl.textContent = "1.00x";
 
   normalizeRandomTypes();
   refreshGuiDisplays();
