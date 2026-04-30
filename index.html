@@ -5895,6 +5895,20 @@ bindTap(mobilePlayBtn, () => {
         return;
       }
 
+      if (key === "Escape") {
+        e.preventDefault();
+        // Exit fullscreen and restore panels — same as spacebar toggle back
+        const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+        if (isFs) {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) exit.call(document);
+        }
+        document.body.classList.remove("panelsHidden");
+        layoutPreviewFrame();
+        resizeRendererToPreviewFrame();
+        return;
+      }
+
       if (key === " ") {
         e.preventDefault();
         // Spacebar = true OS fullscreen + hide panels (show mode)
