@@ -1512,6 +1512,7 @@ body.mobileMode .mobilePanel.show {
           <option value="0.35">Mobile — 35%</option>
         </select>
         <button id="toggleFpsBtn" class="secondaryDark">Show FPS</button>
+        <button id="togglePresetNameBtn" class="secondaryDark">Show Preset Name</button>
       </div>
 
       <!-- Playlist hidden but kept for JS compatibility -->
@@ -1807,6 +1808,8 @@ body.mobileMode .mobilePanel.show {
       <div id="customPanel"></div>
     </div>
   </div>
+
+  <div id="presetNameDisplay" style="display:none; position:fixed; bottom:80px; left:50%; transform:translateX(-50%); z-index:40; padding:8px 20px; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.12); border-radius:6px; font-family:'SF Mono','Fira Code',monospace; font-size:13px; font-weight:700; letter-spacing:0.08em; color:rgba(255,255,255,0.85); pointer-events:none; text-align:center;"></div>
 
   <div id="exportOverlay">
     <div id="exportCard">
@@ -4349,6 +4352,7 @@ function copyCurrentStateToClipboard() {
 
       applyPresetData(presets[selected].values);
       presetNameInput.value = selected;
+      showPresetNameBriefly(selected);
     }
 
     function deleteSelectedPreset() {
@@ -4765,6 +4769,41 @@ copyStateBtn.addEventListener("click", copyCurrentStateToClipboard);
       setTransportPlaying(!transportPlaying);
       playPauseBtn.textContent = transportPlaying ? "⏸ Pause" : "▶ Play";
     });
+
+    // Preset name display
+    let presetNameDisplayTimer = null;
+    const presetNameDisplay = document.getElementById("presetNameDisplay");
+    let showPresetName = false;
+
+    function showPresetNameBriefly(name) {
+      if (!presetNameDisplay) return;
+      presetNameDisplay.textContent = name;
+      presetNameDisplay.style.display = "block";
+      if (!showPresetName) {
+        clearTimeout(presetNameDisplayTimer);
+        presetNameDisplayTimer = setTimeout(() => {
+          presetNameDisplay.style.display = "none";
+        }, 2000);
+      }
+    }
+
+    const togglePresetNameBtn = document.getElementById("togglePresetNameBtn");
+    if (togglePresetNameBtn) {
+      togglePresetNameBtn.addEventListener("click", () => {
+        showPresetName = !showPresetName;
+        togglePresetNameBtn.textContent = showPresetName ? "Hide Preset Name" : "Show Preset Name";
+        togglePresetNameBtn.classList.toggle("active", showPresetName);
+        if (presetNameDisplay) {
+          presetNameDisplay.style.display = showPresetName ? "block" : "none";
+          if (showPresetName && presetNameInput.value) {
+            presetNameDisplay.textContent = presetNameInput.value;
+          }
+        }
+      });
+    }
+
+    // Show preset name when loading via Load button too
+    const _origLoad = loadSelectedPreset;
 
     // Speed slider
     const playbackSpeedSlider = document.getElementById("playbackSpeedSlider");
@@ -5872,6 +5911,26 @@ bindTap(mobilePlayBtn, () => {
         }
         layoutPreviewFrame();
         resizeRendererToPreviewFrame();
+        return;
+      }
+
+      if (key === "c" || key === "C") {
+        e.preventDefault();
+        const presets = loadPresetsFromStorage();
+        const names = Object.keys(presets).sort((a,b) => a.localeCompare(b));
+        if (!names.length) return;
+        const cur = presetSelect.value;
+        const idx = names.indexOf(cur);
+        let next;
+        if (e.shiftKey) {
+          next = names[(idx - 1 + names.length) % names.length];
+        } else {
+          next = names[(idx + 1) % names.length];
+        }
+        presetSelect.value = next;
+        loadSelectedPreset();
+        presetNameInput.value = next;
+        showPresetNameBriefly(next);
         return;
       }
 
